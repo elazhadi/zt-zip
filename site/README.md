@@ -54,6 +54,31 @@ python3 -m http.server 8080
 # puis http://localhost:8080
 ```
 
+## Référencement (SEO)
+
+Bonnes pratiques mises en place sur chaque page :
+
+- **Balises `<title>` et `<meta description>`** uniques et descriptives.
+- **URL canoniques** (`rel="canonical"`) → domaine **https://www.sypramed.ma**.
+- **Open Graph + Twitter Cards** (partage réseaux) avec image dédiée
+  `assets/img/og-image.jpg` (1200×630).
+- **Données structurées JSON-LD** : `HardwareStore` (NAP, horaires, géoloc,
+  marque STRUGAL) sur l'accueil et la page contact ; `BreadcrumbList` sur les
+  pages intérieures → éligible aux résultats enrichis Google.
+- **`robots.txt`** + **`sitemap.xml`** (4 pages).
+- **Favicons** carrés (`favicon-32.png`, `apple-touch-icon.png`) + `theme-color`.
+- HTML5 sémantique, `lang="fr"`, `alt` sur les images, un seul `<h1>` par page.
+- Balises `geo.*` (Skhirat, Témara) pour le SEO local.
+
+> ⚠️ **À faire avant la mise en ligne :**
+> 1. Déployer le site **à la racine** du domaine `www.sypramed.ma` (les URL
+>    canoniques/sitemap pointent vers la racine, pas vers `/site/`).
+> 2. Vérifier les **coordonnées GPS exactes** dans le JSON-LD (`geo`) — la
+>    valeur actuelle (33.8567, -7.0333) est une approximation de Skhirat.
+> 3. Déclarer le site dans **Google Search Console** et y soumettre le sitemap
+>    `https://www.sypramed.ma/sitemap.xml`.
+> 4. Créer la **fiche Google Business Profile** (essentiel pour le SEO local).
+
 ## Technique
 
 - HTML5 sémantique + CSS moderne (variables, grid, flexbox), 100 % responsive.
