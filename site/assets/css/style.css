@@ -335,6 +335,48 @@ img { max-width: 100%; display: block; }
 .swatch .dot { width: 42px; height: 42px; border-radius: 12px; margin: 0 auto 7px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08), var(--shadow-sm); }
 
 /* =========================================================
+   SYSTEMS MATRIX TABLE
+   ========================================================= */
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm); background: #fff; }
+.systems-table { width: 100%; border-collapse: collapse; min-width: 680px; font-size: .94rem; }
+.systems-table th, .systems-table td { text-align: left; padding: 15px 18px; border-bottom: 1px solid var(--line); }
+.systems-table thead th { background: var(--ink); color: #fff; font-family: var(--font-head); font-weight: 600; font-size: .85rem; letter-spacing: .03em; text-transform: uppercase; }
+.systems-table tbody tr:last-child td { border-bottom: 0; }
+.systems-table tbody tr:hover { background: var(--bg-soft); }
+.systems-table .code { font-family: var(--font-head); font-weight: 700; color: var(--red); white-space: nowrap; }
+.systems-table .badge-rpt { display: inline-block; font-family: var(--font-head); font-size: .72rem; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: var(--red-soft); color: var(--red-dark); }
+.systems-table .badge-no { color: var(--muted); font-size: .85rem; }
+
+/* =========================================================
+   VIDEO / YOUTUBE
+   ========================================================= */
+.video-wrap {
+  position: relative; width: 100%; padding-top: 56.25%; border-radius: var(--radius);
+  overflow: hidden; box-shadow: var(--shadow-lg); border: 1px solid rgba(255,255,255,.08);
+  background: #000;
+}
+.video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.video-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 50px; align-items: center; }
+.video-grid .yt-badge {
+  display: inline-flex; align-items: center; gap: 9px; background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.16); padding: 7px 15px; border-radius: 999px;
+  font-family: var(--font-head); font-weight: 500; font-size: .82rem; margin-bottom: 18px;
+}
+.video-grid .yt-badge svg { width: 18px; height: 18px; color: #ff0000; }
+.yt-cta { display: inline-flex; align-items: center; gap: 10px; background: #ff0000; color: #fff;
+  font-family: var(--font-head); font-weight: 600; padding: 13px 24px; border-radius: 999px;
+  box-shadow: 0 10px 24px rgba(255,0,0,.28); transition: transform .25s var(--ease); }
+.yt-cta:hover { transform: translateY(-2px); }
+.yt-cta svg { width: 20px; height: 20px; }
+
+/* product photo with SVG fallback behind */
+.prod .photo, .spec-media .photo, .split .media .photo {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1;
+}
+.prod .photo { z-index: 0; }
+.prod .photo + .art { z-index: -2; }
+
+/* =========================================================
    FOOTER
    ========================================================= */
 .footer { background: #14181f; color: #9aa3b1; padding-top: 70px; }

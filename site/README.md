@@ -26,9 +26,21 @@ site/
 - **Raison sociale** : SYPRAMED — Impo & Export Aluminium
 - **Statut** : Distributeur agréé STRUGAL
 - **Adresse** : Lot Al Kasr N° 12 – Skhirat (région de Témara), Maroc
-- **Téléphone** : +212 5 37 61 19 11 · Mobile : +212 6 64 19 72 58
+- **Téléphone** : +212 5 37 61 19 11 (fixe) · +212 6 61 91 08 93 (mobile / WhatsApp)
 - **Email** : sypramed@gmail.com
 - **Web** : spra-med.com
+- **Google Maps** : https://maps.app.goo.gl/2XUcbgRXSbeirVFe7
+
+## Contenus intégrés
+
+- **Gamme STRUGAL complète** sur `produits.html` : coulissants, battants /
+  oscillo-battants, portes (ALUDOORS), mur rideau & façades, volets & brise-soleil,
+  garde-corps, accessoires & quincaillerie, finitions — plus un tableau
+  récapitulatif des systèmes (S40, S46, S53 RPT, S70, S90, S88 RP, etc.).
+- **Vidéo YouTube** STRUGAL intégrée sur l'accueil + liens vers la
+  **chaîne officielle** https://youtube.com/@strugalaluminium (icônes sociales).
+- **Photos produits** : voir `assets/img/products/README.md` pour ajouter les
+  vraies photos du catalogue Strugal (repli automatique sur illustration SVG).
 
 ## Aperçu local
 
