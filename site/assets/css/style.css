@@ -344,6 +344,27 @@ img { max-width: 100%; display: block; }
 .swatch .dot { width: 42px; height: 42px; border-radius: 12px; margin: 0 auto 7px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08), var(--shadow-sm); }
 
 /* =========================================================
+   CATALOGUE DOWNLOAD
+   ========================================================= */
+.dl-card {
+  display: flex; align-items: center; gap: 26px; flex-wrap: wrap;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 30px 34px; box-shadow: var(--shadow-sm);
+}
+.dl-card .dl-ic {
+  flex: 0 0 auto; width: 66px; height: 66px; border-radius: 16px; display: grid; place-items: center;
+  background: var(--red-soft); color: var(--red);
+}
+.dl-card .dl-ic svg { width: 32px; height: 32px; }
+.dl-card .dl-txt { flex: 1 1 280px; }
+.dl-card .dl-txt h3 { font-size: 1.25rem; margin-bottom: 4px; }
+.dl-card .dl-txt p { margin: 0; font-size: .95rem; }
+.dl-card .dl-meta { font-family: var(--font-head); font-size: .78rem; color: var(--muted); margin-top: 4px; }
+.dl-card .btn { flex: 0 0 auto; }
+.btn .dl-arrow { transition: transform .25s var(--ease); }
+.btn:hover .dl-arrow { transform: translateY(2px); }
+
+/* =========================================================
    SYSTEMS MATRIX TABLE
    ========================================================= */
 .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm); background: #fff; }
