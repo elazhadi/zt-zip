@@ -1,25 +1,17 @@
 # Logos des marques
 
-## Logo STRUGAL
+Logos **officiels** fournis par le client, détourés sur fond transparent.
 
-Les fichiers `strugal.svg` (fond clair) et `strugal-white.svg` (fond foncé)
-sont une **reconstitution vectorielle** du logo STRUGAL, utilisée en attendant
-le fichier officiel.
+| Fichier              | Marque  | Usage                                            |
+|----------------------|---------|--------------------------------------------------|
+| `strugal.png`        | STRUGAL | Fond clair — barre des marques, badge « À propos » |
+| `strugal-white.png`  | STRUGAL | Fond foncé — pied de page                        |
+| `stac.png`           | STAC    | Barre des marques (accueil)                      |
 
-### Remplacer par le logo officiel
+- Fichiers PNG transparents, recadrés sur le contenu.
+- Repli automatique : si un logo est absent, le nom de la marque s'affiche en
+  texte — le site ne casse jamais.
+- Pour mettre à jour un logo, remplacez le fichier en conservant le même nom.
 
-En tant que **distributeur agréé**, demandez à STRUGAL son kit logo
-(SVG/PNG vectoriel) puis remplacez simplement les fichiers en gardant les
-mêmes noms :
-
-| Fichier             | Emplacement                                  |
-|---------------------|----------------------------------------------|
-| `strugal.svg`       | Barre des marques (accueil), badge « À propos » |
-| `strugal-white.svg` | Pied de page (fond sombre)                   |
-
-> Sources officielles : https://www.strugal.com · https://www.strugal.ma
-> Si vous n'avez qu'un PNG, déposez-le sous `strugal.png` / `strugal-white.png`
-> et signalez-le : on ajustera les balises `<img>` (1 ligne par emplacement).
-
-Tout est protégé par un repli automatique : si un logo est absent, le texte
-« STRUGAL » s'affiche à la place — le site ne casse jamais.
+> ALUDOORS est affiché en texte (logo non fourni). Déposez `aludoors.png`
+> et signalez-le pour l'afficher en image.
