@@ -167,6 +167,15 @@ img { max-width: 100%; display: block; }
   color: var(--ink); opacity: .55; transition: opacity .25s, transform .25s;
 }
 .brandstrip .brands span:hover { opacity: 1; transform: translateY(-2px); }
+.brandstrip .brands img.brand-logo-img { height: 34px; width: auto; opacity: .85; transition: opacity .25s, transform .25s; }
+.brandstrip .brands img.brand-logo-img:hover { opacity: 1; transform: translateY(-2px); }
+
+/* "Distributeur agréé" badge with Strugal logo */
+.agree-badge { display: inline-flex; align-items: center; gap: 14px; background: #fff; border: 1px solid var(--line);
+  border-radius: 14px; padding: 14px 20px; box-shadow: var(--shadow-sm); }
+.agree-badge img { height: 30px; width: auto; }
+.agree-badge .txt { font-family: var(--font-head); font-size: .82rem; color: var(--steel); line-height: 1.3; border-left: 1px solid var(--line); padding-left: 14px; }
+.agree-badge .txt b { display: block; color: var(--ink); font-size: .95rem; }
 
 /* =========================================================
    FEATURE / VALUES

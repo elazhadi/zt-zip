@@ -1,7 +1,7 @@
 # SYPRAMED — Site web
 
-Site vitrine de **SYPRAMED**, distributeur agréé **STRUGAL** spécialisé dans
-l'import & export de profilés et systèmes en aluminium au Maroc.
+Site vitrine de **SYPRAMED**, distributeur agréé **STRUGAL** — comptoir de
+vente de profilés aluminium et accessoires au Maroc.
 
 Le design s'inspire des sites de distributeurs aluminium concurrents
 (ex. alunionprofil.com) tout en reprenant l'identité visuelle de SYPRAMED
@@ -27,8 +27,9 @@ site/
 - **Statut** : Distributeur agréé STRUGAL
 - **Adresse** : Lot Al Kasr N° 12 – Skhirat (région de Témara), Maroc
 - **Téléphone** : +212 5 37 61 19 11 (fixe) · +212 6 61 91 08 93 (mobile / WhatsApp)
-- **Email** : sypramed@gmail.com
+- **Email** : contact@sypramed.ma
 - **Web** : spra-med.com
+- **Activité** : Comptoir de vente des profilés aluminium & accessoires
 - **Google Maps** : https://maps.app.goo.gl/2XUcbgRXSbeirVFe7
 
 ## Contenus intégrés
