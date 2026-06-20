@@ -35,7 +35,7 @@ site/
 ## Contenus intégrés
 
 - **Gamme STRUGAL complète** sur `produits.html` : coulissants, battants /
-  oscillo-battants, portes (ALUDOORS), mur rideau & façades, volets & brise-soleil,
+  oscillo-battants, portes, mur rideau & façades, volets & brise-soleil,
   garde-corps, accessoires & quincaillerie, finitions — plus un tableau
   récapitulatif des systèmes (S40, S46, S53 RPT, S70, S90, S88 RP, etc.).
 - **Vidéo YouTube** STRUGAL intégrée sur l'accueil + liens vers la

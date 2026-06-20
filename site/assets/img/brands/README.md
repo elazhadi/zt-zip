@@ -12,6 +12,3 @@ Logos **officiels** fournis par le client, détourés sur fond transparent.
 - Repli automatique : si un logo est absent, le nom de la marque s'affiche en
   texte — le site ne casse jamais.
 - Pour mettre à jour un logo, remplacez le fichier en conservant le même nom.
-
-> ALUDOORS est affiché en texte (logo non fourni). Déposez `aludoors.png`
-> et signalez-le pour l'afficher en image.

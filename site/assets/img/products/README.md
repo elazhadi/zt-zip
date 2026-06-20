@@ -13,7 +13,7 @@ Placez ici des images (idéalement **1200 × 800 px**, format paysage, `.jpg`) :
 |----------------------|-----------------------------------------------|
 | `coulissant.jpg`     | Systèmes coulissants (accueil + produits)     |
 | `battant.jpg`        | Systèmes battants (accueil + produits)        |
-| `porte.jpg`          | Portes & blocs-portes ALUDOORS                |
+| `porte.jpg`          | Portes & blocs-portes en aluminium            |
 | `mur-rideau.jpg`     | Mur rideau / façades                          |
 | `accessoires.jpg`    | Accessoires & quincaillerie (accueil)         |
 
