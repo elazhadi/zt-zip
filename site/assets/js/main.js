@@ -83,15 +83,123 @@
     counters.forEach((c) => co.observe(c));
   }
 
-  // ---- Contact form (front-end only) ----
+  // ---- Contact form : captcha + envoi e-mail ----
+  // Destinataire des demandes
+  const CONTACT_EMAIL = "Sypramed@gmail.com";
+  // Clé d'accès Web3Forms (gratuite) — obtenez-la en 30 s sur https://web3forms.com
+  // en saisissant l'adresse Sypramed@gmail.com, puis collez la clé ci-dessous.
+  // Tant qu'elle reste "REPLACE_WITH_YOUR_ACCESS_KEY", l'envoi se fait via le
+  // client mail du visiteur (mailto) en repli.
+  const WEB3FORMS_KEY = "REPLACE_WITH_YOUR_ACCESS_KEY";
+
   const form = document.querySelector("#contact-form");
   if (form) {
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const ok = form.querySelector(".form-success");
-      if (ok) ok.classList.add("show");
+    const okBox = form.querySelector(".form-success");
+    const errBox = form.querySelector("#form-error");
+    const capA = form.querySelector("#cap-a");
+    const capB = form.querySelector("#cap-b");
+    const capInput = form.querySelector("#captcha");
+    const submitBtn = form.querySelector('button[type="submit"]');
+    let answer = 0;
+
+    const newCaptcha = () => {
+      const a = Math.floor(Math.random() * 9) + 1;
+      const b = Math.floor(Math.random() * 9) + 1;
+      answer = a + b;
+      if (capA) capA.textContent = a;
+      if (capB) capB.textContent = b;
+      if (capInput) capInput.value = "";
+    };
+    newCaptcha();
+
+    const showErr = (msg) => {
+      if (!errBox) return;
+      errBox.textContent = "⚠ " + msg;
+      errBox.classList.add("show");
+      if (okBox) okBox.classList.remove("show");
+    };
+
+    const sendMailto = () => {
+      const get = (n) => (form.querySelector("#" + n) || {}).value || "";
+      const body =
+        "Nom: " + get("nom") + "\n" +
+        "Société: " + get("societe") + "\n" +
+        "Email: " + get("email") + "\n" +
+        "Téléphone: " + get("tel") + "\n" +
+        "Sujet: " + get("sujet") + "\n\n" +
+        get("message");
+      window.location.href =
+        "mailto:" + CONTACT_EMAIL +
+        "?subject=" + encodeURIComponent("[Site SYPRAMED] " + get("sujet") + " — " + get("nom")) +
+        "&body=" + encodeURIComponent(body);
+    };
+
+    const succeed = () => {
+      if (okBox) {
+        okBox.classList.add("show");
+        okBox.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      if (errBox) errBox.classList.remove("show");
       form.reset();
-      if (ok) ok.scrollIntoView({ behavior: "smooth", block: "center" });
+      newCaptcha();
+    };
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (errBox) errBox.classList.remove("show");
+
+      // Honeypot : si rempli, c'est un robot
+      const hp = form.querySelector("#botcheck");
+      if (hp && hp.checked) return;
+
+      // Champs requis
+      if (!form.checkValidity()) {
+        showErr("Merci de remplir tous les champs obligatoires.");
+        form.reportValidity();
+        return;
+      }
+      // Captcha
+      if (parseInt(capInput.value, 10) !== answer) {
+        showErr("Réponse anti-spam incorrecte. Merci de réessayer.");
+        newCaptcha();
+        capInput.focus();
+        return;
+      }
+
+      // Pas de clé configurée -> repli mailto
+      if (WEB3FORMS_KEY === "REPLACE_WITH_YOUR_ACCESS_KEY") {
+        sendMailto();
+        succeed();
+        return;
+      }
+
+      // Envoi via Web3Forms
+      const data = {
+        access_key: WEB3FORMS_KEY,
+        subject: "[Site SYPRAMED] Nouvelle demande de " + (form.querySelector("#nom") || {}).value,
+        from_name: "Site SYPRAMED",
+        nom: (form.querySelector("#nom") || {}).value,
+        societe: (form.querySelector("#societe") || {}).value,
+        email: (form.querySelector("#email") || {}).value,
+        telephone: (form.querySelector("#tel") || {}).value,
+        sujet: (form.querySelector("#sujet") || {}).value,
+        message: (form.querySelector("#message") || {}).value
+      };
+      try {
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.style.opacity = ".65"; }
+        const res = await fetch("https://api.web3forms.com/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(data)
+        });
+        const out = await res.json();
+        if (out.success) succeed();
+        else showErr("L'envoi a échoué. Réessayez ou écrivez à " + CONTACT_EMAIL + ".");
+      } catch (err) {
+        showErr("Connexion impossible. Réessayez ou écrivez à " + CONTACT_EMAIL + ".");
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = ""; }
+      }
     });
   }
 

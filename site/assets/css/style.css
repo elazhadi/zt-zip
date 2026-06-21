@@ -312,6 +312,10 @@ img { max-width: 100%; display: block; }
 .form-note { font-size: .82rem; color: var(--muted); margin: 8px 0 0; }
 .form-success { display: none; background: #eafaf0; border: 1px solid #bce6cd; color: #1c7a45; padding: 14px 16px; border-radius: 10px; margin-bottom: 16px; font-size: .92rem; }
 .form-success.show { display: block; }
+.form-error { display: none; background: #fdecee; border: 1px solid #f5c2c7; color: #b02a37; padding: 14px 16px; border-radius: 10px; margin-bottom: 16px; font-size: .92rem; }
+.form-error.show { display: block; }
+.captcha-field label b { color: var(--red); }
+.btn[disabled] { opacity: .65; cursor: not-allowed; transform: none !important; }
 
 .map-embed { border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); border: 1px solid var(--line); }
 .map-embed iframe { width: 100%; height: 320px; border: 0; display: block; }

@@ -85,5 +85,28 @@ Bonnes pratiques mises en place sur chaque page :
 - Aucune dépendance JS externe (vanilla JS).
 - Polices Google Fonts (Inter / Sora).
 - Illustrations en SVG inline (pas d'images lourdes), chargement rapide.
-- Le formulaire de contact est une démo front-end ; à brancher sur un service
-  d'envoi (Formspree, EmailJS, backend PHP…) pour la mise en production.
+## Formulaire de contact (envoi e-mail + anti-spam)
+
+Les demandes sont envoyées à **Sypramed@gmail.com**. Le site étant statique
+(sans serveur), l'envoi passe par **Web3Forms** (gratuit, sans backend).
+
+Protection anti-spam intégrée :
+- **Captcha** mathématique simple (ex. « 3 + 4 ? ») validé avant l'envoi ;
+- **Honeypot** caché (`botcheck`) qui piège les robots.
+
+### Activer l'envoi réel (1 étape, ~30 s)
+
+1. Allez sur **https://web3forms.com**, saisissez `Sypramed@gmail.com`,
+   récupérez la **clé d'accès** (Access Key) reçue par e-mail.
+2. Dans `assets/js/main.js`, remplacez :
+   ```js
+   const WEB3FORMS_KEY = "REPLACE_WITH_YOUR_ACCESS_KEY";
+   ```
+   par votre clé. C'est tout — les demandes arrivent dans la boîte Gmail.
+
+> Tant que la clé n'est pas renseignée, le bouton « Envoyer » ouvre
+> automatiquement le **client mail** du visiteur (mailto) prérempli vers
+> Sypramed@gmail.com : le formulaire reste donc fonctionnel par défaut.
+
+Alternatives possibles (au lieu de Web3Forms) : Formspree, EmailJS, ou un
+petit backend PHP `mail()` — il suffit de changer l'URL d'envoi dans `main.js`.

@@ -147,7 +147,10 @@
         <!-- form -->
         <div class="reveal">
           <form class="form" id="contact-form" novalidate>
-            <div class="form-success">✓ Merci ! Votre demande a bien été enregistrée. Nous vous recontactons sous 24 h.</div>
+            <div class="form-success">✓ Merci ! Votre demande a bien été envoyée. Nous vous recontactons sous 24 h.</div>
+            <div class="form-error" id="form-error"></div>
+            <!-- Honeypot anti-spam (ne pas remplir) -->
+            <input type="checkbox" name="botcheck" id="botcheck" tabindex="-1" autocomplete="off" style="display:none !important" aria-hidden="true" />
             <div class="row">
               <div class="field"><label for="nom">Nom complet *</label><input type="text" id="nom" name="nom" placeholder="Votre nom" required /></div>
               <div class="field"><label for="societe">Société</label><input type="text" id="societe" name="societe" placeholder="Nom de l'entreprise" /></div>
@@ -168,6 +171,10 @@
               </select>
             </div>
             <div class="field"><label for="message">Votre message *</label><textarea id="message" name="message" placeholder="Décrivez votre besoin : références, quantités, couleurs…" required></textarea></div>
+            <div class="field captcha-field">
+              <label for="captcha">Anti-spam : combien font <b><span id="cap-a">?</span> + <span id="cap-b">?</span></b> ? *</label>
+              <input type="text" id="captcha" name="captcha" inputmode="numeric" autocomplete="off" placeholder="Votre réponse" required />
+            </div>
             <button type="submit" class="btn" style="width:100%;justify-content:center">Envoyer la demande <span class="arrow">→</span></button>
             <p class="form-note">* Champs obligatoires. Vos données ne sont utilisées que pour traiter votre demande.</p>
           </form>
