@@ -1,0 +1,16 @@
+{
+  "name": "@ulysse70/moteur",
+  "version": "1.0.0",
+  "description": "Moteur de débitage ULYSSE 70 / PL600 (Rock Systems / Strugal). Isomorphe, sans dépendance.",
+  "main": "src/index.js",
+  "module": "src/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./src/index.mjs",
+      "require": "./src/index.js"
+    }
+  },
+  "scripts": {
+    "test": "node tests/tests_reference.js"
+  }
+}
