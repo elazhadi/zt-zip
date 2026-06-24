@@ -1,5 +1,5 @@
 /**
- * GAMME PRODIGE BOMBE — Rock Systems / Strugal
+ * GAMME PRODIGE BOMBE — Rock Systems
  * ==============================================
  * Coulissant à dormant fortement bombé 6024V2 (2R) / 6063 (3R). Rail 6099BIS à L-87 mm.
  * Formules issues de l'abaque atelier D_bitage.pptx (Rock Systems).
@@ -61,7 +61,7 @@ function accessoiresChassis() { return []; }
 
 module.exports = {
   id: "prodige_bombe",
-  marque: "Strugal / Rock Systems",
+  marque: "Rock Systems",
   gamme: "PRODIGE BOMBE",
   label: "PRODIGE BOMBE",
   barre: BARRE,

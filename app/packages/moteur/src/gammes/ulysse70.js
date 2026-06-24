@@ -1,5 +1,5 @@
 /**
- * GAMME ULYSSE 70 / PL600 (Rock Systems / Strugal)
+ * GAMME ULYSSE 70 / PL600 (Rock Systems)
  * ================================================
  * Définition de gamme : abaque (formules de coupe par config) + paramètres de
  * mise en barre + règles d'accessoires. Formules validées contre ProGES
@@ -118,7 +118,7 @@ function accessoiresChassis(c) {
 
 module.exports = {
   id: "ulysse70",
-  marque: "Strugal / Rock Systems",
+  marque: "Rock Systems",
   gamme: "ULYSSE 70 / PL600",
   label: "ULYSSE 70 / PL600",
   barre: BARRE,

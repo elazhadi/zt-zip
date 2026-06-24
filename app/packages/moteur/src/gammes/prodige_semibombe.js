@@ -1,5 +1,5 @@
 /**
- * GAMME PRODIGE SEMI-BOMBE — Rock Systems / Strugal
+ * GAMME PRODIGE SEMI-BOMBE — Rock Systems
  * ===================================================
  * Coulissant à dormant bombé 6071BIS (2R) / 6073BIS (3R). Rail 6099BIS à L-86 mm.
  * Formules issues de l'abaque atelier D_bitage.pptx (Rock Systems).
@@ -61,7 +61,7 @@ function accessoiresChassis() { return []; }
 
 module.exports = {
   id: "prodige_semibombe",
-  marque: "Strugal / Rock Systems",
+  marque: "Rock Systems",
   gamme: "PRODIGE SEMI-BOMBE",
   label: "PRODIGE SEMI-BOMBE",
   barre: BARRE,

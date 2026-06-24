@@ -1,5 +1,5 @@
 /**
- * GAMME ÉMERAUDE Coulissant — Rock Systems / Strugal
+ * GAMME ÉMERAUDE Coulissant — Rock Systems
  * ====================================================
  * Coulissant à dormant MD366 (2R) / MD363 (3R). Rail RAIL70 à L-80 mm.
  * Formules issues de l'abaque atelier D_bitage.pptx (Rock Systems).
@@ -61,7 +61,7 @@ function accessoiresChassis() { return []; }
 
 module.exports = {
   id: "emeraude_coulissant",
-  marque: "Strugal / Rock Systems",
+  marque: "Rock Systems",
   gamme: "ÉMERAUDE Coulissant",
   label: "ÉMERAUDE Coulissant",
   barre: BARRE,

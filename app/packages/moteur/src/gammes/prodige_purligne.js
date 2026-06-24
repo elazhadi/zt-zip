@@ -1,5 +1,5 @@
 /**
- * GAMME PRODIGE PUR-LINE — Rock Systems / Strugal
+ * GAMME PRODIGE PUR-LINE — Rock Systems
  * =================================================
  * Coulissant à dormant plat 6051. Rail 6099BIS à L-78,5 mm.
  * Formules issues de l'abaque atelier D_bitage.pptx (Rock Systems).
@@ -61,7 +61,7 @@ function accessoiresChassis() { return []; }
 
 module.exports = {
   id: "prodige_purligne",
-  marque: "Strugal / Rock Systems",
+  marque: "Rock Systems",
   gamme: "PRODIGE PUR-LINE",
   label: "PRODIGE PUR-LINE",
   barre: BARRE,

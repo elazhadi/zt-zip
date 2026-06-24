@@ -1,5 +1,5 @@
 /**
- * GAMME PL600/90 — Rock Systems / Strugal
+ * GAMME PL600/90 — Rock Systems
  * =========================================
  * Coulissant périmétral 90 mm. Dormant PL690.xx (2R/3R).
  * Formules issues de l'abaque atelier D_bitage.pptx (Rock Systems).
@@ -71,7 +71,7 @@ function accessoiresChassis(c) {
 
 module.exports = {
   id: "pl690",
-  marque: "Strugal / Rock Systems",
+  marque: "Rock Systems",
   gamme: "PL600/90",
   label: "PL600/90",
   barre: BARRE,
