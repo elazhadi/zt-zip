@@ -1037,3 +1037,15 @@ body {
   .kpi-row      { grid-template-columns: repeat(2, 1fr); }
   .stats-row-2  { flex-direction: column; }
 }
+
+/* Tarifs — import/export */
+.tarifs-editor-header { display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px; gap: 12px; }
+.tarifs-io-btns { display: flex; gap: 8px; }
+.tarif-import-btn { cursor: pointer; }
+
+.tarif-import-confirm {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: #fefce8; border: 1px solid #fde68a; border-radius: 7px;
+  padding: 10px 14px; margin-bottom: 12px; font-size: 13px;
+}
