@@ -1046,14 +1046,30 @@ body {
 
 .tarif-export-panel {
   background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 7px;
-  padding: 12px 14px; margin-bottom: 12px; font-size: 13px;
+  padding: 14px 16px; margin-bottom: 14px; font-size: 13px;
+  display: flex; flex-direction: column; gap: 12px;
 }
-.tarif-export-select-label {
-  display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 13px;
+.tarif-scope-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
 }
-.tarif-export-select-label select {
-  padding: 4px 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 13px;
+.tarif-scope-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 10px; border-radius: 6px; border: 1px solid #bae6fd;
+  background: #fff; cursor: pointer; font-size: 12px; font-weight: 500;
+  color: var(--gray-700); transition: background .15s, border-color .15s;
 }
+.tarif-scope-btn:hover  { background: #e0f2fe; }
+.tarif-scope-btn.selected { background: #0ea5e9; border-color: #0284c7; color: #fff; }
+.tarif-scope-btn input[type=radio] { display: none; }
+.tarif-export-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.tarif-export-row label { font-weight: 600; white-space: nowrap; font-size: 13px; }
+.tarif-export-row select {
+  flex: 1; padding: 5px 8px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 13px;
+}
+.tarif-export-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.btn-export.active { background: #e0f2fe; border-color: #0ea5e9; }
 
 .tarif-import-confirm {
   display: flex; align-items: flex-start; flex-direction: column; gap: 10px;

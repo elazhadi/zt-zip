@@ -4,35 +4,28 @@ import { api } from '../api/client'
 
 const UNITE_OPTIONS = ['barre', 'ml', 'unité']
 
-// ---- Export helpers ----
-
-function buildExportRows(refs, lignesMap) {
-  return [
-    ['Référence', 'Désignation', 'Prix (MAD)', 'Unité (barre / ml / unité)'],
-    ...refs.map(({ ref, des }) => {
-      const existing = lignesMap[ref] || {}
-      return [ref, des || existing.designation || '', parseFloat(existing.prix_unitaire) || 0, existing.unite_prix || 'barre']
-    }),
-  ]
-}
+// ---- Excel helpers ----
 
 function writeXLSX(rows, filename) {
   const ws = XLSX.utils.aoa_to_sheet(rows)
-  ws['!cols'] = [{ wch: 18 }, { wch: 32 }, { wch: 14 }, { wch: 22 }]
+  ws['!cols'] = [{ wch: 20 }, { wch: 36 }, { wch: 14 }, { wch: 22 }]
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Tarif')
   XLSX.writeFile(wb, filename)
 }
 
-function exportTarifXLSX(nom, lignes) {
-  const rows = [
-    ['Référence', 'Désignation', 'Prix (MAD)', 'Unité (barre / ml / unité)'],
-    ...lignes.map(l => [l.ref, l.designation, parseFloat(l.prix_unitaire) || 0, l.unite_prix]),
-  ]
-  writeXLSX(rows, `tarif-${nom.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`)
+function refRows(refs, lignesMap) {
+  return refs.map(({ ref, des }) => {
+    const ex = lignesMap[ref] || {}
+    return [ref, des || ex.designation || '', parseFloat(ex.prix_unitaire) || 0, ex.unite_prix || 'barre']
+  })
 }
 
-// ---- Parse import ----
+function HEADER() {
+  return ['Référence', 'Désignation', 'Prix (MAD)', 'Unité (barre / ml / unité)']
+}
+
+// ---- Import ----
 function parseTarifXLSX(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -47,9 +40,7 @@ function parseTarifXLSX(file) {
             ref:           String(r[0] || '').trim().toUpperCase(),
             designation:   String(r[1] || '').trim(),
             prix_unitaire: String(parseFloat(r[2]) || 0),
-            unite_prix:    UNITE_OPTIONS.includes(String(r[3] || '').trim())
-                             ? String(r[3]).trim()
-                             : 'barre',
+            unite_prix:    UNITE_OPTIONS.includes(String(r[3] || '').trim()) ? String(r[3]).trim() : 'barre',
           }))
         resolve(lignes)
       } catch (err) {
@@ -61,6 +52,15 @@ function parseTarifXLSX(file) {
   })
 }
 
+const EXPORT_SCOPES = [
+  { value: 'tout',        label: 'Tout le tarif' },
+  { value: 'gamme',       label: 'Une gamme' },
+  { value: 'profils',     label: 'Profilés (catalogue)' },
+  { value: 'accessoires', label: 'Accessoires (catalogue)' },
+  { value: 'chantier',    label: 'Chantier (débitage)' },
+  { value: 'vitrage',     label: 'Vitrage (chantier)' },
+]
+
 export default function TarifsManager() {
   const [tarifs,     setTarifs]     = useState([])
   const [selected,   setSelected]   = useState(null)
@@ -69,22 +69,35 @@ export default function TarifsManager() {
   const [error,      setError]      = useState(null)
   const [saving,     setSaving]     = useState(false)
   const [saveMsg,    setSaveMsg]    = useState(null)
-  const [importInfo, setImportInfo] = useState(null) // { count, lignes }
-  const [importMode, setImportMode] = useState('replace') // replace | merge
+  const [importInfo, setImportInfo] = useState(null)
+  const [importMode, setImportMode] = useState('replace')
 
-  // Export scope panel
-  const [exportPanel,    setExportPanel]    = useState(false)
-  const [exportScope,    setExportScope]    = useState('global')  // global | gamme | projet
+  // Export panel
+  const [exportOpen,     setExportOpen]     = useState(false)
+  const [exportScope,    setExportScope]    = useState('tout')
   const [exportGamme,    setExportGamme]    = useState('')
   const [exportProjetId, setExportProjetId] = useState('')
-  const [catalogue,      setCatalogue]      = useState(null)
-  const [chantiers,      setChantiers]      = useState([])
   const [exportBusy,     setExportBusy]     = useState(false)
   const [exportErr,      setExportErr]      = useState(null)
+
+  // Data for export selectors — loaded when a tarif is selected
+  const [catalogue,  setCatalogue]  = useState(null)  // array of gamme objects
+  const [chantiers,  setChantiers]  = useState([])
 
   const fileRef = useRef()
 
   useEffect(() => { loadTarifs() }, [])
+
+  // Pre-load catalogue + chantiers when a tarif is selected
+  useEffect(() => {
+    if (!selected) return
+    if (!catalogue) {
+      api.getCatalogue().then(r => setCatalogue(r.gammes)).catch(() => {})
+    }
+    if (!chantiers.length) {
+      api.listChantiers().then(r => setChantiers(r.chantiers)).catch(() => {})
+    }
+  }, [selected])
 
   async function loadTarifs() {
     try { setTarifs((await api.listTarifs()).tarifs) }
@@ -92,7 +105,7 @@ export default function TarifsManager() {
   }
 
   async function selectTarif(id) {
-    setSelected(id); setLignes([]); setError(null); setImportInfo(null)
+    setSelected(id); setLignes([]); setError(null); setImportInfo(null); setExportOpen(false)
     try {
       const r = await api.getTarifLignes(id)
       setLignes(r.lignes.map(l => ({ ...l, prix_unitaire: String(l.prix_unitaire) })))
@@ -124,11 +137,9 @@ export default function TarifsManager() {
   function addLigne() {
     setLignes(prev => [...prev, { _key: Date.now(), ref: '', designation: '', prix_unitaire: '', unite_prix: 'barre' }])
   }
-
   function removeLigne(idx) {
     setLignes(prev => prev.filter((_, i) => i !== idx))
   }
-
   function updateLigne(idx, field, val) {
     setLignes(prev => prev.map((l, i) => i === idx ? { ...l, [field]: val } : l))
   }
@@ -154,7 +165,7 @@ export default function TarifsManager() {
     finally { setSaving(false) }
   }
 
-  // ---- Import Excel ----
+  // ---- Import ----
   async function handleFileChange(e) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -174,84 +185,117 @@ export default function TarifsManager() {
         ref: l.ref.trim(), designation: l.designation || '',
         prix_unitaire: parseFloat(l.prix_unitaire) || 0, unite_prix: l.unite_prix,
       }))
-      const merge = importMode === 'merge'
-      await api.setTarifLignes(selected, toSave, merge)
+      await api.setTarifLignes(selected, toSave, importMode === 'merge')
       const r = await api.getTarifLignes(selected)
       setLignes(r.lignes.map(l => ({ ...l, prix_unitaire: String(l.prix_unitaire) })))
       setImportInfo(null)
-      setSaveMsg(merge ? 'Fusionné' : 'Importé')
+      setSaveMsg(importMode === 'merge' ? 'Fusionné' : 'Importé')
       setTimeout(() => setSaveMsg(null), 3000)
     } catch (e) { setError(e.message) }
     finally { setSaving(false) }
   }
 
-  function cancelImport() { setImportInfo(null) }
-
-  // ---- Export scoped ----
-  async function openExportPanel() {
-    setExportPanel(v => !v)
-    setExportErr(null)
-    if (!catalogue) {
-      try { setCatalogue((await api.getCatalogue()).gammes) } catch {}
-    }
-    if (!chantiers.length) {
-      try { setChantiers((await api.listChantiers()).chantiers) } catch {}
-    }
-  }
-
+  // ---- Export ----
   function lignesMap() {
     const map = {}
-    lignes.forEach(l => { map[l.ref] = l })
+    lignes.forEach(l => { map[l.ref.toUpperCase()] = l })
     return map
   }
 
-  async function handleScopedExport() {
-    if (!selected) { setExportErr('Sélectionnez un tarif'); return }
+  function dedup(refs) {
+    const seen = new Set()
+    return refs.filter(r => {
+      if (seen.has(r.ref)) return false
+      seen.add(r.ref); return true
+    })
+  }
+
+  async function handleExport() {
+    if (!selected) return
     setExportBusy(true); setExportErr(null)
     try {
       const selectedTarif = tarifs.find(t => t.id === selected)
+      const tarNom = (selectedTarif?.nom || 'tarif').replace(/[^a-zA-Z0-9]/g, '_')
       const map = lignesMap()
 
-      if (exportScope === 'global') {
-        exportTarifXLSX(selectedTarif?.nom || 'tarif', lignes)
+      if (exportScope === 'tout') {
+        writeXLSX([HEADER(), ...lignes.map(l => [l.ref, l.designation, parseFloat(l.prix_unitaire) || 0, l.unite_prix])],
+          `tarif-${tarNom}.xlsx`)
+        return
+      }
+
+      if (exportScope === 'profils') {
+        if (!catalogue) { setExportErr('Catalogue non chargé, réessayez'); return }
+        const refs = dedup(
+          catalogue.flatMap(g => (g.profils || []).map(p => ({ ref: p.ref, des: p.designation || p.des || '' })))
+        )
+        writeXLSX([HEADER(), ...refRows(refs, map)], `tarif-${tarNom}-profils.xlsx`)
+        return
+      }
+
+      if (exportScope === 'accessoires') {
+        if (!catalogue) { setExportErr('Catalogue non chargé, réessayez'); return }
+        const refs = dedup(
+          catalogue.flatMap(g => (g.accessoires || []).map(a => ({ ref: a.ref, des: a.designation || a.des || '' })))
+        )
+        writeXLSX([HEADER(), ...refRows(refs, map)], `tarif-${tarNom}-accessoires.xlsx`)
         return
       }
 
       if (exportScope === 'gamme') {
         if (!exportGamme) { setExportErr('Sélectionnez une gamme'); return }
-        const gammeData = catalogue?.[exportGamme]
-        if (!gammeData) { setExportErr('Gamme introuvable dans le catalogue'); return }
+        if (!catalogue) { setExportErr('Catalogue non chargé, réessayez'); return }
+        const g = catalogue.find(x => x.id === exportGamme)
+        if (!g) { setExportErr('Gamme introuvable'); return }
         const refs = [
-          ...(gammeData.profils || []).map(r => ({ ref: r.ref, des: r.designation || r.des || '' })),
-          ...(gammeData.accessoires || []).map(r => ({ ref: r.ref, des: r.designation || r.des || '' })),
+          ...(g.profils    || []).map(p => ({ ref: p.ref, des: p.designation || p.des || '' })),
+          ...(g.accessoires|| []).map(a => ({ ref: a.ref, des: a.designation || a.des || '' })),
         ]
-        const rows = buildExportRows(refs, map)
-        writeXLSX(rows, `tarif-${(selectedTarif?.nom || 'tarif').replace(/[^a-zA-Z0-9]/g, '_')}-${exportGamme}.xlsx`)
+        writeXLSX([HEADER(), ...refRows(refs, map)], `tarif-${tarNom}-${exportGamme}.xlsx`)
         return
       }
 
-      if (exportScope === 'projet') {
-        if (!exportProjetId) { setExportErr('Sélectionnez un projet'); return }
+      if (exportScope === 'chantier') {
+        if (!exportProjetId) { setExportErr('Sélectionnez un chantier'); return }
         const { chantier, resultats } = await api.getChantier(exportProjetId)
-        if (!resultats) { setExportErr('Aucun débitage pour ce projet'); return }
-        const refs = [
+        if (!resultats) { setExportErr('Aucun débitage pour ce chantier'); return }
+        const refs = dedup([
           ...Object.keys(resultats.optim || {}).map(ref => ({ ref, des: '' })),
           ...(resultats.accessoires || []).map(a => ({ ref: a.ref, des: a.des || '' })),
-        ]
-        const rows = buildExportRows(refs, map)
-        const slug = (chantier.reference_client || `projet-${exportProjetId}`).replace(/[^a-zA-Z0-9]/g, '_')
-        writeXLSX(rows, `tarif-${(selectedTarif?.nom || 'tarif').replace(/[^a-zA-Z0-9]/g, '_')}-${slug}.xlsx`)
+        ])
+        const slug = (chantier.reference_client || `chantier-${exportProjetId}`).replace(/[^a-zA-Z0-9]/g, '_')
+        writeXLSX([HEADER(), ...refRows(refs, map)], `tarif-${tarNom}-${slug}.xlsx`)
+        return
+      }
+
+      if (exportScope === 'vitrage') {
+        if (!exportProjetId) { setExportErr('Sélectionnez un chantier'); return }
+        const { resultats } = await api.getChantier(exportProjetId)
+        if (!resultats?.vitrage?.length) { setExportErr('Aucun vitrage pour ce chantier'); return }
+        // Déduplique par dimension
+        const dims = {}
+        resultats.vitrage.forEach(v => {
+          const key = `${v.larg}x${v.haut}`
+          if (!dims[key]) dims[key] = { larg: v.larg, haut: v.haut, qte: 0 }
+          dims[key].qte += v.qte
+        })
+        const refs = Object.entries(dims).map(([key, v]) => ({
+          ref: `VIT-${key}`,
+          des: `Vitrage ${v.larg}×${v.haut} mm`,
+        }))
+        writeXLSX([HEADER(), ...refRows(refs, map)], `tarif-${tarNom}-vitrage.xlsx`)
       }
     } catch (e) { setExportErr(e.message) }
     finally { setExportBusy(false) }
   }
 
   const selectedTarif = tarifs.find(t => t.id === selected)
-  const gammeKeys = catalogue ? Object.keys(catalogue).sort() : []
+  const needsProject  = exportScope === 'chantier' || exportScope === 'vitrage'
+  const needsGamme    = exportScope === 'gamme'
 
   return (
     <div className="tarifs-manager">
-      {/* Colonne gauche — liste des tarifs */}
+      {/* Colonne gauche */}
       <div className="tarifs-sidebar">
         <div className="card">
           <div className="card-title">Listes de prix</div>
@@ -266,17 +310,13 @@ export default function TarifsManager() {
             {tarifs.length === 0 && <li className="tarifs-empty">Aucun tarif</li>}
           </ul>
           <form className="tarifs-add-form" onSubmit={createTarif}>
-            <input
-              value={newNom}
-              onChange={e => setNewNom(e.target.value)}
-              placeholder="Nom du tarif"
-            />
+            <input value={newNom} onChange={e => setNewNom(e.target.value)} placeholder="Nom du tarif" />
             <button type="submit" className="btn-add" disabled={!newNom.trim()}>+</button>
           </form>
         </div>
       </div>
 
-      {/* Colonne droite — éditeur */}
+      {/* Colonne droite */}
       <div className="tarifs-editor">
         {!selected
           ? <div className="tarifs-placeholder">← Sélectionnez ou créez un tarif</div>
@@ -286,60 +326,48 @@ export default function TarifsManager() {
                 <div className="card-title" style={{ margin: 0 }}>{selectedTarif?.nom}</div>
                 <div className="tarifs-io-btns">
                   <button
-                    className="btn-export"
-                    onClick={openExportPanel}
-                    title="Exporter vers Excel"
+                    className={`btn-export${exportOpen ? ' active' : ''}`}
+                    onClick={() => { setExportOpen(v => !v); setExportErr(null) }}
                   >
-                    📥 Exporter Excel {exportPanel ? '▲' : '▼'}
+                    📥 Exporter Excel {exportOpen ? '▲' : '▼'}
                   </button>
-                  <label className="btn-export tarif-import-btn" title="Importer depuis Excel">
+                  <label className="btn-export tarif-import-btn">
                     📤 Importer Excel
-                    <input
-                      ref={fileRef}
-                      type="file"
-                      accept=".xlsx,.xls,.ods"
-                      style={{ display: 'none' }}
-                      onChange={handleFileChange}
-                    />
+                    <input ref={fileRef} type="file" accept=".xlsx,.xls,.ods"
+                      style={{ display: 'none' }} onChange={handleFileChange} />
                   </label>
                 </div>
               </div>
 
-              {/* Panneau export scoped */}
-              {exportPanel && (
+              {/* Panneau export */}
+              {exportOpen && (
                 <div className="tarif-export-panel">
-                  <div className="export-mode-row">
-                    {[
-                      { value: 'global', label: 'Global' },
-                      { value: 'gamme',  label: 'Par gamme' },
-                      { value: 'projet', label: 'Par projet' },
-                    ].map(m => (
-                      <label key={m.value} className="export-mode-option">
-                        <input
-                          type="radio"
-                          name="exportScope"
-                          value={m.value}
-                          checked={exportScope === m.value}
-                          onChange={() => setExportScope(m.value)}
-                        />
-                        {m.label}
+                  <div className="tarif-scope-grid">
+                    {EXPORT_SCOPES.map(s => (
+                      <label key={s.value} className={`tarif-scope-btn${exportScope === s.value ? ' selected' : ''}`}>
+                        <input type="radio" name="exportScope" value={s.value}
+                          checked={exportScope === s.value}
+                          onChange={() => setExportScope(s.value)} />
+                        {s.label}
                       </label>
                     ))}
                   </div>
 
-                  {exportScope === 'gamme' && (
-                    <label className="tarif-export-select-label">
-                      Gamme
+                  {needsGamme && (
+                    <div className="tarif-export-row">
+                      <label>Gamme</label>
                       <select value={exportGamme} onChange={e => setExportGamme(e.target.value)}>
                         <option value="">— Sélectionner —</option>
-                        {gammeKeys.map(g => <option key={g} value={g}>{g}</option>)}
+                        {(catalogue || []).map(g => (
+                          <option key={g.id} value={g.id}>{g.nom || g.id}</option>
+                        ))}
                       </select>
-                    </label>
+                    </div>
                   )}
 
-                  {exportScope === 'projet' && (
-                    <label className="tarif-export-select-label">
-                      Projet
+                  {needsProject && (
+                    <div className="tarif-export-row">
+                      <label>Chantier</label>
                       <select value={exportProjetId} onChange={e => setExportProjetId(e.target.value)}>
                         <option value="">— Sélectionner —</option>
                         {chantiers.map(c => (
@@ -348,42 +376,39 @@ export default function TarifsManager() {
                           </option>
                         ))}
                       </select>
-                    </label>
+                    </div>
                   )}
 
-                  <div className="export-actions" style={{ marginTop: 8 }}>
-                    <button className="btn-save" onClick={handleScopedExport} disabled={exportBusy}>
-                      {exportBusy ? 'Export…' : '📥 Télécharger Excel'}
+                  <div className="tarif-export-actions">
+                    <button className="btn-save" onClick={handleExport} disabled={exportBusy}>
+                      {exportBusy ? 'Export…' : '📥 Télécharger'}
                     </button>
-                    {exportErr && <span className="error-msg">{exportErr}</span>}
+                    <span className="export-hint" style={{ marginLeft: 10 }}>
+                      {exportScope === 'tout'        && 'Toutes les lignes du tarif actuel'}
+                      {exportScope === 'gamme'       && 'Profilés + accessoires de la gamme, prix pré-remplis'}
+                      {exportScope === 'profils'     && 'Tous les profilés du catalogue, prix pré-remplis'}
+                      {exportScope === 'accessoires' && 'Tous les accessoires du catalogue, prix pré-remplis'}
+                      {exportScope === 'chantier'    && 'Refs du débitage de ce chantier, prix pré-remplis'}
+                      {exportScope === 'vitrage'     && 'Dimensions vitrage du chantier (VIT-LxH), à tarifier'}
+                    </span>
+                    {exportErr && <span className="error-msg" style={{ marginLeft: 8 }}>{exportErr}</span>}
                   </div>
-                  <p className="export-hint" style={{ marginTop: 6 }}>
-                    {exportScope === 'global'  && 'Toutes les références du tarif actuel.'}
-                    {exportScope === 'gamme'   && 'Références utilisées par la gamme sélectionnée, prix pré-remplis.'}
-                    {exportScope === 'projet'  && 'Références du débitage de ce projet, prix pré-remplis.'}
-                  </p>
                 </div>
               )}
 
-              {/* Bandeau de confirmation d'import */}
+              {/* Bandeau import */}
               {importInfo && (
                 <div className="tarif-import-confirm">
-                  <span>
-                    <strong>{importInfo.count} lignes</strong> prêtes à importer.
-                  </span>
+                  <span><strong>{importInfo.count} lignes</strong> prêtes à importer.</span>
                   <div className="tarif-import-mode">
                     {[
                       { value: 'replace', label: 'Remplacer tout' },
                       { value: 'merge',   label: 'Fusionner (MAJ uniquement)' },
                     ].map(m => (
                       <label key={m.value} className="export-mode-option">
-                        <input
-                          type="radio"
-                          name="importMode"
-                          value={m.value}
+                        <input type="radio" name="importMode" value={m.value}
                           checked={importMode === m.value}
-                          onChange={() => setImportMode(m.value)}
-                        />
+                          onChange={() => setImportMode(m.value)} />
                         {m.label}
                       </label>
                     ))}
@@ -392,11 +417,12 @@ export default function TarifsManager() {
                     <button className="btn-save" onClick={confirmImport} disabled={saving}>
                       {saving ? '…' : 'Appliquer'}
                     </button>
-                    <button className="btn-xs" onClick={cancelImport}>Annuler</button>
+                    <button className="btn-xs" onClick={() => setImportInfo(null)}>Annuler</button>
                   </div>
                 </div>
               )}
 
+              {/* Tableau des lignes */}
               <table className="data-table tarifs-table">
                 <thead>
                   <tr>
@@ -411,38 +437,24 @@ export default function TarifsManager() {
                   {lignes.map((l, idx) => (
                     <tr key={l.id || l._key || idx}>
                       <td>
-                        <input
-                          className="tarif-cell-input"
-                          value={l.ref}
+                        <input className="tarif-cell-input" value={l.ref}
                           onChange={e => updateLigne(idx, 'ref', e.target.value.toUpperCase())}
-                          placeholder="6099BIS"
-                        />
+                          placeholder="6099BIS" />
                       </td>
                       <td>
-                        <input
-                          className="tarif-cell-input"
-                          value={l.designation}
+                        <input className="tarif-cell-input" value={l.designation}
                           onChange={e => updateLigne(idx, 'designation', e.target.value)}
-                          placeholder="Rail bombé"
-                        />
+                          placeholder="Rail bombé" />
                       </td>
                       <td>
-                        <input
-                          className="tarif-cell-input tarif-prix"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={l.prix_unitaire}
+                        <input className="tarif-cell-input tarif-prix" type="number"
+                          step="0.01" min="0" value={l.prix_unitaire}
                           onChange={e => updateLigne(idx, 'prix_unitaire', e.target.value)}
-                          placeholder="0.00"
-                        />
+                          placeholder="0.00" />
                       </td>
                       <td>
-                        <select
-                          className="tarif-cell-select"
-                          value={l.unite_prix}
-                          onChange={e => updateLigne(idx, 'unite_prix', e.target.value)}
-                        >
+                        <select className="tarif-cell-select" value={l.unite_prix}
+                          onChange={e => updateLigne(idx, 'unite_prix', e.target.value)}>
                           <option value="barre">MAD/Barre</option>
                           <option value="ml">MAD/ML</option>
                           <option value="unité">MAD/Unité</option>
