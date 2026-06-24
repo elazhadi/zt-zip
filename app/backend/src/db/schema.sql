@@ -106,4 +106,46 @@ DELETE FROM tenant_gammes
   WHERE gamme_id = 'ulysse70'
     AND tenant_id NOT IN (
       SELECT DISTINCT tenant_id FROM tenant_gammes WHERE gamme_id <> 'ulysse70'
-    )
+    );
+
+-- Listes de prix (tarifs) par tenant.
+CREATE TABLE IF NOT EXISTS tarifs (
+  id        SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  nom       TEXT NOT NULL,
+  actif     BOOLEAN NOT NULL DEFAULT TRUE,
+  cree_le   TIMESTAMP NOT NULL DEFAULT now()
+);
+
+-- Lignes de prix : une ligne par référence dans un tarif.
+CREATE TABLE IF NOT EXISTS tarif_lignes (
+  id            SERIAL PRIMARY KEY,
+  tarif_id      INTEGER NOT NULL REFERENCES tarifs(id) ON DELETE CASCADE,
+  ref           TEXT NOT NULL,
+  designation   TEXT NOT NULL DEFAULT '',
+  prix_unitaire NUMERIC(12,4) NOT NULL DEFAULT 0,
+  unite_prix    TEXT NOT NULL DEFAULT 'barre',
+  UNIQUE(tarif_id, ref)
+);
+
+-- Devis commerciaux.
+CREATE TABLE IF NOT EXISTS devis (
+  id                  SERIAL PRIMARY KEY,
+  tenant_id           INTEGER REFERENCES tenants(id),
+  site_id             INTEGER REFERENCES sites(id),
+  user_id             INTEGER NOT NULL REFERENCES users(id),
+  tarif_id            INTEGER REFERENCES tarifs(id),
+  numero              TEXT,
+  reference_client    TEXT,
+  client_nom          TEXT,
+  client_ville        TEXT,
+  client_contact      TEXT,
+  client_tel          TEXT,
+  client_adresse      TEXT,
+  intermediaire       TEXT,
+  statut              TEXT NOT NULL DEFAULT 'nouveau',
+  chassis_json        TEXT NOT NULL DEFAULT '[]',
+  results_json        TEXT NOT NULL DEFAULT '{}',
+  montant_ht          NUMERIC(12,2),
+  date_creation       TIMESTAMP NOT NULL DEFAULT now()
+);

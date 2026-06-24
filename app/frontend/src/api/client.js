@@ -95,5 +95,20 @@ export const api = {
   listGammes:   () => req("GET", "/gammes"),
   getCatalogue: () => req("GET", "/gammes/catalogue"),
 
+  // Tarifs
+  listTarifs:     ()           => req("GET",    "/tarifs"),
+  createTarif:    (nom)        => req("POST",   "/tarifs", { nom }),
+  updateTarif:    (id, data)   => req("PATCH",  `/tarifs/${id}`, data),
+  deleteTarif:    (id)         => req("DELETE", `/tarifs/${id}`),
+  getTarifLignes: (id)         => req("GET",    `/tarifs/${id}/lignes`),
+  setTarifLignes: (id, lignes) => req("PUT",    `/tarifs/${id}/lignes`, { lignes }),
+
+  // Devis
+  listDevis:   ()         => req("GET",    "/devis"),
+  createDevis: (data)     => req("POST",   "/devis", data),
+  getDevis:    (id)       => req("GET",    `/devis/${id}`),
+  updateDevis: (id, data) => req("PATCH",  `/devis/${id}`, data),
+  deleteDevis: (id)       => req("DELETE", `/devis/${id}`),
+
   health: () => req("GET", "/health"),
 };

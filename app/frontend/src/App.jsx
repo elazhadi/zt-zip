@@ -16,6 +16,9 @@ import ColorisManager from './components/ColorisManager'
 import Backoffice from './components/Backoffice'
 import Catalogue from './components/Catalogue'
 import Profile from './components/Profile'
+import TarifsManager from './components/TarifsManager'
+import DevisCreation from './components/DevisCreation'
+import DevisList from './components/DevisList'
 
 const { debiterChantier } = M
 
@@ -28,6 +31,7 @@ export default function App() {
   const [error, setError] = useState(null)
   const [prefill, setPrefill] = useState(null)
   const [saveMsg, setSaveMsg] = useState(null)
+  const [devisMode, setDevisMode] = useState(false)
 
   // Quand l'utilisateur se connecte, passe directement au calculateur.
   function handleLoginSuccess() {
@@ -105,7 +109,7 @@ export default function App() {
   // Redirige landing vers calc si déjà connecté.
   const activeView = (view === 'landing' && user) ? 'calc' : view
   const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin')
-  const ADMIN_VIEWS = ['admin-users', 'admin-sites', 'admin-colors']
+  const ADMIN_VIEWS = ['admin-users', 'admin-sites', 'admin-colors', 'admin-tarifs']
   const inAdmin = ADMIN_VIEWS.includes(activeView)
 
   return (
@@ -125,6 +129,9 @@ export default function App() {
             </button>
             <button className={activeView === 'catalogue' ? 'nav-link active' : 'nav-link'} onClick={() => handleNav('catalogue')}>
               Catalogue
+            </button>
+            <button className={activeView === 'devis' ? 'nav-link active' : 'nav-link'} onClick={() => handleNav('devis')}>
+              Devis
             </button>
             {isAdmin && (
               <button className={inAdmin ? 'nav-link active' : 'nav-link'} onClick={() => handleNav('admin-users')}>
@@ -154,7 +161,8 @@ export default function App() {
         <nav className="admin-subnav">
           <button className={activeView === 'admin-users'  ? 'subnav-link active' : 'subnav-link'} onClick={() => setView('admin-users')}>Utilisateurs</button>
           <button className={activeView === 'admin-sites'  ? 'subnav-link active' : 'subnav-link'} onClick={() => setView('admin-sites')}>Sites</button>
-          <button className={activeView === 'admin-colors' ? 'subnav-link active' : 'subnav-link'} onClick={() => setView('admin-colors')}>Couleurs</button>
+          <button className={activeView === 'admin-colors'  ? 'subnav-link active' : 'subnav-link'} onClick={() => setView('admin-colors')}>Couleurs</button>
+          <button className={activeView === 'admin-tarifs'  ? 'subnav-link active' : 'subnav-link'} onClick={() => setView('admin-tarifs')}>Tarifs</button>
         </nav>
       )}
 
@@ -188,6 +196,18 @@ export default function App() {
         </main>
       )}
 
+      {activeView === 'admin-tarifs' && isAdmin && (
+        <main className="app-centered-wide admin-page">
+          <TarifsManager />
+        </main>
+      )}
+
+      {activeView === 'devis' && user && (
+        <main className="app-centered-wide">
+          <DevisList />
+        </main>
+      )}
+
       {activeView === 'backoffice' && user && user.role === 'super_admin' && (
         <main className="app-centered-wide">
           <Backoffice />
@@ -206,7 +226,7 @@ export default function App() {
         </main>
       )}
 
-      {activeView === 'calc' && user && (
+      {activeView === 'calc' && user && !devisMode && (
         <main className="app-main">
           <aside className="app-sidebar">
             <ChassisForm onAdd={addChassis} prefill={prefill} onPrefillConsumed={() => setPrefill(null)} />
@@ -218,6 +238,11 @@ export default function App() {
               <button className="btn-save" onClick={saveChantier} disabled={lot.length === 0}>
                 💾 Enregistrer le chantier
               </button>
+              {results && (
+                <button className="btn-devis" onClick={() => setDevisMode(true)}>
+                  📋 Créer un devis
+                </button>
+              )}
               {saveMsg && <div className="save-msg">{saveMsg}</div>}
             </div>
             {error && <div className="error-msg">Erreur : {error}</div>}
@@ -233,6 +258,17 @@ export default function App() {
               </div>
             )}
           </section>
+        </main>
+      )}
+
+      {activeView === 'calc' && user && devisMode && (
+        <main className="app-centered-wide">
+          <DevisCreation
+            results={results}
+            lot={lot}
+            onSaved={() => { setDevisMode(false); handleNav('devis') }}
+            onCancel={() => setDevisMode(false)}
+          />
         </main>
       )}
 

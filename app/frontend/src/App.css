@@ -906,3 +906,94 @@ body {
   transition: background 0.15s, color 0.15s;
 }
 .btn-fiche-atelier:hover { background: var(--blue); color: #fff; }
+
+/* ------------------------------------------------------------------ */
+/* Tarifs admin                                                         */
+/* ------------------------------------------------------------------ */
+.tarifs-manager { display: flex; gap: 20px; align-items: flex-start; }
+.tarifs-sidebar { width: 240px; flex-shrink: 0; }
+.tarifs-editor  { flex: 1; min-width: 0; }
+
+.tarifs-list { list-style: none; padding: 0; margin: 10px 0; }
+.tarifs-item { display: flex; align-items: center; gap: 8px; padding: 6px 4px;
+  border-radius: 5px; cursor: pointer; }
+.tarifs-item:hover, .tarifs-item.active { background: var(--gray-50); }
+.tarifs-nom { flex: 1; font-size: 13px; cursor: pointer; }
+.tarifs-empty { font-size: 12px; color: var(--gray-400); padding: 8px 0; }
+
+.tarifs-add-form { display: flex; gap: 6px; margin-top: 10px; }
+.tarifs-add-form input { flex: 1; padding: 6px 8px; font-size: 13px;
+  border: 1px solid var(--gray-200); border-radius: 6px; }
+
+.tarifs-placeholder { padding: 40px 0; color: var(--gray-400); font-size: 14px; text-align: center; }
+
+.tarif-cell-input { width: 100%; padding: 4px 6px; border: 1px solid var(--gray-200);
+  border-radius: 4px; font-size: 12px; background: #fff; }
+.tarif-cell-input:focus { border-color: var(--blue); outline: none; }
+.tarif-prix { text-align: right; width: 90px; }
+.tarif-cell-select { padding: 4px 6px; border: 1px solid var(--gray-200);
+  border-radius: 4px; font-size: 12px; background: #fff; }
+.tarif-empty-row { text-align: center; color: var(--gray-400); font-size: 12px; padding: 16px; }
+
+.tarifs-table td { padding: 3px 4px; }
+.tarifs-actions { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
+
+/* ------------------------------------------------------------------ */
+/* Devis création                                                       */
+/* ------------------------------------------------------------------ */
+.btn-devis { width: 100%; padding: 9px; background: #0d9488; color: #fff;
+  border: none; border-radius: 7px; font-size: 13px; font-weight: 600;
+  cursor: pointer; margin-top: 6px; }
+.btn-devis:hover { background: #0f766e; }
+
+.devis-creation { padding: 20px 0; }
+.devis-creation-header { display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px; }
+
+.devis-columns { display: flex; gap: 20px; align-items: flex-start; }
+.devis-form-col { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
+.devis-prix-col { flex: 1; min-width: 0; }
+
+.devis-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.devis-form-grid label { display: flex; flex-direction: column; gap: 3px;
+  font-size: 12px; font-weight: 500; color: var(--gray-600); }
+.devis-form-grid input { padding: 6px 8px; border: 1px solid var(--gray-200);
+  border-radius: 5px; font-size: 13px; }
+
+.devis-tarif-select { width: 100%; margin-top: 10px; padding: 7px 8px;
+  border: 1px solid var(--gray-200); border-radius: 6px; font-size: 13px; }
+.devis-no-tarif { font-size: 12px; color: var(--gray-400); margin-top: 8px; }
+
+.devis-prix-hint { color: var(--gray-400); font-size: 13px; padding: 20px 0; }
+
+.devis-prix-table { font-size: 12px; }
+.devis-section-row td { background: #eff6ff; font-weight: 600; font-size: 11px;
+  color: var(--blue); padding: 4px 6px; }
+.devis-subtotal-row td { background: #f0fdf4; font-weight: 600; }
+
+.devis-total-bar { margin-top: 14px; padding: 10px 14px; background: var(--blue);
+  color: #fff; border-radius: 7px; font-size: 14px; text-align: right; }
+
+.devis-actions { display: flex; gap: 10px; align-items: center;
+  margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--gray-100); }
+
+/* ------------------------------------------------------------------ */
+/* Devis liste                                                          */
+/* ------------------------------------------------------------------ */
+.devis-list-card { padding: 20px 24px; }
+
+.statut-select { padding: 3px 6px; border-radius: 5px; border: 1px solid var(--gray-200);
+  font-size: 12px; cursor: pointer; }
+.statut-nouveau   { background: #eff6ff; color: #1d4ed8; }
+.statut-envoye    { background: #fefce8; color: #854d0e; }
+.statut-confirme  { background: #f0fdf4; color: #15803d; }
+.statut-annule    { background: #fef2f2; color: #dc2626; }
+
+.devis-row-actions { display: flex; gap: 4px; }
+
+@media (max-width: 860px) {
+  .tarifs-manager { flex-direction: column; }
+  .tarifs-sidebar { width: 100%; }
+  .devis-columns  { flex-direction: column; }
+  .devis-form-col { width: 100%; }
+}
