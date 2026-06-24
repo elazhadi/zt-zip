@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
+const fs = require("fs");
 
 const authRoutes = require("./routes/auth");
 const sitesRoutes = require("./routes/sites");
@@ -30,6 +32,18 @@ function createApp({ pool, visionClient = null, corsOrigin } = {}) {
   app.use("/api/chantiers", chantiersRoutes(pool));
   app.use("/api/debitage", debitageRoutes());
   app.use("/api/vision", visionRoutes(visionClient));
+
+  // Déploiement « tout-en-un » : si STATIC_DIR est défini, le backend sert aussi
+  // le frontend buildé (une seule origine → pas de CORS, pas de proxy, une seule URL).
+  const staticDir = process.env.STATIC_DIR;
+  if (staticDir && fs.existsSync(staticDir)) {
+    app.use(express.static(staticDir));
+    // Fallback SPA : toute requête GET non-/api renvoie index.html.
+    app.use((req, res, next) => {
+      if (req.method !== "GET" || req.path.startsWith("/api/")) return next();
+      res.sendFile(path.join(staticDir, "index.html"));
+    });
+  }
 
   // Gestionnaire d'erreurs final (les routes async throw remontent ici via Express 5,
   // ou sont catch localement en Express 4 ; ce filet attrape les erreurs synchrones).

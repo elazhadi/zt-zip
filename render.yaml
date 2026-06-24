@@ -1,0 +1,40 @@
+# Blueprint Render — déploiement provisoire « tout-en-un » de l'app ULYSSE 70.
+# Un service web (backend + frontend servi par le backend) + une base PostgreSQL.
+#
+# Déploiement : sur https://dashboard.render.com → New → Blueprint → choisir ce repo.
+# Render lit ce fichier et provisionne la base + le service.
+#
+# Après le 1er déploiement :
+#  - Renseigner ANTHROPIC_API_KEY dans le dashboard (sinon lecture photo désactivée).
+#  - L'app sera servie sur https://<nom-du-service>.onrender.com
+#  - Admin par défaut : admin@ulysse70.local / admin1234 (changeable via les
+#    variables SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD).
+#
+# ⚠️ Vérifie les conditions actuelles des offres gratuites Render (la base et le
+# service gratuits peuvent s'endormir / expirer — suffisant pour un test).
+
+databases:
+  - name: ulysse-db
+    plan: free
+
+services:
+  - type: web
+    name: ulysse70
+    runtime: docker
+    plan: free
+    rootDir: app
+    dockerfilePath: Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ulysse-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: VISION_MODEL
+        value: claude-opus-4-8
+      # Renseigner manuellement dans le dashboard (jamais committée).
+      - key: ANTHROPIC_API_KEY
+        sync: false
