@@ -6,6 +6,7 @@ const sitesRoutes = require("./routes/sites");
 const chantiersRoutes = require("./routes/chantiers");
 const debitageRoutes = require("./routes/debitage");
 const visionRoutes = require("./routes/vision");
+const gammesRoutes = require("./routes/gammes");
 
 // Fabrique l'application Express. Le pool et le client vision sont injectés
 // (production : pg + Anthropic ; tests : pg-mem + client mocké).
@@ -25,6 +26,7 @@ function createApp({ pool, visionClient = null, corsOrigin } = {}) {
 
   app.use("/api/auth", authRoutes(pool));
   app.use("/api/sites", sitesRoutes(pool));
+  app.use("/api/gammes", gammesRoutes());
   app.use("/api/chantiers", chantiersRoutes(pool));
   app.use("/api/debitage", debitageRoutes());
   app.use("/api/vision", visionRoutes(visionClient));

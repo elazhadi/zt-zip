@@ -183,6 +183,29 @@ test("isolation des rôles : un vendeur ne voit pas les chantiers d'un autre", a
   assert.ok(listAdmin.body.chantiers.some((c) => c.id === idA), "admin voit le chantier de A");
 });
 
+test("liste des gammes exposée et ULYSSE 70 présente", async () => {
+  const { app } = await makeApp();
+  const token = await loginAdmin(app);
+  const res = await request(app).get("/api/gammes").set("Authorization", `Bearer ${token}`);
+  assert.strictEqual(res.status, 200);
+  assert.ok(res.body.gammes.some((g) => g.id === "ulysse70"), "ULYSSE 70 listée");
+});
+
+test("la gamme d'un châssis est persistée et relue", async () => {
+  const { app } = await makeApp();
+  const token = await loginAdmin(app);
+  const create = await request(app)
+    .post("/api/chantiers")
+    .set("Authorization", `Bearer ${token}`)
+    .send({ reference_client: "G1", chassis: [{ gamme: "ulysse70", config: "3VT/3R", type: "porte", L: 2895, H: 2500, Q: 1 }] });
+  assert.strictEqual(create.status, 201);
+  const detail = await request(app)
+    .get(`/api/chantiers/${create.body.chantier.id}`)
+    .set("Authorization", `Bearer ${token}`);
+  assert.strictEqual(detail.body.chassis[0].gamme, "ulysse70");
+  assert.strictEqual(detail.body.resultats.vitrage[0].gamme, "ulysse70");
+});
+
 test("lecture croquis (vision mockée) pré-remplit et déduit la config", async () => {
   const { app } = await makeApp();
   const token = await loginAdmin(app);

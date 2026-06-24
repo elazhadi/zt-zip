@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS chassis (
   id           SERIAL PRIMARY KEY,
   chantier_id  INTEGER NOT NULL REFERENCES chantiers(id) ON DELETE CASCADE,
   repere       INTEGER NOT NULL,
+  gamme        TEXT NOT NULL DEFAULT 'ulysse70',
   config       TEXT NOT NULL,
   type_ouvrage TEXT NOT NULL,   -- porte | fenetre
   largeur      INTEGER NOT NULL,

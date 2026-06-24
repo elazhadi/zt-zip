@@ -13,20 +13,32 @@ historique multi-sites.
 
 ```
 app/
-├── packages/moteur/   @ulysse70/moteur — moteur de calcul isomorphe (CJS + ESM)
-│                      débitage · optimisation FFD · vitrage · accessoires
-│                      tests/tests_reference.js  → 30 cas ProGES
+├── packages/moteur/   @ulysse70/moteur — moteur de calcul isomorphe, MULTI-GAMMES
+│   ├── engine/coulissant.js   moteur générique (FFD, tri) — aucune formule de gamme
+│   ├── gammes/ulysse70.js     gamme livrée (abaque ULYSSE 70)
+│   ├── gammes/_TEMPLATE.js    squelette pour ajouter une gamme
+│   ├── registry.js            registre + garde-fous
+│   └── tests/                 30 cas ProGES + 12 tests multi-gammes
 ├── frontend/          React + Vite — calculateur, historique, lecture photo
-│                      exports PDF (jsPDF) + Excel (SheetJS)
+│                      sélecteur marque/gamme · exports PDF (jsPDF) + Excel (SheetJS)
 ├── backend/           Node + Express 5 + PostgreSQL
-│                      auth JWT + rôles · sites · chantiers · débitage · vision
-│                      tests/api.test.js  → 9 tests d'intégration (pg-mem)
+│                      auth JWT + rôles · sites · gammes · chantiers · débitage · vision
+│                      tests/api.test.js  → 11 tests d'intégration (pg-mem)
 └── docker-compose.yml db + backend + frontend (nginx)
 ```
 
 Le moteur est la **source de vérité** : il tourne côté frontend (calcul instantané)
-et côté backend (recalcul fiable pour les exports). Ajouter une gamme = ajouter
-un abaque, sans toucher au reste (cf. cahier des charges §9).
+et côté backend (recalcul fiable pour les exports).
+
+### Multi-gammes / multi-marques
+
+Le moteur gère plusieurs gammes (ULYSSE 70 livrée par défaut). **Ajouter une
+gamme = ajouter une définition** (un fichier `gammes/<id>.js`), sans modifier le
+moteur — voir **`packages/moteur/AJOUTER_UNE_GAMME.md`**. Chaque châssis porte un
+champ `gamme` (défaut `ulysse70`) ; un chantier peut mélanger les gammes.
+
+> ⚠️ **Règle absolue :** les formules viennent de l'**abaque atelier** de chaque
+> gamme — jamais extrapolées. Le registre refuse une gamme sans abaque.
 
 ## Lots livrés
 

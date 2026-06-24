@@ -44,6 +44,7 @@ export default function App() {
     try {
       const { chassis } = await api.getChantier(id)
       const loaded = chassis.map(c => ({
+        gamme: c.gamme || 'ulysse70',
         config: c.config, type: c.type_ouvrage, L: c.largeur, H: c.hauteur,
         Q: c.quantite, color: c.coloris || '', _id: c.id,
       }))

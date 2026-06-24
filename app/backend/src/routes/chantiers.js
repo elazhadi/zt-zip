@@ -21,6 +21,7 @@ function scopeClause(user, params) {
 // Mappe une ligne chassis DB → entrée moteur { config, type, L, H, Q, color }.
 function toMoteur(row) {
   return {
+    gamme: row.gamme || "ulysse70",
     config: row.config,
     type: row.type_ouvrage,
     L: row.largeur,
@@ -107,9 +108,9 @@ module.exports = function chantiersRoutes(pool) {
     let repere = 1;
     for (const c of chassis) {
       await pool.query(
-        `INSERT INTO chassis (chantier_id, repere, config, type_ouvrage, largeur, hauteur, quantite, coloris)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [chantier.id, repere++, c.config, c.type, c.L, c.H, c.Q || 1, c.color || null]
+        `INSERT INTO chassis (chantier_id, repere, gamme, config, type_ouvrage, largeur, hauteur, quantite, coloris)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [chantier.id, repere++, c.gamme || "ulysse70", c.config, c.type, c.L, c.H, c.Q || 1, c.color || null]
       );
     }
     res.status(201).json({ chantier });
@@ -139,9 +140,9 @@ module.exports = function chantiersRoutes(pool) {
       let repere = 1;
       for (const c of chassis) {
         await pool.query(
-          `INSERT INTO chassis (chantier_id, repere, config, type_ouvrage, largeur, hauteur, quantite, coloris)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-          [chantier.id, repere++, c.config, c.type, c.L, c.H, c.Q || 1, c.color || null]
+          `INSERT INTO chassis (chantier_id, repere, gamme, config, type_ouvrage, largeur, hauteur, quantite, coloris)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [chantier.id, repere++, c.gamme || "ulysse70", c.config, c.type, c.L, c.H, c.Q || 1, c.color || null]
         );
       }
     }
@@ -163,6 +164,7 @@ module.exports = function chantiersRoutes(pool) {
 // Normalise une entrée frontend (L/H/Q peuvent arriver en chaîne) vers le moteur.
 function normalizeChassisInput(c) {
   return {
+    gamme: c.gamme || "ulysse70",
     config: c.config,
     type: c.type,
     L: Number(c.L),

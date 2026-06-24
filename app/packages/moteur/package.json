@@ -11,6 +11,6 @@
     }
   },
   "scripts": {
-    "test": "node tests/tests_reference.js"
+    "test": "node tests/tests_reference.js && node tests/tests_multigamme.js"
   }
 }

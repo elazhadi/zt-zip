@@ -4,7 +4,7 @@ export default function DebitageTab({ debits }) {
       {debits.map((d, i) => (
         <div key={i} className="chassis-block">
           <div className="chassis-block-title">
-            Châssis #{i + 1} — {d.chassis.config}&ensp;
+            Châssis #{i + 1} — {d.chassis.gamme && d.chassis.gamme !== 'ulysse70' ? `[${d.chassis.gamme}] ` : ''}{d.chassis.config}&ensp;
             {d.chassis.type === 'porte' ? 'Porte-fenêtre' : 'Fenêtre'}&ensp;
             {d.chassis.L} × {d.chassis.H} mm × {d.chassis.Q}
             {d.chassis.color ? ` · ${d.chassis.color}` : ''}

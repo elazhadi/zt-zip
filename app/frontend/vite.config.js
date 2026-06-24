@@ -18,7 +18,8 @@ export default defineConfig({
   },
   build: {
     commonjsOptions: {
-      include: [/@ulysse70\/moteur/, /node_modules/],
+      // Le moteur est résolu via un symlink workspace : matcher son chemin réel.
+      include: [/@ulysse70\/moteur/, /packages\/moteur/, /node_modules/],
     },
   },
 })
