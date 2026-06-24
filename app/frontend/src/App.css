@@ -584,6 +584,35 @@ body {
 }
 
 /* ------------------------------------------------------------------ */
+/* Administration sub-nav                                               */
+/* ------------------------------------------------------------------ */
+.admin-subnav {
+  display: flex;
+  gap: 2px;
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.subnav-link {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--gray-500);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 16px;
+  transition: color .12s;
+  white-space: nowrap;
+}
+.subnav-link:hover { color: var(--blue-mid); }
+.subnav-link.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+
+.admin-page { padding: 24px 16px; }
+.admin-page .card { max-width: 860px; margin: 0 auto; }
+
+/* ------------------------------------------------------------------ */
 /* User management                                                      */
 /* ------------------------------------------------------------------ */
 .card-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
@@ -665,7 +694,7 @@ body {
 .link-btn { background: none; border: none; color: var(--blue); font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0; font-size: inherit; }
 
 /* ColorisManager */
-.coloris-manager { margin-top: 24px; }
+.coloris-manager { }
 .coloris-list { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
 .coloris-item { display: flex; align-items: center; gap: 8px; padding: 7px 12px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 6px; }
 .coloris-code { font-family: monospace; font-size: 13px; font-weight: 700; color: var(--gray-800); min-width: 60px; }
@@ -679,7 +708,7 @@ body {
 .coloris-add-form input:focus { outline: none; border-color: var(--blue-light); }
 
 /* SiteManager */
-.site-manager { margin-top: 24px; }
+.site-manager { }
 .site-list { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
 .site-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 6px; }
 .site-inactive { opacity: .55; }

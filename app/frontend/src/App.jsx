@@ -11,6 +11,8 @@ import Login from './components/Login'
 import History from './components/History'
 import Landing from './components/Landing'
 import UserManagement from './components/UserManagement'
+import SiteManager from './components/SiteManager'
+import ColorisManager from './components/ColorisManager'
 import Backoffice from './components/Backoffice'
 import Catalogue from './components/Catalogue'
 
@@ -18,7 +20,7 @@ const { debiterChantier } = M
 
 export default function App() {
   const { user, logout } = useAuth()
-  const [view, setView] = useState('landing')    // landing|login|calc|history|users|backoffice|catalogue
+  const [view, setView] = useState('landing')    // landing|login|calc|history|admin-users|admin-sites|admin-colors|backoffice|catalogue
 
   const [lot, setLot] = useState([])
   const [results, setResults] = useState(null)
@@ -101,6 +103,9 @@ export default function App() {
 
   // Redirige landing vers calc si déjà connecté.
   const activeView = (view === 'landing' && user) ? 'calc' : view
+  const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin')
+  const ADMIN_VIEWS = ['admin-users', 'admin-sites', 'admin-colors']
+  const inAdmin = ADMIN_VIEWS.includes(activeView)
 
   return (
     <div className="app">
@@ -120,9 +125,9 @@ export default function App() {
             <button className={activeView === 'catalogue' ? 'nav-link active' : 'nav-link'} onClick={() => handleNav('catalogue')}>
               Catalogue
             </button>
-            {(user.role === 'admin') && (
-              <button className={activeView === 'users' ? 'nav-link active' : 'nav-link'} onClick={() => handleNav('users')}>
-                Utilisateurs
+            {isAdmin && (
+              <button className={inAdmin ? 'nav-link active' : 'nav-link'} onClick={() => handleNav('admin-users')}>
+                Administration
               </button>
             )}
             {user.role === 'super_admin' && (
@@ -144,6 +149,14 @@ export default function App() {
         </div>
       </header>
 
+      {inAdmin && isAdmin && (
+        <nav className="admin-subnav">
+          <button className={activeView === 'admin-users'  ? 'subnav-link active' : 'subnav-link'} onClick={() => setView('admin-users')}>Utilisateurs</button>
+          <button className={activeView === 'admin-sites'  ? 'subnav-link active' : 'subnav-link'} onClick={() => setView('admin-sites')}>Sites</button>
+          <button className={activeView === 'admin-colors' ? 'subnav-link active' : 'subnav-link'} onClick={() => setView('admin-colors')}>Couleurs</button>
+        </nav>
+      )}
+
       {activeView === 'login' && (
         <main className="app-centered">
           <Login onSuccess={handleLoginSuccess} />
@@ -156,9 +169,21 @@ export default function App() {
         </main>
       )}
 
-      {activeView === 'users' && user && (user.role === 'admin' || user.role === 'super_admin') && (
+      {activeView === 'admin-users' && isAdmin && (
         <main className="app-centered-wide">
           <UserManagement />
+        </main>
+      )}
+
+      {activeView === 'admin-sites' && isAdmin && (
+        <main className="app-centered-wide admin-page">
+          <SiteManager />
+        </main>
+      )}
+
+      {activeView === 'admin-colors' && isAdmin && (
+        <main className="app-centered-wide admin-page">
+          <ColorisManager />
         </main>
       )}
 
