@@ -30,10 +30,30 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
     [gammes, form.gamme]
   )
 
+  // Pour les gammes frappe, le type est encodé dans le config ID.
+  function typeFromFrappeConfig(configId) {
+    if (!configId) return null
+    if (configId === 'FEN-FIXE') return 'fixe'
+    if (configId === 'FEN-SOUFFLET') return 'basculant'
+    if (configId.startsWith('FEN-')) return 'ouvrant_pf'
+    if (configId.startsWith('PORTE-')) return 'ouvrant_pf'
+    return null
+  }
+
+  const isFrappeGamme = useMemo(
+    () => {
+      const g = gammes.find(g => g.id === form.gamme)
+      return g?.configs?.some(c => c.startsWith('FEN-') || c.startsWith('PORTE-'))
+    },
+    [gammes, form.gamme]
+  )
+
   // Changer de gamme : recale la config sur la première de la nouvelle gamme.
   function setGamme(id) {
-    const first = gammes.find(g => g.id === id)?.configs[0] || ''
-    setForm(prev => ({ ...prev, gamme: id, config: first }))
+    const g = gammes.find(g => g.id === id)
+    const first = g?.configs[0] || ''
+    const derivedType = typeFromFrappeConfig(first)
+    setForm(prev => ({ ...prev, gamme: id, config: first, ...(derivedType ? { type: derivedType } : {}) }))
   }
 
   // Pré-remplissage depuis une photo : remplit + surligne les champs lus.
@@ -108,27 +128,34 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
       <div className="form-row">
         <label>
           Configuration
-          <select className={cls('config')} value={form.config} onChange={e => set('config', e.target.value)}>
+          <select className={cls('config')} value={form.config} onChange={e => {
+            const v = e.target.value
+            const derivedType = typeFromFrappeConfig(v)
+            set('config', v)
+            if (derivedType) setForm(prev => ({ ...prev, config: v, type: derivedType }))
+          }}>
             {configs.map(c => <option key={c}>{c}</option>)}
           </select>
         </label>
-        <label>
-          Type d'ouvrage
-          <select value={form.type} onChange={e => set('type', e.target.value)}>
-            <optgroup label="Coulissants">
-              <option value="porte">Porte-fenêtre coulissante</option>
-              <option value="fenetre">Fenêtre coulissante</option>
-            </optgroup>
-            <optgroup label="Ouvrants">
-              <option value="ouvrant_pf">Ouvrant à la française</option>
-              <option value="oscillo_battant">Oscillo-battant</option>
-            </optgroup>
-            <optgroup label="Fixes &amp; autres">
-              <option value="fixe">Panneau fixe</option>
-              <option value="basculant">Basculant</option>
-            </optgroup>
-          </select>
-        </label>
+        {!isFrappeGamme && (
+          <label>
+            Type d'ouvrage
+            <select value={form.type} onChange={e => set('type', e.target.value)}>
+              <optgroup label="Coulissants">
+                <option value="porte">Porte-fenêtre coulissante</option>
+                <option value="fenetre">Fenêtre coulissante</option>
+              </optgroup>
+              <optgroup label="Ouvrants">
+                <option value="ouvrant_pf">Ouvrant à la française</option>
+                <option value="oscillo_battant">Oscillo-battant</option>
+              </optgroup>
+              <optgroup label="Fixes &amp; autres">
+                <option value="fixe">Panneau fixe</option>
+                <option value="basculant">Basculant</option>
+              </optgroup>
+            </select>
+          </label>
+        )}
       </div>
 
       <div className="form-row">

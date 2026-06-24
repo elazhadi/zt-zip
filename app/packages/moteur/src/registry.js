@@ -15,6 +15,8 @@ const prodige_purligne   = require("./gammes/prodige_purligne");
 const prodige_semibombe  = require("./gammes/prodige_semibombe");
 const prodige_bombe      = require("./gammes/prodige_bombe");
 const emeraude_coulissant = require("./gammes/emeraude_coulissant");
+const ulysse_pl500       = require("./gammes/ulysse_pl500");
+const prodige_5020       = require("./gammes/prodige_5020");
 const { optimiser, round1, buildRefSort } = require("./engine/coulissant");
 
 const GAMMES = new Map();
@@ -48,6 +50,8 @@ registerGamme(prodige_purligne);
 registerGamme(prodige_semibombe);
 registerGamme(prodige_bombe);
 registerGamme(emeraude_coulissant);
+registerGamme(ulysse_pl500);
+registerGamme(prodige_5020);
 
 function getGamme(id) {
   const g = GAMMES.get(id || DEFAULT_GAMME);
