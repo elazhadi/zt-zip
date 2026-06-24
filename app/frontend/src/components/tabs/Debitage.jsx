@@ -1,3 +1,5 @@
+import { typeLabel } from '../../utils/typeLabel'
+
 export default function DebitageTab({ debits }) {
   return (
     <div>
@@ -5,7 +7,7 @@ export default function DebitageTab({ debits }) {
         <div key={i} className="chassis-block">
           <div className="chassis-block-title">
             Châssis #{i + 1} — {d.chassis.gamme && d.chassis.gamme !== 'ulysse70' ? `[${d.chassis.gamme}] ` : ''}{d.chassis.config}&ensp;
-            {d.chassis.type === 'porte' ? 'Porte-fenêtre' : 'Fenêtre'}&ensp;
+            {typeLabel(d.chassis.type)}&ensp;
             {d.chassis.L} × {d.chassis.H} mm × {d.chassis.Q}
             {d.chassis.color ? ` · ${d.chassis.color}` : ''}
           </div>

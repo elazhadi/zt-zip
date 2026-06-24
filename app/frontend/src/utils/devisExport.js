@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
+import { typeLabel } from './typeLabel'
 
 const BLUE = [30, 64, 175]
 
@@ -87,7 +88,7 @@ export function exportDevisPDF({ numero, client_nom, reference_client, tarif_nom
     head: [['#', 'Config', 'Type', 'L mm', 'H mm', 'Qté', 'Coloris']],
     body: lot.map((c, i) => [
       i + 1, c.config,
-      c.type === 'porte' ? 'Porte-fenêtre' : 'Fenêtre',
+      typeLabel(c.type),
       c.L, c.H, c.Q, c.color || '',
     ]),
     styles: { fontSize: 8 },
@@ -167,7 +168,7 @@ export function exportDevisXLSX({ numero, client_nom, reference_client, tarif_no
     ['#', 'Config', 'Type', 'L (mm)', 'H (mm)', 'Qté', 'Coloris'],
     ...lot.map((c, i) => [
       i + 1, c.config,
-      c.type === 'porte' ? 'Porte-fenêtre' : 'Fenêtre',
+      typeLabel(c.type),
       c.L, c.H, c.Q, c.color || '',
     ]),
   ]), 'Châssis')

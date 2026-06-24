@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
+import { typeLabel } from './typeLabel'
 
 const REF_ORDER = [
   '6099BIS', 'PL600.01', 'PL600.03', 'PL600.04',
@@ -116,7 +117,7 @@ export function exportPDF(results, lot) {
     body: lot.map((c, i) => [
       i + 1,
       c.config,
-      c.type === 'porte' ? 'Porte-fenêtre' : 'Fenêtre',
+      typeLabel(c.type),
       c.L,
       c.H,
       c.Q,
@@ -227,7 +228,7 @@ export function exportXLSX(results, lot) {
       ...lot.map((c, i) => [
         i + 1,
         c.config,
-        c.type === 'porte' ? 'Porte-fenêtre' : 'Fenêtre',
+        typeLabel(c.type),
         c.L, c.H, c.Q,
         c.color || '',
       ]),

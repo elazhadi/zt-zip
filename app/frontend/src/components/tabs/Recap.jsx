@@ -1,4 +1,5 @@
 import { exportPDF, exportPDFSimple, exportXLSX } from '../../utils/exports'
+import { typeLabel } from '../../utils/typeLabel'
 import MiseEnBarreTab from './MiseEnBarre'
 import VitrageTab from './Vitrage'
 import AccessoiresTab from './Accessoires'
@@ -92,7 +93,7 @@ export default function RecapTab({ results, lot, refClient = '' }) {
                 <td className="col-mono">{i + 1}</td>
                 <td>{c.gamme || 'ulysse70'}</td>
                 <td>{c.config}</td>
-                <td>{c.type === 'porte' ? 'Porte-fenêtre' : 'Fenêtre'}</td>
+                <td>{typeLabel(c.type)}</td>
                 <td className="col-right col-mono">{c.L}</td>
                 <td className="col-right col-mono">{c.H}</td>
                 <td className="col-right col-mono">{c.Q}</td>

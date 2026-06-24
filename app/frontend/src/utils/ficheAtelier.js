@@ -8,7 +8,8 @@ export function printFicheAtelier(results, lot, refClient = '') {
   const chassisBlocks = debits.map((d, idx) => {
     const c = d.chassis;
     const gammeLabel = c.gamme && c.gamme !== 'ulysse70' ? `[${c.gamme}] ` : '';
-    const typeLabel = c.type === 'porte' ? 'Porte-fenêtre' : 'Fenêtre';
+    const TYPE_LABEL = { porte:'Porte-fenêtre coulissante', fenetre:'Fenêtre coulissante', ouvrant_pf:"Ouvrant à la française", oscillo_battant:'Oscillo-battant', fixe:'Panneau fixe', basculant:'Basculant' }
+    const typeLabel = TYPE_LABEL[c.type] || c.type || '—';
     const qteLabel = c.Q > 1 ? ` × ${c.Q}` : '';
     const colorLabel = c.color ? ` · ${c.color}` : '';
     const title = `${gammeLabel}${c.config} ${typeLabel} — ${c.L} × ${c.H} mm${qteLabel}${colorLabel}`;

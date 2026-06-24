@@ -115,8 +115,18 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
         <label>
           Type d'ouvrage
           <select value={form.type} onChange={e => set('type', e.target.value)}>
-            <option value="porte">Porte-fenêtre (3 côtés)</option>
-            <option value="fenetre">Fenêtre (4 côtés)</option>
+            <optgroup label="Coulissants">
+              <option value="porte">Porte-fenêtre coulissante</option>
+              <option value="fenetre">Fenêtre coulissante</option>
+            </optgroup>
+            <optgroup label="Ouvrants">
+              <option value="ouvrant_pf">Ouvrant à la française</option>
+              <option value="oscillo_battant">Oscillo-battant</option>
+            </optgroup>
+            <optgroup label="Fixes &amp; autres">
+              <option value="fixe">Panneau fixe</option>
+              <option value="basculant">Basculant</option>
+            </optgroup>
           </select>
         </label>
       </div>

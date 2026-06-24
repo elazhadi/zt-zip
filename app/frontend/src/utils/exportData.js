@@ -1,6 +1,13 @@
 import * as XLSX from 'xlsx'
 
-const TYPE_LABEL = { porte: 'Porte-fenêtre', fenetre: 'Fenêtre' }
+const TYPE_LABEL = {
+  porte:           'Porte-fenêtre coulissante',
+  fenetre:         'Fenêtre coulissante',
+  ouvrant_pf:      'Ouvrant à la française',
+  oscillo_battant: 'Oscillo-battant',
+  fixe:            'Panneau fixe',
+  basculant:       'Basculant',
+}
 const fmtDate = d => new Date(d).toLocaleDateString('fr-FR')
 
 function autoWidth(ws, rows) {
