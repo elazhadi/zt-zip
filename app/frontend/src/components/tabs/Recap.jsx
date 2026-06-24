@@ -4,21 +4,19 @@ import VitrageTab from './Vitrage'
 import AccessoiresTab from './Accessoires'
 
 function RecapDebitage({ results }) {
-  // Agrège toutes les lignes de débitage par (ref, long) sur l'ensemble du chantier.
+  // Agrège toutes les lignes de débitage par ref uniquement — une ligne par référence.
   const map = {};
   results.debits.forEach(d =>
     d.lignes.forEach(l => {
-      const key = `${l.ref}||${l.long}`;
-      if (!map[key]) map[key] = { ref: l.ref, des: l.des, coupe: l.coupe, long: l.long, qte: 0 };
-      map[key].qte += l.qte;
+      if (!map[l.ref]) map[l.ref] = { ref: l.ref, des: l.des, coupe: l.coupe, qte: 0 };
+      map[l.ref].qte += l.qte;
     })
   );
 
   const refSort = results.refSort || {};
   const rows = Object.values(map).sort((a, b) => {
     const ra = refSort[a.ref] ?? 999, rb = refSort[b.ref] ?? 999;
-    if (ra !== rb) return ra - rb;
-    return b.long - a.long;
+    return ra - rb;
   });
 
   return (
@@ -28,7 +26,6 @@ function RecapDebitage({ results }) {
           <th>Référence</th>
           <th>Désignation</th>
           <th>Coupe</th>
-          <th className="col-right">Long. (mm)</th>
           <th className="col-right">Qté totale</th>
         </tr>
       </thead>
@@ -42,7 +39,6 @@ function RecapDebitage({ results }) {
                 {r.coupe}
               </span>
             </td>
-            <td className="col-right col-mono">{r.long}</td>
             <td className="col-right col-mono">{r.qte}</td>
           </tr>
         ))}
