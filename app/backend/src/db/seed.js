@@ -67,6 +67,21 @@ async function seed(pool, opts = {}) {
     );
   }
 
+  // Super-admin plateforme (optionnel) : créé si SEED_SUPERADMIN_EMAIL est défini.
+  // Ce compte voit toutes les sociétés et accède au backoffice.
+  const superEmail = opts.superAdminEmail || process.env.SEED_SUPERADMIN_EMAIL;
+  const superPass  = opts.superAdminPass  || process.env.SEED_SUPERADMIN_PASSWORD || "superadmin1234";
+  if (superEmail) {
+    const superExists = await pool.query("SELECT id FROM users WHERE email = $1", [superEmail]);
+    if (!superExists.rows.length) {
+      const superHash = await bcrypt.hash(superPass, 10);
+      await pool.query(
+        "INSERT INTO users (tenant_id, site_id, nom, email, hash_mdp, role) VALUES ($1,$2,$3,$4,$5,'super_admin')",
+        [tenantId, siteId, "Super Admin", superEmail, superHash]
+      );
+    }
+  }
+
   return { created: true, adminEmail, adminPass, siteId, tenantId };
 }
 

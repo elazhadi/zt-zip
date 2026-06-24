@@ -1,17 +1,17 @@
-# Blueprint Render — déploiement provisoire « tout-en-un » de l'app ULYSSE 70.
+# Blueprint Render — déploiement Gabarys (SaaS multi-tenant).
 # Un service web (backend + frontend servi par le backend) + une base PostgreSQL.
 #
 # Déploiement : sur https://dashboard.render.com → New → Blueprint → choisir ce repo.
 # Render lit ce fichier et provisionne la base + le service.
 #
-# Après le 1er déploiement :
-#  - Renseigner ANTHROPIC_API_KEY dans le dashboard (sinon lecture photo désactivée).
-#  - L'app sera servie sur https://<nom-du-service>.onrender.com
-#  - Admin par défaut : admin@ulysse70.local / admin1234 (changeable via les
-#    variables SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD).
+# Après le 1er déploiement, renseigner dans le dashboard (Environment) :
+#  - ANTHROPIC_API_KEY        → active la lecture photo
+#  - SEED_SUPERADMIN_EMAIL    → email du compte backoffice super_admin
+#  - SEED_SUPERADMIN_PASSWORD → mot de passe du super_admin (défaut : superadmin1234)
+#  - SEED_ADMIN_EMAIL         → email admin du 1er tenant (défaut : admin@gabarys.local)
+#  - SEED_ADMIN_PASSWORD      → mot de passe admin (défaut : admin1234)
 #
-# ⚠️ Vérifie les conditions actuelles des offres gratuites Render (la base et le
-# service gratuits peuvent s'endormir / expirer — suffisant pour un test).
+# L'app sera servie sur https://<nom-du-service>.onrender.com
 
 databases:
   - name: ulysse-db
@@ -19,10 +19,9 @@ databases:
 
 services:
   - type: web
-    name: ulysse70
+    name: gabarys
     runtime: docker
     plan: free
-    # L'app vit sur cette branche (master ne contient pas le dossier app/).
     branch: claude/new-session-hc0ixc
     rootDir: app
     dockerfilePath: Dockerfile
@@ -37,6 +36,14 @@ services:
         generateValue: true
       - key: VISION_MODEL
         value: claude-opus-4-8
-      # Renseigner manuellement dans le dashboard (jamais committée).
+      # À renseigner manuellement dans le dashboard (jamais committées).
       - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SEED_SUPERADMIN_EMAIL
+        sync: false
+      - key: SEED_SUPERADMIN_PASSWORD
+        sync: false
+      - key: SEED_ADMIN_EMAIL
+        sync: false
+      - key: SEED_ADMIN_PASSWORD
         sync: false
