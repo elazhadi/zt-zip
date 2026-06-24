@@ -79,11 +79,7 @@ async function seed(pool, opts = {}) {
       [opts.tenantNom || "Gabarys Demo", tenantSlug]
     );
     tenantId = t.rows[0].id;
-    // Accès à la gamme ulysse70 par défaut.
-    await pool.query(
-      "INSERT INTO tenant_gammes (tenant_id, gamme_id) VALUES ($1, $2)",
-      [tenantId, "ulysse70"]
-    );
+    // Pas d'entrée dans tenant_gammes → toutes les gammes sont accessibles par défaut.
   }
 
   const site = await pool.query(
