@@ -4,19 +4,35 @@ import { api } from '../api/client'
 
 const UNITE_OPTIONS = ['barre', 'ml', 'unité']
 
+// ---- Export helpers ----
+
+function buildExportRows(refs, lignesMap) {
+  return [
+    ['Référence', 'Désignation', 'Prix (MAD)', 'Unité (barre / ml / unité)'],
+    ...refs.map(({ ref, des }) => {
+      const existing = lignesMap[ref] || {}
+      return [ref, des || existing.designation || '', parseFloat(existing.prix_unitaire) || 0, existing.unite_prix || 'barre']
+    }),
+  ]
+}
+
+function writeXLSX(rows, filename) {
+  const ws = XLSX.utils.aoa_to_sheet(rows)
+  ws['!cols'] = [{ wch: 18 }, { wch: 32 }, { wch: 14 }, { wch: 22 }]
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, 'Tarif')
+  XLSX.writeFile(wb, filename)
+}
+
 function exportTarifXLSX(nom, lignes) {
   const rows = [
     ['Référence', 'Désignation', 'Prix (MAD)', 'Unité (barre / ml / unité)'],
     ...lignes.map(l => [l.ref, l.designation, parseFloat(l.prix_unitaire) || 0, l.unite_prix]),
   ]
-  const ws = XLSX.utils.aoa_to_sheet(rows)
-  // Largeurs de colonnes
-  ws['!cols'] = [{ wch: 18 }, { wch: 32 }, { wch: 14 }, { wch: 22 }]
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb, ws, 'Tarif')
-  XLSX.writeFile(wb, `tarif-${nom.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`)
+  writeXLSX(rows, `tarif-${nom.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`)
 }
 
+// ---- Parse import ----
 function parseTarifXLSX(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -25,7 +41,6 @@ function parseTarifXLSX(file) {
         const wb = XLSX.read(e.target.result, { type: 'array' })
         const ws = wb.Sheets[wb.SheetNames[0]]
         const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' })
-        // Ignore la ligne d'en-tête (row 0)
         const lignes = rows.slice(1)
           .filter(r => String(r[0] || '').trim())
           .map(r => ({
@@ -55,6 +70,18 @@ export default function TarifsManager() {
   const [saving,     setSaving]     = useState(false)
   const [saveMsg,    setSaveMsg]    = useState(null)
   const [importInfo, setImportInfo] = useState(null) // { count, lignes }
+  const [importMode, setImportMode] = useState('replace') // replace | merge
+
+  // Export scope panel
+  const [exportPanel,    setExportPanel]    = useState(false)
+  const [exportScope,    setExportScope]    = useState('global')  // global | gamme | projet
+  const [exportGamme,    setExportGamme]    = useState('')
+  const [exportProjetId, setExportProjetId] = useState('')
+  const [catalogue,      setCatalogue]      = useState(null)
+  const [chantiers,      setChantiers]      = useState([])
+  const [exportBusy,     setExportBusy]     = useState(false)
+  const [exportErr,      setExportErr]      = useState(null)
+
   const fileRef = useRef()
 
   useEffect(() => { loadTarifs() }, [])
@@ -140,14 +167,87 @@ export default function TarifsManager() {
     } catch (err) { setError(err.message) }
   }
 
-  function confirmImport() {
-    setLignes(importInfo.lignes)
-    setImportInfo(null)
+  async function confirmImport() {
+    setSaving(true); setError(null)
+    try {
+      const toSave = importInfo.lignes.map(l => ({
+        ref: l.ref.trim(), designation: l.designation || '',
+        prix_unitaire: parseFloat(l.prix_unitaire) || 0, unite_prix: l.unite_prix,
+      }))
+      const merge = importMode === 'merge'
+      await api.setTarifLignes(selected, toSave, merge)
+      const r = await api.getTarifLignes(selected)
+      setLignes(r.lignes.map(l => ({ ...l, prix_unitaire: String(l.prix_unitaire) })))
+      setImportInfo(null)
+      setSaveMsg(merge ? 'Fusionné' : 'Importé')
+      setTimeout(() => setSaveMsg(null), 3000)
+    } catch (e) { setError(e.message) }
+    finally { setSaving(false) }
   }
 
   function cancelImport() { setImportInfo(null) }
 
+  // ---- Export scoped ----
+  async function openExportPanel() {
+    setExportPanel(v => !v)
+    setExportErr(null)
+    if (!catalogue) {
+      try { setCatalogue((await api.getCatalogue()).gammes) } catch {}
+    }
+    if (!chantiers.length) {
+      try { setChantiers((await api.listChantiers()).chantiers) } catch {}
+    }
+  }
+
+  function lignesMap() {
+    const map = {}
+    lignes.forEach(l => { map[l.ref] = l })
+    return map
+  }
+
+  async function handleScopedExport() {
+    if (!selected) { setExportErr('Sélectionnez un tarif'); return }
+    setExportBusy(true); setExportErr(null)
+    try {
+      const selectedTarif = tarifs.find(t => t.id === selected)
+      const map = lignesMap()
+
+      if (exportScope === 'global') {
+        exportTarifXLSX(selectedTarif?.nom || 'tarif', lignes)
+        return
+      }
+
+      if (exportScope === 'gamme') {
+        if (!exportGamme) { setExportErr('Sélectionnez une gamme'); return }
+        const gammeData = catalogue?.[exportGamme]
+        if (!gammeData) { setExportErr('Gamme introuvable dans le catalogue'); return }
+        const refs = [
+          ...(gammeData.profils || []).map(r => ({ ref: r.ref, des: r.designation || r.des || '' })),
+          ...(gammeData.accessoires || []).map(r => ({ ref: r.ref, des: r.designation || r.des || '' })),
+        ]
+        const rows = buildExportRows(refs, map)
+        writeXLSX(rows, `tarif-${(selectedTarif?.nom || 'tarif').replace(/[^a-zA-Z0-9]/g, '_')}-${exportGamme}.xlsx`)
+        return
+      }
+
+      if (exportScope === 'projet') {
+        if (!exportProjetId) { setExportErr('Sélectionnez un projet'); return }
+        const { chantier, resultats } = await api.getChantier(exportProjetId)
+        if (!resultats) { setExportErr('Aucun débitage pour ce projet'); return }
+        const refs = [
+          ...Object.keys(resultats.optim || {}).map(ref => ({ ref, des: '' })),
+          ...(resultats.accessoires || []).map(a => ({ ref: a.ref, des: a.des || '' })),
+        ]
+        const rows = buildExportRows(refs, map)
+        const slug = (chantier.reference_client || `projet-${exportProjetId}`).replace(/[^a-zA-Z0-9]/g, '_')
+        writeXLSX(rows, `tarif-${(selectedTarif?.nom || 'tarif').replace(/[^a-zA-Z0-9]/g, '_')}-${slug}.xlsx`)
+      }
+    } catch (e) { setExportErr(e.message) }
+    finally { setExportBusy(false) }
+  }
+
   const selectedTarif = tarifs.find(t => t.id === selected)
+  const gammeKeys = catalogue ? Object.keys(catalogue).sort() : []
 
   return (
     <div className="tarifs-manager">
@@ -187,11 +287,10 @@ export default function TarifsManager() {
                 <div className="tarifs-io-btns">
                   <button
                     className="btn-export"
-                    onClick={() => exportTarifXLSX(selectedTarif?.nom || 'tarif', lignes)}
-                    disabled={lignes.length === 0}
+                    onClick={openExportPanel}
                     title="Exporter vers Excel"
                   >
-                    📥 Exporter Excel
+                    📥 Exporter Excel {exportPanel ? '▲' : '▼'}
                   </button>
                   <label className="btn-export tarif-import-btn" title="Importer depuis Excel">
                     📤 Importer Excel
@@ -206,15 +305,93 @@ export default function TarifsManager() {
                 </div>
               </div>
 
+              {/* Panneau export scoped */}
+              {exportPanel && (
+                <div className="tarif-export-panel">
+                  <div className="export-mode-row">
+                    {[
+                      { value: 'global', label: 'Global' },
+                      { value: 'gamme',  label: 'Par gamme' },
+                      { value: 'projet', label: 'Par projet' },
+                    ].map(m => (
+                      <label key={m.value} className="export-mode-option">
+                        <input
+                          type="radio"
+                          name="exportScope"
+                          value={m.value}
+                          checked={exportScope === m.value}
+                          onChange={() => setExportScope(m.value)}
+                        />
+                        {m.label}
+                      </label>
+                    ))}
+                  </div>
+
+                  {exportScope === 'gamme' && (
+                    <label className="tarif-export-select-label">
+                      Gamme
+                      <select value={exportGamme} onChange={e => setExportGamme(e.target.value)}>
+                        <option value="">— Sélectionner —</option>
+                        {gammeKeys.map(g => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                    </label>
+                  )}
+
+                  {exportScope === 'projet' && (
+                    <label className="tarif-export-select-label">
+                      Projet
+                      <select value={exportProjetId} onChange={e => setExportProjetId(e.target.value)}>
+                        <option value="">— Sélectionner —</option>
+                        {chantiers.map(c => (
+                          <option key={c.id} value={c.id}>
+                            {c.reference_client || `#${c.id}`} — {new Date(c.date_creation).toLocaleDateString('fr-FR')}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+
+                  <div className="export-actions" style={{ marginTop: 8 }}>
+                    <button className="btn-save" onClick={handleScopedExport} disabled={exportBusy}>
+                      {exportBusy ? 'Export…' : '📥 Télécharger Excel'}
+                    </button>
+                    {exportErr && <span className="error-msg">{exportErr}</span>}
+                  </div>
+                  <p className="export-hint" style={{ marginTop: 6 }}>
+                    {exportScope === 'global'  && 'Toutes les références du tarif actuel.'}
+                    {exportScope === 'gamme'   && 'Références utilisées par la gamme sélectionnée, prix pré-remplis.'}
+                    {exportScope === 'projet'  && 'Références du débitage de ce projet, prix pré-remplis.'}
+                  </p>
+                </div>
+              )}
+
               {/* Bandeau de confirmation d'import */}
               {importInfo && (
                 <div className="tarif-import-confirm">
                   <span>
                     <strong>{importInfo.count} lignes</strong> prêtes à importer.
-                    Cela remplacera les lignes actuelles.
                   </span>
+                  <div className="tarif-import-mode">
+                    {[
+                      { value: 'replace', label: 'Remplacer tout' },
+                      { value: 'merge',   label: 'Fusionner (MAJ uniquement)' },
+                    ].map(m => (
+                      <label key={m.value} className="export-mode-option">
+                        <input
+                          type="radio"
+                          name="importMode"
+                          value={m.value}
+                          checked={importMode === m.value}
+                          onChange={() => setImportMode(m.value)}
+                        />
+                        {m.label}
+                      </label>
+                    ))}
+                  </div>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="btn-save" onClick={confirmImport}>Appliquer</button>
+                    <button className="btn-save" onClick={confirmImport} disabled={saving}>
+                      {saving ? '…' : 'Appliquer'}
+                    </button>
                     <button className="btn-xs" onClick={cancelImport}>Annuler</button>
                   </div>
                 </div>

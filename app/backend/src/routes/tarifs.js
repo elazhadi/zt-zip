@@ -62,7 +62,7 @@ module.exports = function tarifsRoutes(pool, { authenticate, requireRole }) {
     res.json({ lignes: r.rows });
   });
 
-  // PUT /tarifs/:id/lignes — remplacement complet
+  // PUT /tarifs/:id/lignes — remplacement complet ou fusion (?mode=merge)
   router.put("/:id/lignes", requireRole("admin", "super_admin"), async (req, res) => {
     const check = await pool.query(
       "SELECT id FROM tarifs WHERE id = $1 AND tenant_id = $2",
@@ -70,7 +70,10 @@ module.exports = function tarifsRoutes(pool, { authenticate, requireRole }) {
     );
     if (!check.rows.length) return res.status(404).json({ error: "Tarif introuvable" });
     const { lignes = [] } = req.body || {};
-    await pool.query("DELETE FROM tarif_lignes WHERE tarif_id = $1", [req.params.id]);
+    const merge = req.query.mode === "merge";
+    if (!merge) {
+      await pool.query("DELETE FROM tarif_lignes WHERE tarif_id = $1", [req.params.id]);
+    }
     for (const l of lignes) {
       const ref = (l.ref || "").trim().toUpperCase();
       if (!ref) continue;

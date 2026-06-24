@@ -107,7 +107,7 @@ export const api = {
   updateTarif:    (id, data)   => req("PATCH",  `/tarifs/${id}`, data),
   deleteTarif:    (id)         => req("DELETE", `/tarifs/${id}`),
   getTarifLignes: (id)         => req("GET",    `/tarifs/${id}/lignes`),
-  setTarifLignes: (id, lignes) => req("PUT",    `/tarifs/${id}/lignes`, { lignes }),
+  setTarifLignes: (id, lignes, merge = false) => req("PUT", `/tarifs/${id}/lignes${merge ? '?mode=merge' : ''}`, { lignes }),
 
   // Devis
   listDevis:   ()         => req("GET",    "/devis"),
