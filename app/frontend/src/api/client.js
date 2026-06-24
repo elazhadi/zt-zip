@@ -110,5 +110,8 @@ export const api = {
   updateDevis: (id, data) => req("PATCH",  `/devis/${id}`, data),
   deleteDevis: (id)       => req("DELETE", `/devis/${id}`),
 
+  // Stats
+  getStats: () => req("GET", "/stats"),
+
   health: () => req("GET", "/health"),
 };

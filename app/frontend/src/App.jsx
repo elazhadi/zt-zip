@@ -17,6 +17,7 @@ import Backoffice from './components/Backoffice'
 import Catalogue from './components/Catalogue'
 import Profile from './components/Profile'
 import TarifsManager from './components/TarifsManager'
+import Stats from './components/Stats'
 import DevisCreation from './components/DevisCreation'
 import DevisList from './components/DevisList'
 
@@ -133,6 +134,9 @@ export default function App() {
             <button className={activeView === 'devis' ? 'nav-link active' : 'nav-link'} onClick={() => handleNav('devis')}>
               Devis
             </button>
+            <button className={activeView === 'stats' ? 'nav-link active' : 'nav-link'} onClick={() => handleNav('stats')}>
+              Statistiques
+            </button>
             {isAdmin && (
               <button className={inAdmin ? 'nav-link active' : 'nav-link'} onClick={() => handleNav('admin-users')}>
                 Administration
@@ -205,6 +209,12 @@ export default function App() {
       {activeView === 'devis' && user && (
         <main className="app-centered-wide">
           <DevisList />
+        </main>
+      )}
+
+      {activeView === 'stats' && user && (
+        <main className="app-centered-wide">
+          <Stats />
         </main>
       )}
 
