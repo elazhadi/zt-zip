@@ -890,3 +890,19 @@ body {
 .profile-form input:focus { outline: none; border-color: var(--blue); background: #fff; }
 
 .profile-hint { font-weight: 400; color: var(--gray-400); font-size: 12px; }
+
+/* Fiche atelier */
+.btn-fiche-atelier {
+  margin-left: auto;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #fff;
+  border: 1px solid var(--blue);
+  color: var(--blue);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-fiche-atelier:hover { background: var(--blue); color: #fff; }

@@ -4,6 +4,7 @@ import MiseEnBarreTab from './tabs/MiseEnBarre'
 import VitrageTab from './tabs/Vitrage'
 import AccessoiresTab from './tabs/Accessoires'
 import RecapTab from './tabs/Recap'
+import { printFicheAtelier } from '../utils/ficheAtelier'
 
 const TABS = [
   { id: 'debitage',    label: 'Débitage' },
@@ -23,6 +24,13 @@ export default function ResultsPanel({ results, lot }) {
         <span>📦 {stats.barres} barres</span>
         <span>📏 {stats.metreTotal_m} m de profilé</span>
         <span>♻️ {stats.chuteTotale_m} m de chute ({stats.chutePct}%)</span>
+        <button
+          className="btn-fiche-atelier"
+          onClick={() => printFicheAtelier(results, lot)}
+          title="Ouvrir la fiche de fabrication imprimable"
+        >
+          🖨️ Fiche atelier
+        </button>
       </div>
 
       <div className="tab-bar">
