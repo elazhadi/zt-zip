@@ -99,6 +99,11 @@ ALTER TABLE abaques ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenant
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS vision_enabled BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS max_users INTEGER NOT NULL DEFAULT 5;
 ALTER TABLE coloris ADD COLUMN IF NOT EXISTS nom TEXT NOT NULL DEFAULT '';
--- Note : tenant_gammes vide = toutes les gammes accessibles (comportement par défaut).
--- La restriction initiale ulysse70 du seed a été supprimée (commit après multi-gammes).
--- Pour les tenants existants avec ulysse70 seul : Backoffice → société → Modifier → sauver sans gamme.
+-- Migration : supprime la restriction ulysse70-seul créée par l'ancien seed.
+-- Idempotent : après la première exécution tenant_gammes est vide, le DELETE ne trouve plus rien.
+-- Un tenant_gammes vide signifie "toutes les gammes accessibles".
+DELETE FROM tenant_gammes
+  WHERE gamme_id = 'ulysse70'
+    AND tenant_id NOT IN (
+      SELECT DISTINCT tenant_id FROM tenant_gammes WHERE gamme_id <> 'ulysse70'
+    )
