@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { api } from '../api/client'
 
-const INIT = { gamme: '', config: '', type: 'porte', L: '', H: '', Q: 1, color: '' }
+const INIT = { gamme: '', config: '', type: '', L: '', H: '', Q: 1, color: '' }
 
 export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
   const [gammes, setGammes] = useState([])
@@ -12,25 +12,16 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
 
   useEffect(() => {
     api.listGammes()
-      .then(r => {
-        setGammes(r.gammes)
-        setForm(prev => {
-          if (prev.gamme || !r.gammes.length) return prev
-          const first = r.gammes[0]
-          return { ...prev, gamme: first.id, config: first.configs[0] || '' }
-        })
-      })
+      .then(r => setGammes(r.gammes))
       .catch(() => {})
     api.listColoris().then(r => setColoris(r.coloris)).catch(() => {})
   }, [])
 
-  // Configs proposées = celles de la gamme sélectionnée.
   const configs = useMemo(
     () => gammes.find(g => g.id === form.gamme)?.configs || [],
     [gammes, form.gamme]
   )
 
-  // Pour les gammes frappe, le type est encodé dans le config ID.
   function typeFromFrappeConfig(configId) {
     if (!configId) return null
     if (configId === 'FEN-FIXE') return 'fixe'
@@ -40,20 +31,15 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
     return null
   }
 
-  const isFrappeGamme = useMemo(
-    () => {
-      const g = gammes.find(g => g.id === form.gamme)
-      return g?.configs?.some(c => c.startsWith('FEN-') || c.startsWith('PORTE-'))
-    },
-    [gammes, form.gamme]
-  )
+  const isFrappeGamme = useMemo(() => {
+    const g = gammes.find(g => g.id === form.gamme)
+    return Boolean(g?.configs?.some(c => c.startsWith('FEN-') || c.startsWith('PORTE-')))
+  }, [gammes, form.gamme])
 
-  // Changer de gamme : recale la config sur la première de la nouvelle gamme.
+  // Changer de gamme : réinitialise config et type pour forcer un choix explicite.
   function setGamme(id) {
-    const g = gammes.find(g => g.id === id)
-    const first = g?.configs[0] || ''
-    const derivedType = typeFromFrappeConfig(first)
-    setForm(prev => ({ ...prev, gamme: id, config: first, ...(derivedType ? { type: derivedType } : {}) }))
+    setForm(prev => ({ ...prev, gamme: id, config: '', type: '' }))
+    setErrors(prev => ({ ...prev, gamme: undefined, config: undefined, type: undefined }))
   }
 
   // Pré-remplissage depuis une photo : remplit + surligne les champs lus.
@@ -85,8 +71,10 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
 
   function validate() {
     const e = {}
+    if (!form.gamme) e.gamme = 'Choisir une gamme'
+    if (!isFrappeGamme && !form.type) e.type = "Choisir un type d'ouvrage"
+    if (!form.config) e.config = 'Choisir une configuration'
     const L = Number(form.L), H = Number(form.H), Q = Number(form.Q)
-    if (!form.config) e.config = 'Configuration requise'
     if (!form.L || isNaN(L) || L < 300 || L > 8000) e.L = '300 – 8000 mm'
     if (!form.H || isNaN(H) || H < 300 || H > 8000) e.H = '300 – 8000 mm'
     if (!form.Q || isNaN(Q) || Q < 1 || Q > 99)    e.Q = '1 – 99'
@@ -98,7 +86,8 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
     onAdd({ gamme: form.gamme, config: form.config, type: form.type, L: Number(form.L), H: Number(form.H), Q: Number(form.Q), color: form.color })
-    setForm(prev => ({ ...INIT, gamme: prev.gamme, config: prev.config }))
+    // Conserver gamme + type + config pour faciliter la saisie du prochain châssis similaire.
+    setForm(prev => ({ ...INIT, gamme: prev.gamme, config: prev.config, type: prev.type }))
     setErrors({})
     setHighlighted({})
   }
@@ -116,31 +105,25 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
     <form className="card chassis-form" onSubmit={handleSubmit} noValidate>
       <div className="card-title">Nouveau châssis</div>
 
+      {/* 1. Marque / Gamme */}
       <div className="form-row">
         <label style={{ flex: '1 1 100%' }}>
           Marque / Gamme
           <select value={form.gamme} onChange={e => setGamme(e.target.value)}>
+            <option value="">— Choisir une gamme —</option>
             {gammes.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
           </select>
+          {errors.gamme && <span className="field-err">{errors.gamme}</span>}
         </label>
       </div>
 
-      <div className="form-row">
-        <label>
-          Configuration
-          <select className={cls('config')} value={form.config} onChange={e => {
-            const v = e.target.value
-            const derivedType = typeFromFrappeConfig(v)
-            set('config', v)
-            if (derivedType) setForm(prev => ({ ...prev, config: v, type: derivedType }))
-          }}>
-            {configs.map(c => <option key={c}>{c}</option>)}
-          </select>
-        </label>
-        {!isFrappeGamme && (
-          <label>
+      {/* 2. Type d'ouvrage — uniquement pour les gammes coulissantes */}
+      {!isFrappeGamme && (
+        <div className="form-row">
+          <label style={{ flex: '1 1 100%' }}>
             Type d'ouvrage
             <select value={form.type} onChange={e => set('type', e.target.value)}>
+              <option value="">— Choisir un type —</option>
               <optgroup label="Coulissants">
                 <option value="porte">Porte-fenêtre coulissante</option>
                 <option value="fenetre">Fenêtre coulissante</option>
@@ -154,10 +137,36 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
                 <option value="basculant">Basculant</option>
               </optgroup>
             </select>
+            {errors.type && <span className="field-err">{errors.type}</span>}
           </label>
-        )}
+        </div>
+      )}
+
+      {/* 3. Configuration */}
+      <div className="form-row">
+        <label style={{ flex: '1 1 100%' }}>
+          Configuration
+          <select
+            className={cls('config')}
+            value={form.config}
+            disabled={!form.gamme}
+            onChange={e => {
+              const v = e.target.value
+              const derivedType = typeFromFrappeConfig(v)
+              set('config', v)
+              if (derivedType) setForm(prev => ({ ...prev, config: v, type: derivedType }))
+            }}
+          >
+            <option value="">
+              {form.gamme ? '— Choisir une configuration —' : '— Sélectionner d\'abord une gamme —'}
+            </option>
+            {configs.map(c => <option key={c}>{c}</option>)}
+          </select>
+          {errors.config && <span className="field-err">{errors.config}</span>}
+        </label>
       </div>
 
+      {/* 4. Dimensions */}
       <div className="form-row">
         <label>
           Largeur L (mm)
@@ -183,6 +192,7 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
         </label>
       </div>
 
+      {/* 5. Quantité + Coloris */}
       <div className="form-row">
         <label>
           Quantité
