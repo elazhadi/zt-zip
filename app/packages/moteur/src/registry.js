@@ -70,27 +70,68 @@ function listeGammes() {
   }));
 }
 
-// Catalogue riche pour la page de référence (configs détaillées, abaque, profilés).
+// Catalogue riche pour la page de référence (configs détaillées, abaque, profilés, accessoires).
+// Les profilés et accessoires sont extraits automatiquement depuis les fonctions de l'abaque.
 function catalogueGammes() {
-  return [...GAMMES.values()].map((g) => ({
-    id:       g.id,
-    marque:   g.marque  || '',
-    gamme:    g.gamme   || g.label,
-    label:    g.label,
-    barre:    g.barre,
-    configIds: g.configIds,
-    configs: g.configIds.map((id) => {
-      const c = g.configs[id];
-      return {
-        id,
-        vantaux:    c.vantaux,
-        rails:      c.rails,
-        dormant:    c.dormant,
-        hasJonction: Boolean(c.jonction),
-      };
-    }),
-    refs: g.refOrder || [],
-  }));
+  return [...GAMMES.values()].map((g) => {
+    const order = g.refOrder || [];
+
+    // Profilés : on collecte les refs uniques via debiterChassis sur chaque config.
+    // La désignation est simplifiée (sans suffixe "— haut / bas / G / D").
+    const profilMap = new Map();
+    for (const configId of g.configIds) {
+      try {
+        const sample = { gamme: g.id, config: configId, type: "porte", L: 2400, H: 2200, Q: 1 };
+        const { lignes } = g.debiterChassis(sample);
+        lignes.forEach((l) => {
+          if (!profilMap.has(l.ref)) {
+            const des = l.des
+              .replace(/\s*—\s*(trav\.?\s*)?(haute?|basse?|montant\s*[GgDd]|[GgDd])\s*$/i, "")
+              .trim();
+            profilMap.set(l.ref, {
+              ref:     l.ref,
+              des,
+              coupe:   l.coupe,
+              formule: l.formule,
+              barre:   g.montRefs && g.montRefs.includes(l.ref) ? g.barre.montants : g.barre.standard,
+            });
+          }
+        });
+      } catch { /* config partielle — on ignore */ }
+    }
+    const profils = [...profilMap.values()].sort((a, b) => {
+      const ia = order.indexOf(a.ref), ib = order.indexOf(b.ref);
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+    });
+
+    // Accessoires : refs uniques à travers toutes les configs (Q=1).
+    const accMap = new Map();
+    for (const configId of g.configIds) {
+      try {
+        const sample = { gamme: g.id, config: configId, type: "porte", L: 2400, H: 2200, Q: 1 };
+        g.accessoiresChassis(sample).forEach((a) => {
+          if (!accMap.has(a.ref)) accMap.set(a.ref, { ref: a.ref, des: a.des, unite: a.unite });
+        });
+      } catch { /* pas d'accessoires définis — on ignore */ }
+    }
+    const accessoires = [...accMap.values()];
+
+    return {
+      id:        g.id,
+      marque:    g.marque  || "",
+      gamme:     g.gamme   || g.label,
+      label:     g.label,
+      barre:     g.barre,
+      configIds: g.configIds,
+      configs:   g.configIds.map((id) => {
+        const c = g.configs[id];
+        return { id, vantaux: c.vantaux, rails: c.rails, dormant: c.dormant, hasJonction: Boolean(c.jonction) };
+      }),
+      refs:      order,
+      profils,
+      accessoires,
+    };
+  });
 }
 
 function debiterChassis(c) {

@@ -768,9 +768,20 @@ body {
 }
 .catalogue-gamme-sub { font-size: 12px; color: var(--gray-500); margin-top: -4px; }
 
-.catalogue-configs-grid {
-  display: flex; flex-wrap: wrap; gap: 10px;
+/* Onglets internes à la carte gamme */
+.catalogue-card-tabs {
+  display: flex; gap: 2px; border-bottom: 1px solid var(--gray-200);
+  margin: 0 -18px 12px; padding: 0 18px;
 }
+.catalogue-tab {
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--gray-500); cursor: pointer; font-size: 12px; font-weight: 500;
+  padding: 7px 12px; white-space: nowrap; transition: color .12s;
+}
+.catalogue-tab:hover { color: var(--blue-mid); }
+.catalogue-tab.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+
+.catalogue-configs-grid { display: flex; flex-wrap: wrap; gap: 10px; }
 .catalogue-config-card {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   background: var(--gray-50); border: 1px solid var(--gray-200);
@@ -780,19 +791,23 @@ body {
 .catalogue-config-meta { font-size: 10px; color: var(--gray-500); text-align: center; }
 .schema-svg { width: 90px; height: 60px; display: block; }
 
-.catalogue-refs { margin-top: 4px; }
-.catalogue-refs summary {
-  font-size: 12px; color: var(--gray-500); cursor: pointer;
-  list-style: none; display: flex; align-items: center; gap: 4px;
+/* Table profilés / accessoires dans le catalogue */
+.catalogue-table-wrap { overflow-x: auto; }
+.catalogue-table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
 }
-.catalogue-refs summary::-webkit-details-marker { display: none; }
-.catalogue-refs[open] summary { color: var(--blue); }
-.catalogue-refs-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
-.catalogue-ref-chip {
-  font-family: monospace; font-size: 11px; font-weight: 600;
-  background: var(--blue-bg); color: var(--blue);
-  padding: 2px 7px; border-radius: 4px;
+.catalogue-table th {
+  background: var(--gray-50); padding: 6px 10px; text-align: left;
+  border-bottom: 1px solid var(--gray-200); font-size: 10px; font-weight: 700;
+  color: var(--gray-500); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap;
 }
+.catalogue-table td { padding: 6px 10px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+.catalogue-table tbody tr:hover td { background: var(--gray-50); }
+
+.coupe-cell { display: flex; align-items: center; gap: 6px; }
+.coupe-icon { display: block; flex-shrink: 0; }
+
+.catalogue-empty-sub { font-size: 12px; color: var(--gray-400); padding: 12px 0; }
 
 /* CSS variables extras */
 :root {
