@@ -12,6 +12,7 @@ const visionRoutes = require("./routes/vision");
 const gammesRoutes = require("./routes/gammes");
 const usersRoutes = require("./routes/users");
 const tenantsRoutes = require("./routes/tenants");
+const colorisRoutes = require("./routes/coloris");
 
 // Fabrique l'application Express. Pool et visionClient injectés
 // (production : pg + Anthropic ; tests : pg-mem + client mocké).
@@ -38,6 +39,7 @@ function createApp({ pool, visionClient = null, corsOrigin } = {}) {
   app.use("/api/vision",    visionRoutes(visionClient, auth));
   app.use("/api/users",     usersRoutes(pool, auth));
   app.use("/api/tenants",   tenantsRoutes(pool, auth));
+  app.use("/api/coloris",   colorisRoutes(pool, auth));
 
   // Déploiement tout-en-un : le backend sert aussi le frontend buildé.
   const staticDir = process.env.STATIC_DIR;

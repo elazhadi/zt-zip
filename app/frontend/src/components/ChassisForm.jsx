@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import M from '@ulysse70/moteur'
+import { api } from '../api/client'
 
 // Gammes disponibles (registre du moteur). S'enrichit quand on ajoute une gamme.
 const GAMMES = M.listeGammes()
@@ -13,7 +14,12 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
     return { ...INIT, config: first?.configs[0] || '' }
   })
   const [errors, setErrors] = useState({})
-  const [highlighted, setHighlighted] = useState({}) // champs issus d'une photo
+  const [highlighted, setHighlighted] = useState({})
+  const [coloris, setColoris] = useState([])
+
+  useEffect(() => {
+    api.listColoris().then(r => setColoris(r.coloris)).catch(() => {})
+  }, [])
 
   // Configs proposées = celles de la gamme sélectionnée.
   const configs = useMemo(
@@ -146,11 +152,10 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
         </label>
         <label>
           Coloris
-          <input
-            type="text" value={form.color}
-            onChange={e => set('color', e.target.value)}
-            placeholder="ex. Blanc RAL 9016"
-          />
+          <select value={form.color} onChange={e => set('color', e.target.value)}>
+            <option value="">— Coloris —</option>
+            {coloris.map(c => <option key={c.id} value={c.code}>{c.code}</option>)}
+          </select>
         </label>
       </div>
 

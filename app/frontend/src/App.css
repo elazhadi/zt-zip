@@ -664,6 +664,16 @@ body {
 /* Misc */
 .link-btn { background: none; border: none; color: var(--blue); font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0; font-size: inherit; }
 
+/* ColorisManager */
+.coloris-manager { margin-top: 24px; }
+.coloris-list { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.coloris-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 6px; }
+.coloris-code { font-family: monospace; font-size: 14px; font-weight: 600; color: var(--gray-800); }
+.coloris-empty { color: var(--gray-400); font-size: 13px; padding: 8px 0; }
+.coloris-add-form { display: flex; gap: 8px; }
+.coloris-add-form input { flex: 1; padding: 8px 10px; border: 1px solid var(--gray-200); border-radius: 6px; font-size: 14px; }
+.coloris-add-form input:focus { outline: none; border-color: var(--blue-light); }
+
 /* CSS variables extras */
 :root {
   --text-muted:     var(--gray-400);

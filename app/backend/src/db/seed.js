@@ -106,7 +106,27 @@ async function seed(pool, opts = {}) {
     );
   }
 
+  // Coloris par défaut pour les tenants qui n'en ont pas encore.
+  await seedColoris(pool);
+
   return { created: true, adminEmail, adminPass, siteId, tenantId };
 }
 
-module.exports = { seed, ABAQUE_ULYSSE70 };
+const DEFAULT_COLORIS = ['9010', '9005', 'X7760', 'SX3714', 'SX3724'];
+
+// Insère les coloris par défaut pour chaque tenant qui n'en possède aucun.
+async function seedColoris(pool) {
+  const tenants = await pool.query(
+    "SELECT id FROM tenants WHERE id NOT IN (SELECT DISTINCT tenant_id FROM coloris)"
+  );
+  for (const t of tenants.rows) {
+    for (let i = 0; i < DEFAULT_COLORIS.length; i++) {
+      await pool.query(
+        "INSERT INTO coloris (tenant_id, code, ordre) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+        [t.id, DEFAULT_COLORIS[i], i]
+      );
+    }
+  }
+}
+
+module.exports = { seed, seedColoris, ABAQUE_ULYSSE70 };

@@ -73,6 +73,15 @@ CREATE TABLE IF NOT EXISTS abaques (
   actif     BOOLEAN NOT NULL DEFAULT TRUE
 );
 
+-- Référentiel de coloris par tenant (éditable par l'admin).
+CREATE TABLE IF NOT EXISTS coloris (
+  id        SERIAL PRIMARY KEY,
+  tenant_id INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  code      TEXT NOT NULL,
+  ordre     INTEGER NOT NULL DEFAULT 0,
+  UNIQUE(tenant_id, code)
+);
+
 -- Upgrade d'installations existantes (idempotent sur PostgreSQL 9.6+).
 -- Sur pg-mem (tests), ignorés si la colonne existe déjà (cf. migrate.js).
 ALTER TABLE sites ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);

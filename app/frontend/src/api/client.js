@@ -81,5 +81,10 @@ export const api = {
     return req("POST", "/vision/lire", fd, { isForm: true });
   },
 
+  // Coloris
+  listColoris:   ()     => req("GET",    "/coloris"),
+  addColoris:    (code) => req("POST",   "/coloris", { code }),
+  deleteColoris: (id)   => req("DELETE", `/coloris/${id}`),
+
   health: () => req("GET", "/health"),
 };
