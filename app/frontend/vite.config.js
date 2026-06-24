@@ -12,6 +12,11 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    // Surveiller les fichiers du package moteur (symlink workspace) pour
+    // invalider le cache de pré-compilation quand une gamme est ajoutée.
+    watch: {
+      ignored: ['!**/node_modules/@ulysse70/**'],
+    },
   },
   optimizeDeps: {
     include: ['@ulysse70/moteur'],
