@@ -34,7 +34,7 @@ module.exports = function authRoutes(pool, { authenticate, requireRole }) {
         role:           user.role,
         site_id:        user.site_id,
         tenant_id:      user.tenant_id,
-        vision_enabled: user.vision_enabled ?? false,
+        vision_enabled: user.vision_enabled !== false,
       },
     });
   });
@@ -55,7 +55,7 @@ module.exports = function authRoutes(pool, { authenticate, requireRole }) {
         role:           user.role,
         site_id:        user.site_id,
         tenant_id:      user.tenant_id,
-        vision_enabled: user.vision_enabled ?? false,
+        vision_enabled: user.vision_enabled !== false,
       },
     });
   });
