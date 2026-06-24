@@ -1,17 +1,40 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const CONFIGS = ['2VT/2R', '3VT/2R', '4VT/2R', '3VT/3R', '6VT/3R', '4VT/4R', '8VT/4R']
 
 const INIT = { config: '3VT/3R', type: 'porte', L: '', H: '', Q: 1, color: '' }
 
-export default function ChassisForm({ onAdd }) {
+export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
   const [form, setForm] = useState(INIT)
   const [errors, setErrors] = useState({})
+  const [highlighted, setHighlighted] = useState({}) // champs issus d'une photo
+
+  // Pré-remplissage depuis une photo : remplit + surligne les champs lus.
+  useEffect(() => {
+    if (!prefill) return
+    setForm(prev => ({
+      ...prev,
+      config: prefill.config || prev.config,
+      L: prefill.L !== '' && prefill.L != null ? String(prefill.L) : prev.L,
+      H: prefill.H !== '' && prefill.H != null ? String(prefill.H) : prev.H,
+      Q: prefill.Q != null ? prefill.Q : prev.Q,
+    }))
+    setHighlighted({
+      config: Boolean(prefill.config),
+      L: prefill.L !== '' && prefill.L != null,
+      H: prefill.H !== '' && prefill.H != null,
+      Q: prefill.Q != null,
+    })
+    onPrefillConsumed?.()
+  }, [prefill]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function set(k, v) {
     setForm(prev => ({ ...prev, [k]: v }))
     if (errors[k]) setErrors(prev => ({ ...prev, [k]: undefined }))
+    if (highlighted[k]) setHighlighted(prev => ({ ...prev, [k]: false }))
   }
+
+  const cls = (k) => (highlighted[k] ? 'field-prefilled' : undefined)
 
   function validate() {
     const e = {}
@@ -29,6 +52,7 @@ export default function ChassisForm({ onAdd }) {
     onAdd({ config: form.config, type: form.type, L: Number(form.L), H: Number(form.H), Q: Number(form.Q), color: form.color })
     setForm(INIT)
     setErrors({})
+    setHighlighted({})
   }
 
   return (
@@ -38,7 +62,7 @@ export default function ChassisForm({ onAdd }) {
       <div className="form-row">
         <label>
           Configuration
-          <select value={form.config} onChange={e => set('config', e.target.value)}>
+          <select className={cls('config')} value={form.config} onChange={e => set('config', e.target.value)}>
             {CONFIGS.map(c => <option key={c}>{c}</option>)}
           </select>
         </label>
@@ -55,6 +79,7 @@ export default function ChassisForm({ onAdd }) {
         <label>
           Largeur L (mm)
           <input
+            className={cls('L')}
             type="number" value={form.L}
             onChange={e => set('L', e.target.value)}
             placeholder="ex. 2895"
@@ -65,6 +90,7 @@ export default function ChassisForm({ onAdd }) {
         <label>
           Hauteur H (mm)
           <input
+            className={cls('H')}
             type="number" value={form.H}
             onChange={e => set('H', e.target.value)}
             placeholder="ex. 2500"
@@ -78,6 +104,7 @@ export default function ChassisForm({ onAdd }) {
         <label>
           Quantité
           <input
+            className={cls('Q')}
             type="number" value={form.Q}
             onChange={e => set('Q', e.target.value)}
             min="1" max="99" step="1"

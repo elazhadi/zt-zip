@@ -2,10 +2,15 @@
   "name": "ulysse70-workspace",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["packages/*", "frontend"],
+  "workspaces": ["packages/*", "backend", "frontend"],
   "scripts": {
-    "test": "npm run test --workspace=packages/moteur",
-    "dev": "npm run dev --workspace=frontend",
-    "build": "npm run build --workspace=frontend"
+    "test": "npm run test --workspace=packages/moteur && npm run test --workspace=backend",
+    "test:moteur": "npm run test --workspace=packages/moteur",
+    "test:backend": "npm run test --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspace=frontend",
+    "migrate": "npm run migrate --workspace=backend",
+    "seed": "npm run seed --workspace=backend"
   }
 }

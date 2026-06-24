@@ -51,6 +51,87 @@ body {
 .app-header h1 { font-size: 20px; font-weight: 700; letter-spacing: .02em; }
 .app-header p { font-size: 13px; opacity: .8; }
 
+/* Nav + user menu in header */
+.app-nav { display: flex; gap: 4px; margin-left: 8px; }
+.app-user { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.user-badge { font-size: 12px; opacity: .85; white-space: nowrap; }
+.nav-link {
+  background: none;
+  border: none;
+  color: white;
+  opacity: .8;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background .15s, opacity .15s;
+}
+.nav-link:hover { opacity: 1; background: rgba(255,255,255,.12); }
+.nav-link.active { opacity: 1; background: rgba(255,255,255,.18); font-weight: 600; }
+
+/* Centered single-column layouts (login, history) */
+.app-centered { display: flex; justify-content: center; padding: 40px 16px; }
+.app-centered-wide { padding: 16px; }
+.app-centered-wide .history-card { max-width: 1000px; margin: 0 auto; }
+
+/* Login */
+.login-card { width: 360px; max-width: 100%; display: flex; flex-direction: column; gap: 14px; }
+.login-label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: .04em; }
+.login-label input { padding: 9px 11px; border: 1px solid var(--gray-200); border-radius: 6px; font-size: 14px; }
+.login-label input:focus { outline: none; border-color: var(--blue-light); box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+.login-hint { font-size: 12px; color: var(--gray-400); line-height: 1.5; }
+
+/* History */
+.history-search { display: flex; gap: 8px; margin-bottom: 16px; }
+.history-search input { flex: 1; padding: 9px 11px; border: 1px solid var(--gray-200); border-radius: 6px; font-size: 14px; }
+.history-search input:focus { outline: none; border-color: var(--blue-light); box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+.btn-link {
+  background: none; border: none; color: var(--blue); cursor: pointer;
+  font-size: 13px; font-weight: 600; padding: 2px 8px; border-radius: 4px;
+}
+.btn-link:hover { background: var(--blue-bg); }
+
+/* Photo upload */
+.photo-drop {
+  display: block; text-align: center; padding: 16px;
+  border: 2px dashed var(--gray-300); border-radius: 8px;
+  color: var(--blue); font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.photo-drop:hover { border-color: var(--blue-light); background: var(--blue-bg); }
+.photo-hint { font-size: 12px; color: var(--gray-400); margin-top: 8px; }
+.photo-result { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.photo-warn { font-size: 12px; color: #92400e; background: #fef3c7; padding: 6px 10px; border-radius: 6px; }
+.photo-avert { font-size: 11px; color: var(--gray-500); }
+.photo-chassis { border: 1px solid var(--gray-200); border-radius: 6px; padding: 8px 10px; }
+.photo-chassis-vals { display: flex; gap: 12px; font-size: 13px; font-weight: 600; flex-wrap: wrap; }
+.photo-annot { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+.btn-prefill {
+  margin-top: 6px; background: var(--blue-bg); color: var(--blue);
+  border: none; border-radius: 6px; padding: 6px 10px; font-size: 12px;
+  font-weight: 600; cursor: pointer;
+}
+.btn-prefill:hover { background: #dbeafe; }
+
+/* Pre-filled (from photo) highlight */
+.field-prefilled {
+  background: #fffbeb !important;
+  border-color: #fbbf24 !important;
+  box-shadow: 0 0 0 2px rgba(251,191,36,.25) !important;
+}
+
+/* Sidebar actions */
+.sidebar-actions { display: flex; flex-direction: column; gap: 8px; }
+.btn-save {
+  width: 100%; padding: 10px; background: white; color: var(--blue);
+  border: 1.5px solid var(--blue-light); border-radius: 6px;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s;
+}
+.btn-save:hover:not(:disabled) { background: var(--blue-bg); }
+.btn-save:disabled { color: var(--gray-400); border-color: var(--gray-200); cursor: not-allowed; }
+.save-msg { font-size: 13px; color: var(--green); font-weight: 600; text-align: center; }
+
 .app-main {
   display: flex;
   gap: 16px;
