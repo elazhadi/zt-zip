@@ -75,7 +75,7 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
     setHighlighted({})
   }
 
-  const showGamme = GAMMES.length > 1
+  const showGamme = GAMMES.length > 0
 
   return (
     <form className="card chassis-form" onSubmit={handleSubmit} noValidate>

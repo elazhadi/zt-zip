@@ -1,9 +1,7 @@
 const express = require("express");
-const { signToken, hashPassword, checkPassword } = require("../auth/jwt");
-const { authenticate, requireRole } = require("../middleware/auth");
+const { signToken, generateSessionKey, hashPassword, checkPassword } = require("../auth/jwt");
 
-// Routes d'authentification et de gestion des comptes.
-module.exports = function authRoutes(pool) {
+module.exports = function authRoutes(pool, { authenticate, requireRole }) {
   const router = express.Router();
 
   // POST /api/auth/login — { email, password } → { token, user }
@@ -12,44 +10,95 @@ module.exports = function authRoutes(pool) {
     if (!email || !password) {
       return res.status(400).json({ error: "email et password requis" });
     }
-    const r = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+    const r = await pool.query(
+      "SELECT u.*, t.vision_enabled FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.email = $1",
+      [email]
+    );
     const user = r.rows[0];
     if (!user || !(await checkPassword(password, user.hash_mdp))) {
       return res.status(401).json({ error: "Identifiants incorrects" });
     }
-    const token = signToken(user);
+    if (!user.actif) {
+      return res.status(403).json({ error: "Compte désactivé — contactez votre administrateur" });
+    }
+    // Nouvelle session : invalide toute session précédente.
+    const sessionKey = generateSessionKey();
+    await pool.query("UPDATE users SET session_key = $1 WHERE id = $2", [sessionKey, user.id]);
+    const token = signToken(user, sessionKey);
     res.json({
       token,
-      user: { id: user.id, nom: user.nom, email: user.email, role: user.role, site_id: user.site_id },
+      user: {
+        id:             user.id,
+        nom:            user.nom,
+        email:          user.email,
+        role:           user.role,
+        site_id:        user.site_id,
+        tenant_id:      user.tenant_id,
+        vision_enabled: user.vision_enabled ?? false,
+      },
     });
   });
 
   // GET /api/auth/me — profil courant
-  router.get("/me", authenticate, (req, res) => {
-    res.json({ user: req.user });
+  router.get("/me", authenticate, async (req, res) => {
+    const r = await pool.query(
+      "SELECT u.*, t.vision_enabled FROM users u LEFT JOIN tenants t ON t.id = u.tenant_id WHERE u.id = $1",
+      [req.user.id]
+    );
+    const user = r.rows[0];
+    if (!user) return res.status(404).json({ error: "Utilisateur introuvable" });
+    res.json({
+      user: {
+        id:             user.id,
+        nom:            user.nom,
+        email:          user.email,
+        role:           user.role,
+        site_id:        user.site_id,
+        tenant_id:      user.tenant_id,
+        vision_enabled: user.vision_enabled ?? false,
+      },
+    });
   });
 
-  // POST /api/auth/register — création d'un compte (admin/responsable uniquement)
+  // POST /api/auth/logout — invalide la session courante
+  router.post("/logout", authenticate, async (req, res) => {
+    await pool.query("UPDATE users SET session_key = NULL WHERE id = $1", [req.user.id]);
+    res.json({ ok: true });
+  });
+
+  // POST /api/auth/register — création d'un compte dans le même tenant (admin/responsable)
   // { nom, email, password, role, site_id }
-  router.post("/register", authenticate, requireRole("admin", "responsable"), async (req, res) => {
+  router.post("/register", authenticate, requireRole("admin", "responsable", "super_admin"), async (req, res) => {
     const { nom, email, password, role = "vendeur", site_id } = req.body || {};
     if (!nom || !email || !password) {
       return res.status(400).json({ error: "nom, email, password requis" });
     }
-    if (!["vendeur", "responsable", "admin"].includes(role)) {
+    const validRoles = ["vendeur", "responsable", "admin"];
+    if (!validRoles.includes(role)) {
       return res.status(400).json({ error: "Rôle invalide" });
     }
-    // Un responsable ne peut créer que dans son propre site et ne peut pas créer d'admin.
     let targetSite = site_id;
+    let targetTenant = req.user.tenant_id;
     if (req.user.role === "responsable") {
-      targetSite = req.user.site_id;
+      targetSite   = req.user.site_id;
+      targetTenant = req.user.tenant_id;
       if (role === "admin") return res.status(403).json({ error: "Un responsable ne peut pas créer d'admin" });
+    }
+    // Vérifie la limite max_users du tenant.
+    const countR = await pool.query(
+      "SELECT COUNT(*) AS n FROM users WHERE tenant_id = $1 AND actif = TRUE",
+      [targetTenant]
+    );
+    const tenantR = await pool.query("SELECT max_users FROM tenants WHERE id = $1", [targetTenant]);
+    const maxUsers = tenantR.rows[0]?.max_users ?? 5;
+    if (Number(countR.rows[0].n) >= maxUsers) {
+      return res.status(403).json({ error: `Limite de ${maxUsers} utilisateurs atteinte pour ce compte` });
     }
     try {
       const hash = await hashPassword(password);
       const r = await pool.query(
-        "INSERT INTO users (site_id, nom, email, hash_mdp, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, nom, email, role, site_id",
-        [targetSite || null, nom, email, hash, role]
+        "INSERT INTO users (tenant_id, site_id, nom, email, hash_mdp, role) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, nom, email, role, site_id, tenant_id",
+        [targetTenant, targetSite || null, nom, email, hash, role]
       );
       res.status(201).json({ user: r.rows[0] });
     } catch (e) {

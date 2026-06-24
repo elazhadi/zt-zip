@@ -7,8 +7,6 @@ const schemaPath = path.join(__dirname, "schema.sql");
 // Les statements sont exécutés un par un pour rester compatible pg-mem (tests).
 async function migrate(pool) {
   const sql = fs.readFileSync(schemaPath, "utf8");
-  // Retire les lignes entièrement en commentaire (les commentaires en fin de
-  // ligne sont conservés : le moteur SQL les gère), puis découpe sur ';'.
   const cleaned = sql
     .split("\n")
     .filter((line) => !/^\s*--/.test(line))
@@ -18,7 +16,15 @@ async function migrate(pool) {
     .map((s) => s.trim())
     .filter((s) => s.length);
   for (const stmt of statements) {
-    await pool.query(stmt);
+    try {
+      await pool.query(stmt);
+    } catch (e) {
+      // ALTER TABLE ADD COLUMN IF NOT EXISTS peut échouer sur pg-mem quand la
+      // colonne existe déjà dans le CREATE TABLE (installations fraîches en test).
+      // La colonne est déjà là — on ignore.
+      if (/^ALTER TABLE/i.test(stmt) && /already exists/i.test(e.message)) continue;
+      throw e;
+    }
   }
   return statements.length;
 }

@@ -1,41 +1,39 @@
 const express = require("express");
 const M = require("@ulysse70/moteur");
-const { authenticate } = require("../middleware/auth");
 
 const { debiterChantier } = M;
 
-// Construit la clause de visibilité selon le rôle :
-//  - vendeur     : ses propres chantiers
-//  - responsable : tous les chantiers de son site
-//  - admin       : tout
+// Clause de visibilité selon rôle + tenant.
 function scopeClause(user, params) {
-  if (user.role === "admin") return { where: "", params };
+  if (user.role === "super_admin") return { where: "", params };
+  params.push(user.tenant_id);
+  const tenantFilter = `s.tenant_id = $${params.length}`;
+  if (user.role === "admin") return { where: tenantFilter, params };
   if (user.role === "responsable") {
     params.push(user.site_id);
-    return { where: `c.site_id = $${params.length}`, params };
+    return { where: `${tenantFilter} AND c.site_id = $${params.length}`, params };
   }
   params.push(user.id);
-  return { where: `c.user_id = $${params.length}`, params };
+  return { where: `${tenantFilter} AND c.user_id = $${params.length}`, params };
 }
 
-// Mappe une ligne chassis DB → entrée moteur { config, type, L, H, Q, color }.
 function toMoteur(row) {
   return {
-    gamme: row.gamme || "ulysse70",
+    gamme:  row.gamme || "ulysse70",
     config: row.config,
-    type: row.type_ouvrage,
-    L: row.largeur,
-    H: row.hauteur,
-    Q: row.quantite,
-    color: row.coloris || "",
+    type:   row.type_ouvrage,
+    L:      row.largeur,
+    H:      row.hauteur,
+    Q:      row.quantite,
+    color:  row.coloris || "",
   };
 }
 
-module.exports = function chantiersRoutes(pool) {
+module.exports = function chantiersRoutes(pool, { authenticate }) {
   const router = express.Router();
   router.use(authenticate);
 
-  // GET /api/chantiers?q=ref&from=YYYY-MM-DD&to=...  — liste/recherche (historique)
+  // GET /api/chantiers?q=ref&from=YYYY-MM-DD&to=...
   router.get("/", async (req, res) => {
     const params = [];
     const filters = [];
@@ -72,7 +70,7 @@ module.exports = function chantiersRoutes(pool) {
     res.json({ chantiers: r.rows });
   });
 
-  // GET /api/chantiers/:id — détail + châssis + recalcul du débitage par le moteur
+  // GET /api/chantiers/:id
   router.get("/:id", async (req, res) => {
     const chantier = await loadVisible(pool, req.user, req.params.id);
     if (!chantier) return res.status(404).json({ error: "Chantier introuvable" });
@@ -86,13 +84,12 @@ module.exports = function chantiersRoutes(pool) {
     res.json({ chantier, chassis: ch.rows, resultats });
   });
 
-  // POST /api/chantiers — { reference_client, statut?, chassis: [...] }
+  // POST /api/chantiers
   router.post("/", async (req, res) => {
     const { reference_client, statut = "brouillon", chassis = [] } = req.body || {};
     if (!Array.isArray(chassis) || chassis.length === 0) {
       return res.status(400).json({ error: "Au moins un châssis requis" });
     }
-    // Valide les cotes via le moteur (lève si config inconnue / lot vide).
     try {
       debiterChantier(chassis.map(normalizeChassisInput));
     } catch (e) {
@@ -100,7 +97,7 @@ module.exports = function chantiersRoutes(pool) {
     }
 
     const cr = await pool.query(
-      "INSERT INTO chantiers (site_id, user_id, reference_client, statut) VALUES ($1, $2, $3, $4) RETURNING *",
+      "INSERT INTO chantiers (site_id, user_id, reference_client, statut) VALUES ($1,$2,$3,$4) RETURNING *",
       [req.user.site_id, req.user.id, reference_client || null, statut]
     );
     const chantier = cr.rows[0];
@@ -109,14 +106,14 @@ module.exports = function chantiersRoutes(pool) {
     for (const c of chassis) {
       await pool.query(
         `INSERT INTO chassis (chantier_id, repere, gamme, config, type_ouvrage, largeur, hauteur, quantite, coloris)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
         [chantier.id, repere++, c.gamme || "ulysse70", c.config, c.type, c.L, c.H, c.Q || 1, c.color || null]
       );
     }
     res.status(201).json({ chantier });
   });
 
-  // PATCH /api/chantiers/:id — maj référence/statut (remplacement des châssis optionnel)
+  // PATCH /api/chantiers/:id
   router.patch("/:id", async (req, res) => {
     const chantier = await loadVisible(pool, req.user, req.params.id);
     if (!chantier) return res.status(404).json({ error: "Chantier introuvable" });
@@ -141,7 +138,7 @@ module.exports = function chantiersRoutes(pool) {
       for (const c of chassis) {
         await pool.query(
           `INSERT INTO chassis (chantier_id, repere, gamme, config, type_ouvrage, largeur, hauteur, quantite, coloris)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
           [chantier.id, repere++, c.gamme || "ulysse70", c.config, c.type, c.L, c.H, c.Q || 1, c.color || null]
         );
       }
@@ -161,24 +158,28 @@ module.exports = function chantiersRoutes(pool) {
   return router;
 };
 
-// Normalise une entrée frontend (L/H/Q peuvent arriver en chaîne) vers le moteur.
 function normalizeChassisInput(c) {
   return {
-    gamme: c.gamme || "ulysse70",
+    gamme:  c.gamme || "ulysse70",
     config: c.config,
-    type: c.type,
-    L: Number(c.L),
-    H: Number(c.H),
-    Q: Number(c.Q) || 1,
-    color: c.color || "",
+    type:   c.type,
+    L:      Number(c.L),
+    H:      Number(c.H),
+    Q:      Number(c.Q) || 1,
+    color:  c.color || "",
   };
 }
 
-// Charge un chantier en respectant la visibilité du rôle.
+// Charge un chantier en respectant la visibilité du rôle et l'isolation tenant.
 async function loadVisible(pool, user, id) {
-  const r = await pool.query("SELECT * FROM chantiers WHERE id = $1", [id]);
+  const r = await pool.query(
+    "SELECT c.*, s.tenant_id AS site_tenant_id FROM chantiers c JOIN sites s ON s.id = c.site_id WHERE c.id = $1",
+    [id]
+  );
   const chantier = r.rows[0];
   if (!chantier) return null;
+  if (user.role === "super_admin") return chantier;
+  if (Number(chantier.site_tenant_id) !== Number(user.tenant_id)) return null;
   if (user.role === "admin") return chantier;
   if (user.role === "responsable") return chantier.site_id === user.site_id ? chantier : null;
   return chantier.user_id === user.id ? chantier : null;

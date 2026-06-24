@@ -1,9 +1,6 @@
-// Client API léger pour le backend ULYSSE 70.
-// L'URL de base vient de VITE_API_URL (défaut : /api, proxifié par nginx en prod
-// ou par le proxy Vite en dev).
 const BASE = import.meta.env.VITE_API_URL || "/api";
 
-const TOKEN_KEY = "ulysse70_token";
+const TOKEN_KEY = "gabarys_token";
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -20,7 +17,7 @@ async function req(method, path, body, { isForm = false } = {}) {
 
   let payload;
   if (isForm) {
-    payload = body; // FormData : ne pas fixer Content-Type (le navigateur s'en charge)
+    payload = body;
   } else if (body !== undefined) {
     headers["Content-Type"] = "application/json";
     payload = JSON.stringify(body);
@@ -40,26 +37,41 @@ async function req(method, path, body, { isForm = false } = {}) {
 
 export const api = {
   // Auth
-  login: (email, password) => req("POST", "/auth/login", { email, password }),
-  me: () => req("GET", "/auth/me"),
+  login:    (email, password) => req("POST", "/auth/login", { email, password }),
+  me:       () => req("GET", "/auth/me"),
+  logout:   () => req("POST", "/auth/logout"),
   register: (payload) => req("POST", "/auth/register", payload),
 
   // Sites
-  listSites: () => req("GET", "/sites"),
+  listSites:   () => req("GET", "/sites"),
+  createSite:  (data) => req("POST", "/sites", data),
+  updateSite:  (id, data) => req("PATCH", `/sites/${id}`, data),
 
-  // Chantiers (historique)
+  // Users (admin)
+  listUsers:      () => req("GET", "/users"),
+  createUser:     (data) => req("POST", "/users", data),
+  updateUser:     (id, data) => req("PATCH", `/users/${id}`, data),
+  deactivateUser: (id) => req("DELETE", `/users/${id}`),
+
+  // Tenants (super_admin backoffice)
+  listTenants:   () => req("GET", "/tenants"),
+  getTenant:     (id) => req("GET", `/tenants/${id}`),
+  createTenant:  (data) => req("POST", "/tenants", data),
+  updateTenant:  (id, data) => req("PATCH", `/tenants/${id}`, data),
+
+  // Chantiers
   listChantiers: (params = {}) => {
     const qs = new URLSearchParams(
       Object.entries(params).filter(([, v]) => v != null && v !== "")
     ).toString();
     return req("GET", `/chantiers${qs ? `?${qs}` : ""}`);
   },
-  getChantier: (id) => req("GET", `/chantiers/${id}`),
+  getChantier:    (id) => req("GET", `/chantiers/${id}`),
   createChantier: (payload) => req("POST", "/chantiers", payload),
   updateChantier: (id, payload) => req("PATCH", `/chantiers/${id}`, payload),
   deleteChantier: (id) => req("DELETE", `/chantiers/${id}`),
 
-  // Débitage côté serveur (recalcul fiable)
+  // Débitage côté serveur
   debiter: (chassis) => req("POST", "/debitage", { chassis }),
 
   // Lecture croquis (photo → vision → pré-remplissage)
