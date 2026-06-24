@@ -1,14 +1,29 @@
 const express = require("express");
 
+const DEFAULT_COLORIS = ['9010', '9005', 'X7760', 'SX3714', 'SX3724'];
+
 module.exports = function colorisRoutes(pool, { authenticate, requireRole }) {
   const router = express.Router();
 
-  // GET /api/coloris
+  // GET /api/coloris — auto-seed les défauts si le tenant n'en a aucun.
   router.get("/", authenticate, async (req, res) => {
-    const r = await pool.query(
+    const tid = req.user.tenant_id;
+    let r = await pool.query(
       "SELECT id, code, ordre FROM coloris WHERE tenant_id = $1 ORDER BY ordre, code",
-      [req.user.tenant_id]
+      [tid]
     );
+    if (r.rows.length === 0 && tid) {
+      for (let i = 0; i < DEFAULT_COLORIS.length; i++) {
+        await pool.query(
+          "INSERT INTO coloris (tenant_id, code, ordre) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+          [tid, DEFAULT_COLORIS[i], i]
+        );
+      }
+      r = await pool.query(
+        "SELECT id, code, ordre FROM coloris WHERE tenant_id = $1 ORDER BY ordre, code",
+        [tid]
+      );
+    }
     res.json({ coloris: r.rows });
   });
 
