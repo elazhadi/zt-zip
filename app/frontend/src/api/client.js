@@ -71,6 +71,12 @@ export const api = {
     return req("GET", `/chantiers${qs ? `?${qs}` : ""}`);
   },
   getChantier:    (id) => req("GET", `/chantiers/${id}`),
+  exportChantiers: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v != null && v !== '')
+    ).toString()
+    return req("GET", `/chantiers/export${qs ? `?${qs}` : ''}`)
+  },
   createChantier: (payload) => req("POST", "/chantiers", payload),
   updateChantier: (id, payload) => req("PATCH", `/chantiers/${id}`, payload),
   deleteChantier: (id) => req("DELETE", `/chantiers/${id}`),

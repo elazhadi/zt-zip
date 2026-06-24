@@ -70,6 +70,61 @@ module.exports = function chantiersRoutes(pool, { authenticate }) {
     res.json({ chantiers: r.rows });
   });
 
+  // GET /api/chantiers/export?gamme=&from=&to=  — export brut chantiers+chassis
+  router.get("/export", async (req, res) => {
+    const params = [];
+    const filters = [];
+    const scoped = scopeClause(req.user, params);
+    if (scoped.where) filters.push(scoped.where);
+
+    if (req.query.gamme) {
+      params.push(req.query.gamme);
+      filters.push(`ch.gamme = $${params.length}`);
+    }
+    if (req.query.from) {
+      params.push(req.query.from);
+      filters.push(`c.date_creation >= $${params.length}`);
+    }
+    if (req.query.to) {
+      params.push(req.query.to);
+      filters.push(`c.date_creation <= $${params.length}`);
+    }
+
+    const whereSql = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+    const r = await pool.query(
+      `SELECT c.id, c.reference_client, c.statut, c.date_creation,
+              u.nom AS vendeur_nom, s.nom AS site_nom,
+              ch.repere, ch.gamme, ch.config, ch.type_ouvrage,
+              ch.largeur, ch.hauteur, ch.quantite, ch.coloris
+         FROM chantiers c
+         JOIN users u ON u.id = c.user_id
+         JOIN sites s ON s.id = c.site_id
+         LEFT JOIN chassis ch ON ch.chantier_id = c.id
+         ${whereSql}
+         ORDER BY c.date_creation DESC, c.id, ch.repere`,
+      params
+    );
+
+    const map = new Map();
+    for (const row of r.rows) {
+      if (!map.has(row.id)) {
+        map.set(row.id, {
+          id: row.id, reference_client: row.reference_client, statut: row.statut,
+          date_creation: row.date_creation, vendeur_nom: row.vendeur_nom,
+          site_nom: row.site_nom, chassis: [],
+        });
+      }
+      if (row.repere != null) {
+        map.get(row.id).chassis.push({
+          repere: row.repere, gamme: row.gamme, config: row.config,
+          type_ouvrage: row.type_ouvrage, largeur: row.largeur,
+          hauteur: row.hauteur, quantite: row.quantite, coloris: row.coloris,
+        });
+      }
+    }
+    res.json({ chantiers: Array.from(map.values()) });
+  });
+
   // GET /api/chantiers/:id
   router.get("/:id", async (req, res) => {
     const chantier = await loadVisible(pool, req.user, req.params.id);
