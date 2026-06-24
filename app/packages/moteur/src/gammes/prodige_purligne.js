@@ -57,7 +57,31 @@ function vitrageChassis(c) {
   return { larg: round1(a.vitL(c.L)), haut: round1(a.vitH(c.H)), qte: a.vitQ * c.Q };
 }
 
-function accessoiresChassis() { return []; }
+function accessoiresChassis(c) {
+  const a = CONFIGS[c.config], v = a.vantaux, Q = c.Q, acc = [];
+  const add = (ref, des, qte, unite) => { if (qte > 0) acc.push({ ref, des, qte: qte * Q, unite }); };
+
+  add("SOT_6302",    "Galet double 150 kg",                       v,         "unité");
+  add("1303",        "Équerre dormant à pion 36×10",               8,         "unité");
+  add("BU_6051",     "Bouchon dormant 6051/6052 (2R)",             2,         "unité");
+  if (a.rails === 2) {
+    add("6310",      "Kit d'étanchéité 2 rails",                   1,         "kit");
+    add("6310BIS",   "Complément étanchéité 2 rails",              1,         "kit");
+  } else {
+    add("6311",      "Kit d'étanchéité 3 rails",                   1,         "kit");
+  }
+  if (a.jonction) add("PP_CB4V/PRD", "Bouchon profil jonction 4 vantaux",   1, "unité");
+  add("6319",        "Bouchon montant latéral",                    a.latQ,    "lot");
+  add("6315",        "Bouchon montant central",                    a.centrQ,  "lot");
+  add("6312",        "Busette de drainage",                        2,         "unité");
+  add("6318",        "Clapet anti-retour à bille",                 2,         "unité");
+  add("BUT0195",     "Butée coulissant",                           2,         "unité");
+  add("S076471P",    "Serrure VERSUS cache",                       1,         "unité");
+  add("FPM6307",     "Fermeture ALPHA manuelle + gâche",           1,         "unité");
+  add("33.705",      "Joint brosse 7×5 mm",
+                     Math.ceil(c.H / 1000 * 1.1 * v),             "ml");
+  return acc;
+}
 
 module.exports = {
   id: "prodige_purligne",
