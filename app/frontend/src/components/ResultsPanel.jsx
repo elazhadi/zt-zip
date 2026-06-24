@@ -14,7 +14,7 @@ const TABS = [
   { id: 'recap',       label: 'Récap complet' },
 ]
 
-export default function ResultsPanel({ results, lot }) {
+export default function ResultsPanel({ results, lot, refClient = '' }) {
   const [tab, setTab] = useState('debitage')
   const { stats } = results
 
@@ -26,7 +26,7 @@ export default function ResultsPanel({ results, lot }) {
         <span>♻️ {stats.chuteTotale_m} m de chute ({stats.chutePct}%)</span>
         <button
           className="btn-fiche-atelier"
-          onClick={() => printFicheAtelier(results, lot)}
+          onClick={() => printFicheAtelier(results, lot, refClient)}
           title="Ouvrir la fiche de fabrication imprimable"
         >
           🖨️ Fiche atelier
@@ -50,7 +50,7 @@ export default function ResultsPanel({ results, lot }) {
         {tab === 'barres'      && <MiseEnBarreTab optim={results.optim} stats={results.stats} />}
         {tab === 'vitrage'     && <VitrageTab vitrage={results.vitrage} />}
         {tab === 'accessoires' && <AccessoiresTab accessoires={results.accessoires} />}
-        {tab === 'recap'       && <RecapTab results={results} lot={lot} />}
+        {tab === 'recap'       && <RecapTab results={results} lot={lot} refClient={refClient} />}
       </div>
     </div>
   )

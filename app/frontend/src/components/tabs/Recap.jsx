@@ -1,4 +1,4 @@
-import { exportPDF, exportXLSX } from '../../utils/exports'
+import { exportPDF, exportPDFSimple, exportXLSX } from '../../utils/exports'
 import MiseEnBarreTab from './MiseEnBarre'
 import VitrageTab from './Vitrage'
 import AccessoiresTab from './Accessoires'
@@ -49,12 +49,17 @@ function RecapDebitage({ results }) {
   );
 }
 
-export default function RecapTab({ results, lot }) {
+export default function RecapTab({ results, lot, refClient = '' }) {
   return (
     <div>
       <div className="export-bar">
-        <button className="btn-export" onClick={() => exportPDF(results, lot)}>
-          📄 Exporter PDF
+        <button className="btn-export" onClick={() => exportPDFSimple(results, lot, refClient)}
+          title="Récap débitage + accessoires uniquement">
+          📄 PDF commande
+        </button>
+        <button className="btn-export" onClick={() => exportPDF(results, lot)}
+          title="Toutes les sections : châssis, débitage, mise en barre, vitrage, accessoires">
+          📄 PDF complet
         </button>
         <button className="btn-export" onClick={() => exportXLSX(results, lot)}>
           📊 Exporter Excel

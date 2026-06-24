@@ -29,6 +29,7 @@ export default function App() {
 
   const [lot, setLot] = useState([])
   const [results, setResults] = useState(null)
+  const [refClient, setRefClient] = useState('')
   const [error, setError] = useState(null)
   const [prefill, setPrefill] = useState(null)
   const [saveMsg, setSaveMsg] = useState(null)
@@ -42,6 +43,7 @@ export default function App() {
   function addChassis(chassis) {
     setLot(prev => [...prev, { ...chassis, _id: Date.now() + Math.random() }])
     setResults(null)
+    setRefClient('')
   }
   function removeChassis(id) {
     setLot(prev => prev.filter(c => c._id !== id))
@@ -59,7 +61,7 @@ export default function App() {
 
   async function loadChantier(id) {
     try {
-      const { chassis } = await api.getChantier(id)
+      const { chantier, chassis } = await api.getChantier(id)
       const loaded = chassis.map(c => ({
         gamme: c.gamme || 'ulysse70',
         config: c.config, type: c.type_ouvrage, L: c.largeur, H: c.hauteur,
@@ -67,6 +69,7 @@ export default function App() {
       }))
       setLot(loaded)
       setResults(debiterChantier(loaded))
+      setRefClient(chantier?.reference_client || '')
       setView('calc')
     } catch (e) {
       setError(e.message)
@@ -260,7 +263,7 @@ export default function App() {
 
           <section className="app-results">
             {results ? (
-              <ResultsPanel results={results} lot={lot} />
+              <ResultsPanel results={results} lot={lot} refClient={refClient} />
             ) : (
               <div className="empty-results">
                 <div className="empty-icon">📐</div>
