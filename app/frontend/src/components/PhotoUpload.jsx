@@ -42,8 +42,13 @@ export default function PhotoUpload({ onPrefill, loggedIn, onNeedLogin }) {
       <div className="card-title">📷 Lecture d'un croquis</div>
 
       <label className="photo-drop">
-        <input type="file" accept="image/*" capture="environment" onChange={handleFile} hidden />
-        {busy ? 'Lecture en cours…' : 'Prendre / importer une photo'}
+        <input
+          type="file"
+          accept="image/*,application/pdf"
+          onChange={handleFile}
+          hidden
+        />
+        {busy ? 'Lecture en cours…' : 'Photo, galerie ou PDF'}
       </label>
 
       {!loggedIn && (

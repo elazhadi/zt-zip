@@ -4,10 +4,10 @@ const { lireCroquis } = require("../vision/client");
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20 Mo — couvre les PDFs
 });
 
-const MEDIA_OK = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const MEDIA_OK = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"]);
 
 // Lecture de croquis manuscrit. L'appel au modèle se fait CÔTÉ BACKEND uniquement
 // (la clé API ne touche jamais le frontend). Le résultat PRÉ-REMPLIT le formulaire —

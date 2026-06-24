@@ -71,6 +71,9 @@ function createVisionClient(opts = {}) {
     model,
     available: true,
     _callModel: async ({ mediaType, base64 }) => {
+      const contentBlock = mediaType === "application/pdf"
+        ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } }
+        : { type: "image",    source: { type: "base64", media_type: mediaType,          data: base64 } };
       const resp = await anthropic.messages.create({
         model,
         max_tokens: 2048,
@@ -78,10 +81,7 @@ function createVisionClient(opts = {}) {
         messages: [
           {
             role: "user",
-            content: [
-              { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
-              { type: "text", text: USER_PROMPT },
-            ],
+            content: [ contentBlock, { type: "text", text: USER_PROMPT } ],
           },
         ],
       });
