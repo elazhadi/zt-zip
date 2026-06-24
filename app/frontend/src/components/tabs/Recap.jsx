@@ -4,12 +4,11 @@ import VitrageTab from './Vitrage'
 import AccessoiresTab from './Accessoires'
 
 function RecapDebitage({ results }) {
-  // Agrège toutes les lignes de débitage par ref uniquement — une ligne par référence.
+  // Agrège toutes les lignes de débitage par ref — une ligne par référence.
   const map = {};
   results.debits.forEach(d =>
     d.lignes.forEach(l => {
-      if (!map[l.ref]) map[l.ref] = { ref: l.ref, des: l.des, coupe: l.coupe, qte: 0 };
-      map[l.ref].qte += l.qte;
+      if (!map[l.ref]) map[l.ref] = { ref: l.ref, des: l.des, coupe: l.coupe };
     })
   );
 
@@ -26,22 +25,25 @@ function RecapDebitage({ results }) {
           <th>Référence</th>
           <th>Désignation</th>
           <th>Coupe</th>
-          <th className="col-right">Qté totale</th>
+          <th className="col-right">Barres à commander</th>
         </tr>
       </thead>
       <tbody>
-        {rows.map((r, i) => (
-          <tr key={i}>
-            <td className="col-ref">{r.ref}</td>
-            <td>{r.des}</td>
-            <td>
-              <span className={`coupe-badge ${r.coupe === 'Onglet 45°' ? 'coupe-onglet' : 'coupe-droite'}`}>
-                {r.coupe}
-              </span>
-            </td>
-            <td className="col-right col-mono">{r.qte}</td>
-          </tr>
-        ))}
+        {rows.map((r, i) => {
+          const barres = results.optim?.[r.ref]?.bars?.length ?? '—';
+          return (
+            <tr key={i}>
+              <td className="col-ref">{r.ref}</td>
+              <td>{r.des}</td>
+              <td>
+                <span className={`coupe-badge ${r.coupe === 'Onglet 45°' ? 'coupe-onglet' : 'coupe-droite'}`}>
+                  {r.coupe}
+                </span>
+              </td>
+              <td className="col-right col-mono">{barres}</td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
