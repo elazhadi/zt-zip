@@ -12,12 +12,13 @@ import History from './components/History'
 import Landing from './components/Landing'
 import UserManagement from './components/UserManagement'
 import Backoffice from './components/Backoffice'
+import Catalogue from './components/Catalogue'
 
 const { debiterChantier } = M
 
 export default function App() {
   const { user, logout } = useAuth()
-  const [view, setView] = useState('landing')    // landing|login|calc|history|users|backoffice
+  const [view, setView] = useState('landing')    // landing|login|calc|history|users|backoffice|catalogue
 
   const [lot, setLot] = useState([])
   const [results, setResults] = useState(null)
@@ -116,6 +117,9 @@ export default function App() {
             <button className={activeView === 'history' ? 'nav-link active' : 'nav-link'} onClick={() => handleNav('history')}>
               Historique
             </button>
+            <button className={activeView === 'catalogue' ? 'nav-link active' : 'nav-link'} onClick={() => handleNav('catalogue')}>
+              Catalogue
+            </button>
             {(user.role === 'admin') && (
               <button className={activeView === 'users' ? 'nav-link active' : 'nav-link'} onClick={() => handleNav('users')}>
                 Utilisateurs
@@ -161,6 +165,12 @@ export default function App() {
       {activeView === 'backoffice' && user && user.role === 'super_admin' && (
         <main className="app-centered-wide">
           <Backoffice />
+        </main>
+      )}
+
+      {activeView === 'catalogue' && user && (
+        <main className="app-centered-wide">
+          <Catalogue />
         </main>
       )}
 

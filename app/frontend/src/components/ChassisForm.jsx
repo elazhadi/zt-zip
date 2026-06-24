@@ -154,7 +154,7 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
           Coloris
           <select value={form.color} onChange={e => set('color', e.target.value)}>
             <option value="">— Coloris —</option>
-            {coloris.map(c => <option key={c.id} value={c.code}>{c.code}</option>)}
+            {coloris.map(c => <option key={c.id} value={c.code}>{c.code}{c.nom ? ` — ${c.nom}` : ''}</option>)}
           </select>
         </label>
       </div>

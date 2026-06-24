@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api/client'
 import ColorisManager from './ColorisManager'
+import SiteManager from './SiteManager'
 
 const ROLES = ['vendeur', 'responsable', 'admin']
 const ROLE_LABEL = { vendeur: 'Vendeur', responsable: 'Responsable', admin: 'Admin' }
@@ -189,6 +190,7 @@ export default function UserManagement() {
         </tbody>
       </table>
 
+      <SiteManager />
       <ColorisManager />
     </div>
   )

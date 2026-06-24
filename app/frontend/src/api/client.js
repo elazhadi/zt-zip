@@ -82,9 +82,13 @@ export const api = {
   },
 
   // Coloris
-  listColoris:   ()     => req("GET",    "/coloris"),
-  addColoris:    (code) => req("POST",   "/coloris", { code }),
-  deleteColoris: (id)   => req("DELETE", `/coloris/${id}`),
+  listColoris:   ()            => req("GET",    "/coloris"),
+  addColoris:    (code, nom)   => req("POST",   "/coloris", { code, nom }),
+  updateColoris: (id, nom)     => req("PATCH",  `/coloris/${id}`, { nom }),
+  deleteColoris: (id)          => req("DELETE", `/coloris/${id}`),
+
+  // Catalogue gammes
+  getCatalogue: () => req("GET", "/gammes/catalogue"),
 
   health: () => req("GET", "/health"),
 };

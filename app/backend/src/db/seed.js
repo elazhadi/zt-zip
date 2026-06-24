@@ -112,20 +112,37 @@ async function seed(pool, opts = {}) {
   return { created: true, adminEmail, adminPass, siteId, tenantId };
 }
 
-const DEFAULT_COLORIS = ['9010', '9005', 'X7760', 'SX3714', 'SX3724'];
+const DEFAULT_COLORIS = [
+  { code: '9010',  nom: 'Blanc pur' },
+  { code: '9005',  nom: 'Noir profond' },
+  { code: 'X7760', nom: 'Gris métal' },
+  { code: 'SX3714',nom: 'Beige sable' },
+  { code: 'SX3724',nom: 'Gris clair' },
+];
 
-// Insère les coloris par défaut pour chaque tenant qui n'en possède aucun.
+// Insère/met à jour les coloris par défaut pour les tenants sans coloris
+// et met à jour le nom si vide (migration depuis avant le champ nom).
 async function seedColoris(pool) {
   const tenants = await pool.query(
     "SELECT id FROM tenants WHERE id NOT IN (SELECT DISTINCT tenant_id FROM coloris)"
   );
   for (const t of tenants.rows) {
     for (let i = 0; i < DEFAULT_COLORIS.length; i++) {
+      const { code, nom } = DEFAULT_COLORIS[i];
       await pool.query(
-        "INSERT INTO coloris (tenant_id, code, ordre) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
-        [t.id, DEFAULT_COLORIS[i], i]
+        `INSERT INTO coloris (tenant_id, code, nom, ordre) VALUES ($1, $2, $3, $4)
+         ON CONFLICT (tenant_id, code) DO UPDATE SET nom = EXCLUDED.nom WHERE coloris.nom = ''`,
+        [t.id, code, nom, i]
       );
     }
+  }
+  // Met à jour le nom des coloris existants dont le nom est vide.
+  for (let i = 0; i < DEFAULT_COLORIS.length; i++) {
+    const { code, nom } = DEFAULT_COLORIS[i];
+    await pool.query(
+      "UPDATE coloris SET nom = $1 WHERE code = $2 AND nom = ''",
+      [nom, code]
+    );
   }
 }
 

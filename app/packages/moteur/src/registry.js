@@ -70,6 +70,29 @@ function listeGammes() {
   }));
 }
 
+// Catalogue riche pour la page de référence (configs détaillées, abaque, profilés).
+function catalogueGammes() {
+  return [...GAMMES.values()].map((g) => ({
+    id:       g.id,
+    marque:   g.marque  || '',
+    gamme:    g.gamme   || g.label,
+    label:    g.label,
+    barre:    g.barre,
+    configIds: g.configIds,
+    configs: g.configIds.map((id) => {
+      const c = g.configs[id];
+      return {
+        id,
+        vantaux:    c.vantaux,
+        rails:      c.rails,
+        dormant:    c.dormant,
+        hasJonction: Boolean(c.jonction),
+      };
+    }),
+    refs: g.refOrder || [],
+  }));
+}
+
 function debiterChassis(c) {
   return gammeOf(c).debiterChassis(c);
 }
@@ -145,6 +168,7 @@ module.exports = {
   registerGamme,
   getGamme,
   listeGammes,
+  catalogueGammes,
   debiterChassis,
   vitrageChassis,
   accessoiresChassis,

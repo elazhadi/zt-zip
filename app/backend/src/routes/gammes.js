@@ -7,6 +7,11 @@ module.exports = function gammesRoutes(pool, { authenticate }) {
   const router = express.Router();
   router.use(authenticate);
 
+  // GET /api/gammes/catalogue — données techniques complètes (configs, barres, profilés).
+  router.get("/catalogue", async (req, res) => {
+    res.json({ gammes: M.catalogueGammes() });
+  });
+
   router.get("/", async (req, res) => {
     const all = M.listeGammes();
     if (!pool || !req.user.tenant_id) {

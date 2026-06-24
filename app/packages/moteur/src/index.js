@@ -26,9 +26,10 @@ const API = {
   accessoiresChassis: registry.accessoiresChassis,
   aggregateAccessoires: registry.aggregateAccessoires,
   optimiser,
-  listeGammes: registry.listeGammes,
-  getGamme: registry.getGamme,
-  registerGamme: registry.registerGamme,
+  listeGammes:     registry.listeGammes,
+  catalogueGammes: registry.catalogueGammes,
+  getGamme:        registry.getGamme,
+  registerGamme:   registry.registerGamme,
 
   // ---- Surface de compatibilité ULYSSE 70 (anciens consommateurs) ----
   ABAQUE: ulysse70.configs,
