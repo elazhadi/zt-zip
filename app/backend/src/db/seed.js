@@ -19,9 +19,48 @@ const ABAQUE_ULYSSE70 = {
 
 // Crée les données minimales : un tenant, un site, un admin et l'entrée d'abaque.
 // Idempotent : ne réinsère pas si l'admin existe déjà.
+// Le super_admin est créé/vérifié indépendamment à chaque démarrage.
 async function seed(pool, opts = {}) {
   const adminEmail = opts.adminEmail || process.env.SEED_ADMIN_EMAIL || "admin@gabarys.local";
   const adminPass  = opts.adminPass  || process.env.SEED_ADMIN_PASSWORD || "admin1234";
+
+  // Super-admin plateforme : vérifié/créé en premier, indépendamment du reste.
+  // Permet de créer le super_admin même si le seed normal a déjà tourné.
+  const superEmail = opts.superAdminEmail || process.env.SEED_SUPERADMIN_EMAIL;
+  const superPass  = opts.superAdminPass  || process.env.SEED_SUPERADMIN_PASSWORD || "superadmin1234";
+  if (superEmail) {
+    const superExists = await pool.query("SELECT id FROM users WHERE email = $1", [superEmail]);
+    if (!superExists.rows.length) {
+      // S'assure qu'un tenant par défaut existe pour rattacher le super_admin.
+      let defaultTenantId;
+      const tenantCheck = await pool.query("SELECT id FROM tenants WHERE slug = 'default'");
+      if (tenantCheck.rows.length) {
+        defaultTenantId = tenantCheck.rows[0].id;
+      } else {
+        const t = await pool.query(
+          "INSERT INTO tenants (nom, slug, plan, vision_enabled, max_users) VALUES ($1,$2,'trial',TRUE,10) RETURNING id",
+          ["Gabarys Demo", "default"]
+        );
+        defaultTenantId = t.rows[0].id;
+      }
+      let defaultSiteId;
+      const siteCheck = await pool.query("SELECT id FROM sites WHERE tenant_id = $1 LIMIT 1", [defaultTenantId]);
+      if (siteCheck.rows.length) {
+        defaultSiteId = siteCheck.rows[0].id;
+      } else {
+        const s = await pool.query(
+          "INSERT INTO sites (tenant_id, nom, adresse, actif) VALUES ($1,$2,$3,TRUE) RETURNING id",
+          [defaultTenantId, "Comptoir principal", "—"]
+        );
+        defaultSiteId = s.rows[0].id;
+      }
+      const superHash = require("bcryptjs").hashSync(superPass, 10);
+      await pool.query(
+        "INSERT INTO users (tenant_id, site_id, nom, email, hash_mdp, role) VALUES ($1,$2,$3,$4,$5,'super_admin')",
+        [defaultTenantId, defaultSiteId, "Super Admin", superEmail, superHash]
+      );
+    }
+  }
 
   const existing = await pool.query("SELECT id FROM users WHERE email = $1", [adminEmail]);
   if (existing.rows.length) {
@@ -65,21 +104,6 @@ async function seed(pool, opts = {}) {
       "INSERT INTO abaques (tenant_id, gamme, version, data_json, actif) VALUES ($1,$2,$3,$4,TRUE)",
       [tenantId, ABAQUE_ULYSSE70.gamme, "1.0", JSON.stringify(ABAQUE_ULYSSE70)]
     );
-  }
-
-  // Super-admin plateforme (optionnel) : créé si SEED_SUPERADMIN_EMAIL est défini.
-  // Ce compte voit toutes les sociétés et accède au backoffice.
-  const superEmail = opts.superAdminEmail || process.env.SEED_SUPERADMIN_EMAIL;
-  const superPass  = opts.superAdminPass  || process.env.SEED_SUPERADMIN_PASSWORD || "superadmin1234";
-  if (superEmail) {
-    const superExists = await pool.query("SELECT id FROM users WHERE email = $1", [superEmail]);
-    if (!superExists.rows.length) {
-      const superHash = await bcrypt.hash(superPass, 10);
-      await pool.query(
-        "INSERT INTO users (tenant_id, site_id, nom, email, hash_mdp, role) VALUES ($1,$2,$3,$4,$5,'super_admin')",
-        [tenantId, siteId, "Super Admin", superEmail, superHash]
-      );
-    }
   }
 
   return { created: true, adminEmail, adminPass, siteId, tenantId };

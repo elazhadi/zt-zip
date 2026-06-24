@@ -1,10 +1,12 @@
+import logoSvg from '../assets/logo.svg'
+
 export default function Landing({ onLogin }) {
   return (
     <div className="landing">
       <header className="landing-hero">
         <div className="landing-hero-inner">
           <div className="landing-logo">
-            <span className="landing-logo-icon">⬡</span>
+            <img src={logoSvg} alt="Gabarys" className="landing-logo-icon" />
             <span className="landing-logo-name">Gabarys</span>
           </div>
           <h1 className="landing-title">

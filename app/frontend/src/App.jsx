@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import M from '@ulysse70/moteur'
+import logoSvg from './assets/logo.svg'
 import { useAuth } from './api/auth.jsx'
 import { api } from './api/client'
 import ChassisForm from './components/ChassisForm'
@@ -104,7 +105,7 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div className="app-header-title" style={{ cursor: 'pointer' }} onClick={() => handleNav(user ? 'calc' : 'landing')}>
-          <span className="app-logo">⬡</span>
+          <img src={logoSvg} alt="Gabarys" className="app-logo-img" />
           <h1>Gabarys</h1>
         </div>
         {user && (

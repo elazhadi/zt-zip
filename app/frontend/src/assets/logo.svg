@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- Outer frame corners -->
+  <rect x="4" y="4" width="20" height="20" fill="#9aa8b8" opacity="0.7"/>
+  <rect x="96" y="4" width="20" height="20" fill="#9aa8b8" opacity="0.7"/>
+  <rect x="4" y="96" width="20" height="20" fill="#9aa8b8" opacity="0.7"/>
+  <rect x="96" y="96" width="20" height="20" fill="#9aa8b8" opacity="0.7"/>
+  <!-- Blue corner highlights -->
+  <rect x="4" y="4" width="8" height="8" fill="#3a7abf"/>
+  <rect x="108" y="4" width="8" height="8" fill="#3a7abf"/>
+  <rect x="4" y="108" width="8" height="8" fill="#3a7abf"/>
+  <rect x="108" y="108" width="8" height="8" fill="#3a7abf"/>
+
+  <!-- G shape — horizontal top bar -->
+  <rect x="32" y="18" width="56" height="12" rx="2"
+        fill="url(#grad1)" transform="rotate(-8,60,24)"/>
+  <!-- G shape — left vertical bar -->
+  <rect x="18" y="32" width="12" height="56" rx="2"
+        fill="url(#grad1)" transform="rotate(-8,24,60)"/>
+  <!-- G shape — bottom bar -->
+  <rect x="32" y="90" width="56" height="12" rx="2"
+        fill="url(#grad2)" transform="rotate(8,60,96)"/>
+  <!-- G shape — right middle crossbar (the distinctive G element) -->
+  <rect x="64" y="60" width="38" height="12" rx="2"
+        fill="url(#grad2)"/>
+  <!-- G shape — right partial vertical -->
+  <rect x="90" y="60" width="12" height="32" rx="2"
+        fill="url(#grad1)"/>
+
+  <!-- Diagonal accent bars -->
+  <rect x="28" y="28" width="10" height="64" rx="2"
+        fill="url(#grad3)" transform="rotate(-35,33,60)" opacity="0.85"/>
+  <rect x="50" y="28" width="10" height="64" rx="2"
+        fill="url(#grad3)" transform="rotate(-35,55,60)" opacity="0.85"/>
+
+  <defs>
+    <linearGradient id="grad1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5a9fd4"/>
+      <stop offset="100%" stop-color="#1a5296"/>
+    </linearGradient>
+    <linearGradient id="grad2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1a5296"/>
+      <stop offset="100%" stop-color="#5a9fd4"/>
+    </linearGradient>
+    <linearGradient id="grad3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7ab5e0"/>
+      <stop offset="50%" stop-color="#3a7abf"/>
+      <stop offset="100%" stop-color="#1a4080"/>
+    </linearGradient>
+  </defs>
+</svg>

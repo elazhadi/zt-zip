@@ -9,7 +9,12 @@
  * Garde-fou : une gamme sans abaque (formules) est REFUSÉE. On n'extrapole jamais.
  */
 
-const ulysse70 = require("./gammes/ulysse70");
+const ulysse70           = require("./gammes/ulysse70");
+const pl690              = require("./gammes/pl690");
+const prodige_purligne   = require("./gammes/prodige_purligne");
+const prodige_semibombe  = require("./gammes/prodige_semibombe");
+const prodige_bombe      = require("./gammes/prodige_bombe");
+const emeraude_coulissant = require("./gammes/emeraude_coulissant");
 const { optimiser, round1, buildRefSort } = require("./engine/coulissant");
 
 const GAMMES = new Map();
@@ -36,8 +41,13 @@ function registerGamme(def) {
   return def;
 }
 
-// Gamme de base livrée.
+// Gammes livrées (abaques issus de D_bitage.pptx — Rock Systems).
 registerGamme(ulysse70);
+registerGamme(pl690);
+registerGamme(prodige_purligne);
+registerGamme(prodige_semibombe);
+registerGamme(prodige_bombe);
+registerGamme(emeraude_coulissant);
 
 function getGamme(id) {
   const g = GAMMES.get(id || DEFAULT_GAMME);

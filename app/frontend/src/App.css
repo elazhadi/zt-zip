@@ -48,6 +48,7 @@ body {
 }
 .app-header-title { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .app-logo { font-size: 22px; }
+.app-logo-img { width: 36px; height: 36px; object-fit: contain; }
 .app-header h1 { font-size: 20px; font-weight: 700; letter-spacing: .02em; }
 .app-header p { font-size: 13px; opacity: .8; }
 
@@ -543,7 +544,7 @@ body {
 }
 .landing-hero-inner { max-width: 640px; margin: 0 auto; }
 .landing-logo { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 32px; }
-.landing-logo-icon { font-size: 40px; }
+.landing-logo-icon { width: 64px; height: 64px; object-fit: contain; }
 .landing-logo-name { font-size: 28px; font-weight: 800; letter-spacing: .02em; }
 .landing-title { font-size: clamp(28px, 5vw, 46px); font-weight: 800; line-height: 1.15; margin-bottom: 20px; }
 .landing-title-accent { opacity: .85; }
