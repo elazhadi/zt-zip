@@ -53,10 +53,10 @@ function parseTarifXLSX(file) {
 }
 
 const EXPORT_SCOPES = [
-  { value: 'tout',        label: 'Tout le tarif' },
+  { value: 'global',      label: 'Global' },
   { value: 'gamme',       label: 'Une gamme' },
-  { value: 'profils',     label: 'Profilés (catalogue)' },
-  { value: 'accessoires', label: 'Accessoires (catalogue)' },
+  { value: 'profils',     label: 'Profilés' },
+  { value: 'accessoires', label: 'Accessoires' },
   { value: 'chantier',    label: 'Chantier (débitage)' },
   { value: 'vitrage',     label: 'Vitrage (chantier)' },
 ]
@@ -74,7 +74,7 @@ export default function TarifsManager() {
 
   // Export panel
   const [exportOpen,     setExportOpen]     = useState(false)
-  const [exportScope,    setExportScope]    = useState('tout')
+  const [exportScope,    setExportScope]    = useState('global')
   const [exportGamme,    setExportGamme]    = useState('')
   const [exportProjetId, setExportProjetId] = useState('')
   const [exportBusy,     setExportBusy]     = useState(false)
@@ -218,9 +218,13 @@ export default function TarifsManager() {
       const tarNom = (selectedTarif?.nom || 'tarif').replace(/[^a-zA-Z0-9]/g, '_')
       const map = lignesMap()
 
-      if (exportScope === 'tout') {
-        writeXLSX([HEADER(), ...lignes.map(l => [l.ref, l.designation, parseFloat(l.prix_unitaire) || 0, l.unite_prix])],
-          `tarif-${tarNom}.xlsx`)
+      if (exportScope === 'global') {
+        if (!catalogue) { setExportErr('Catalogue non chargé, réessayez'); return }
+        const refs = dedup([
+          ...catalogue.flatMap(g => (g.profils     || []).map(p => ({ ref: p.ref, des: p.designation || p.des || '' }))),
+          ...catalogue.flatMap(g => (g.accessoires || []).map(a => ({ ref: a.ref, des: a.designation || a.des || '' }))),
+        ])
+        writeXLSX([HEADER(), ...refRows(refs, map)], `tarif-${tarNom}-global.xlsx`)
         return
       }
 
@@ -384,7 +388,7 @@ export default function TarifsManager() {
                       {exportBusy ? 'Export…' : '📥 Télécharger'}
                     </button>
                     <span className="export-hint" style={{ marginLeft: 10 }}>
-                      {exportScope === 'tout'        && 'Toutes les lignes du tarif actuel'}
+                      {exportScope === 'global'      && 'Tous les profilés + accessoires de toutes les gammes, prix pré-remplis'}
                       {exportScope === 'gamme'       && 'Profilés + accessoires de la gamme, prix pré-remplis'}
                       {exportScope === 'profils'     && 'Tous les profilés du catalogue, prix pré-remplis'}
                       {exportScope === 'accessoires' && 'Tous les accessoires du catalogue, prix pré-remplis'}
