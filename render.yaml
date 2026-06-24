@@ -22,6 +22,8 @@ services:
     name: ulysse70
     runtime: docker
     plan: free
+    # L'app vit sur cette branche (master ne contient pas le dossier app/).
+    branch: claude/new-session-hc0ixc
     rootDir: app
     dockerfilePath: Dockerfile
     dockerContext: .
