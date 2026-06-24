@@ -92,6 +92,35 @@ module.exports = function usersRoutes(pool, { authenticate, requireRole }) {
     res.json({ user: r.rows[0] });
   });
 
+  // GET /api/users/:id/gammes — gammes spécifiquement assignées à l'utilisateur
+  router.get("/:id/gammes", async (req, res) => {
+    const check = await pool.query("SELECT tenant_id FROM users WHERE id = $1", [req.params.id]);
+    if (!check.rows[0]) return res.status(404).json({ error: "Utilisateur introuvable" });
+    if (req.user.role !== "super_admin" && Number(check.rows[0].tenant_id) !== Number(req.user.tenant_id)) {
+      return res.status(403).json({ error: "Accès refusé" });
+    }
+    const r = await pool.query("SELECT gamme_id FROM user_gammes WHERE user_id = $1 ORDER BY gamme_id", [req.params.id]);
+    res.json({ gamme_ids: r.rows.map((row) => row.gamme_id) });
+  });
+
+  // PUT /api/users/:id/gammes — remplace les gammes de l'utilisateur (tableau vide = hérite du tenant)
+  router.put("/:id/gammes", async (req, res) => {
+    const { gamme_ids = [] } = req.body || {};
+    if (!Array.isArray(gamme_ids)) return res.status(400).json({ error: "gamme_ids doit être un tableau" });
+    const check = await pool.query("SELECT tenant_id FROM users WHERE id = $1", [req.params.id]);
+    if (!check.rows[0]) return res.status(404).json({ error: "Utilisateur introuvable" });
+    if (req.user.role !== "super_admin" && Number(check.rows[0].tenant_id) !== Number(req.user.tenant_id)) {
+      return res.status(403).json({ error: "Accès refusé" });
+    }
+    await pool.query("DELETE FROM user_gammes WHERE user_id = $1", [req.params.id]);
+    if (gamme_ids.length > 0) {
+      const params = [req.params.id, ...gamme_ids];
+      const vals = gamme_ids.map((_, i) => `($1, $${i + 2})`).join(", ");
+      await pool.query(`INSERT INTO user_gammes (user_id, gamme_id) VALUES ${vals}`, params);
+    }
+    res.json({ gamme_ids });
+  });
+
   // DELETE /api/users/:id — désactivation (soft delete)
   router.delete("/:id", async (req, res) => {
     const check = await pool.query("SELECT * FROM users WHERE id = $1", [req.params.id]);

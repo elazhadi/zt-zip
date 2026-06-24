@@ -1,32 +1,46 @@
 const express = require("express");
 const M = require("@ulysse70/moteur");
 
-// Gammes disponibles pour le tenant courant. Si le tenant a des entrées dans
-// tenant_gammes, seules celles-ci sont exposées ; sinon toutes sont renvoyées.
+// Résout la liste de gammes accessibles pour un utilisateur.
+// Priorité : user_gammes → tenant_gammes → toutes.
+async function resolveGammes(pool, user, allGammes) {
+  if (!pool || !user.tenant_id) return allGammes;
+
+  const isAdmin = user.role === "admin" || user.role === "super_admin";
+  if (!isAdmin) {
+    const uR = await pool.query(
+      "SELECT gamme_id FROM user_gammes WHERE user_id = $1",
+      [user.id]
+    );
+    if (uR.rows.length > 0) {
+      const userAllowed = new Set(uR.rows.map((r) => r.gamme_id));
+      return allGammes.filter((g) => userAllowed.has(g.id));
+    }
+  }
+
+  const tR = await pool.query(
+    "SELECT gamme_id FROM tenant_gammes WHERE tenant_id = $1",
+    [user.tenant_id]
+  );
+  if (!tR.rows.length) return allGammes;
+  const tenantAllowed = new Set(tR.rows.map((r) => r.gamme_id));
+  return allGammes.filter((g) => tenantAllowed.has(g.id));
+}
+
 module.exports = function gammesRoutes(pool, { authenticate }) {
   const router = express.Router();
   router.use(authenticate);
 
-  // GET /api/gammes/catalogue — données techniques complètes (configs, barres, profilés).
-  router.get("/catalogue", async (req, res) => {
-    res.json({ gammes: M.catalogueGammes() });
+  // GET /api/gammes — liste filtrée par user puis tenant.
+  router.get("/", async (req, res) => {
+    const gammes = await resolveGammes(pool, req.user, M.listeGammes());
+    res.json({ gammes });
   });
 
-  router.get("/", async (req, res) => {
-    const all = M.listeGammes();
-    if (!pool || !req.user.tenant_id) {
-      return res.json({ gammes: all });
-    }
-    const r = await pool.query(
-      "SELECT gamme_id FROM tenant_gammes WHERE tenant_id = $1",
-      [req.user.tenant_id]
-    );
-    if (!r.rows.length) {
-      // Pas de restriction configurée : toutes les gammes sont accessibles.
-      return res.json({ gammes: all });
-    }
-    const allowed = new Set(r.rows.map((row) => row.gamme_id));
-    res.json({ gammes: all.filter((g) => allowed.has(g.id)) });
+  // GET /api/gammes/catalogue — données techniques complètes (idem filtrage).
+  router.get("/catalogue", async (req, res) => {
+    const gammes = await resolveGammes(pool, req.user, M.catalogueGammes());
+    res.json({ gammes });
   });
 
   return router;

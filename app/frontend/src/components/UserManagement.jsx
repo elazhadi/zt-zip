@@ -7,11 +7,12 @@ const ROLE_LABEL = { vendeur: 'Vendeur', responsable: 'Responsable', admin: 'Adm
 export default function UserManagement() {
   const [users, setUsers] = useState([])
   const [sites, setSites] = useState([])
+  const [gammes, setGammes] = useState([])
   const [error, setError] = useState(null)
   const [creating, setCreating] = useState(false)
   const [editId, setEditId] = useState(null)
 
-  const [form, setForm] = useState({ nom: '', email: '', password: '', role: 'vendeur', site_id: '' })
+  const [form, setForm] = useState({ nom: '', email: '', password: '', role: 'vendeur', site_id: '', gamme_ids: [] })
   const [formErr, setFormErr] = useState(null)
 
   useEffect(() => {
@@ -20,9 +21,10 @@ export default function UserManagement() {
 
   async function load() {
     try {
-      const [u, s] = await Promise.all([api.listUsers(), api.listSites()])
+      const [u, s, g] = await Promise.all([api.listUsers(), api.listSites(), api.listGammes()])
       setUsers(u.users)
       setSites(s.sites)
+      setGammes(g.gammes)
     } catch (e) {
       setError(e.message)
     }
@@ -31,21 +33,34 @@ export default function UserManagement() {
   function startCreate() {
     setCreating(true)
     setEditId(null)
-    setForm({ nom: '', email: '', password: '', role: 'vendeur', site_id: '' })
+    setForm({ nom: '', email: '', password: '', role: 'vendeur', site_id: '', gamme_ids: [] })
     setFormErr(null)
   }
 
-  function startEdit(u) {
+  async function startEdit(u) {
     setEditId(u.id)
     setCreating(false)
-    setForm({ nom: u.nom, email: u.email, password: '', role: u.role, site_id: u.site_id || '' })
     setFormErr(null)
+    setForm({ nom: u.nom, email: u.email, password: '', role: u.role, site_id: u.site_id || '', gamme_ids: [] })
+    try {
+      const r = await api.getUserGammes(u.id)
+      setForm(prev => ({ ...prev, gamme_ids: r.gamme_ids }))
+    } catch { /* ignore */ }
   }
 
   function cancelForm() {
     setCreating(false)
     setEditId(null)
     setFormErr(null)
+  }
+
+  function toggleGamme(id) {
+    setForm(prev => {
+      const ids = prev.gamme_ids.includes(id)
+        ? prev.gamme_ids.filter(g => g !== id)
+        : [...prev.gamme_ids, id]
+      return { ...prev, gamme_ids: ids }
+    })
   }
 
   async function submitCreate(e) {
@@ -55,13 +70,16 @@ export default function UserManagement() {
       return
     }
     try {
-      await api.createUser({
+      const { user } = await api.createUser({
         nom:      form.nom,
         email:    form.email,
         password: form.password,
         role:     form.role,
         site_id:  form.site_id || null,
       })
+      if (form.gamme_ids.length > 0) {
+        await api.setUserGammes(user.id, form.gamme_ids)
+      }
       setCreating(false)
       load()
     } catch (e) {
@@ -77,6 +95,7 @@ export default function UserManagement() {
         role:    form.role,
         site_id: form.site_id || null,
       })
+      await api.setUserGammes(editId, form.gamme_ids)
       setEditId(null)
       load()
     } catch (e) {
@@ -96,6 +115,8 @@ export default function UserManagement() {
       setError(e.message)
     }
   }
+
+  const showGammeSection = form.role !== 'admin'
 
   return (
     <div className="card user-mgmt">
@@ -143,6 +164,35 @@ export default function UserManagement() {
               </select>
             </label>
           </div>
+
+          {showGammeSection && gammes.length > 0 && (
+            <div className="user-gammes-section">
+              <div className="user-gammes-label">
+                Gammes accessibles
+                <span className="user-gammes-hint">
+                  {form.gamme_ids.length === 0
+                    ? '— toutes (héritage compte)'
+                    : `${form.gamme_ids.length} sélectionnée${form.gamme_ids.length > 1 ? 's' : ''}`}
+                </span>
+              </div>
+              <div className="user-gammes-list">
+                {gammes.map(g => (
+                  <label key={g.id} className="user-gamme-check">
+                    <input
+                      type="checkbox"
+                      checked={form.gamme_ids.includes(g.id)}
+                      onChange={() => toggleGamme(g.id)}
+                    />
+                    {g.label}
+                  </label>
+                ))}
+              </div>
+              {form.gamme_ids.length === 0 && (
+                <p className="user-gammes-tip">Aucune sélection = accès à toutes les gammes du compte</p>
+              )}
+            </div>
+          )}
+
           {formErr && <div className="error-msg">{formErr}</div>}
           <div className="form-actions">
             <button type="submit" className="btn-add">{creating ? 'Créer' : 'Enregistrer'}</button>

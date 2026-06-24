@@ -82,6 +82,13 @@ CREATE TABLE IF NOT EXISTS coloris (
   UNIQUE(tenant_id, code)
 );
 
+-- Gammes accessibles par utilisateur (vide = hérite des restrictions du tenant).
+CREATE TABLE IF NOT EXISTS user_gammes (
+  user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  gamme_id TEXT NOT NULL,
+  PRIMARY KEY (user_id, gamme_id)
+);
+
 -- Upgrade d'installations existantes (idempotent sur PostgreSQL 9.6+).
 -- Sur pg-mem (tests), ignorés si la colonne existe déjà (cf. migrate.js).
 ALTER TABLE sites ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenants(id);

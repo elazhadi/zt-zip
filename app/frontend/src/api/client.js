@@ -52,6 +52,8 @@ export const api = {
   createUser:     (data) => req("POST", "/users", data),
   updateUser:     (id, data) => req("PATCH", `/users/${id}`, data),
   deactivateUser: (id) => req("DELETE", `/users/${id}`),
+  getUserGammes:  (id) => req("GET",  `/users/${id}/gammes`),
+  setUserGammes:  (id, gamme_ids) => req("PUT", `/users/${id}/gammes`, { gamme_ids }),
 
   // Tenants (super_admin backoffice)
   listTenants:   () => req("GET", "/tenants"),
@@ -87,7 +89,8 @@ export const api = {
   updateColoris: (id, nom)     => req("PATCH",  `/coloris/${id}`, { nom }),
   deleteColoris: (id)          => req("DELETE", `/coloris/${id}`),
 
-  // Catalogue gammes
+  // Gammes
+  listGammes:   () => req("GET", "/gammes"),
   getCatalogue: () => req("GET", "/gammes/catalogue"),
 
   health: () => req("GET", "/health"),

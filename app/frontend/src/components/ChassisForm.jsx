@@ -1,35 +1,38 @@
 import { useState, useEffect, useMemo } from 'react'
-import M from '@ulysse70/moteur'
 import { api } from '../api/client'
 
-// Gammes disponibles (registre du moteur). S'enrichit quand on ajoute une gamme.
-const GAMMES = M.listeGammes()
-const DEFAULT_GAMME = GAMMES[0]?.id || 'ulysse70'
-
-const INIT = { gamme: DEFAULT_GAMME, config: '', type: 'porte', L: '', H: '', Q: 1, color: '' }
+const INIT = { gamme: '', config: '', type: 'porte', L: '', H: '', Q: 1, color: '' }
 
 export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
-  const [form, setForm] = useState(() => {
-    const first = GAMMES.find(g => g.id === DEFAULT_GAMME)
-    return { ...INIT, config: first?.configs[0] || '' }
-  })
+  const [gammes, setGammes] = useState([])
+  const [form, setForm] = useState(INIT)
   const [errors, setErrors] = useState({})
   const [highlighted, setHighlighted] = useState({})
   const [coloris, setColoris] = useState([])
 
   useEffect(() => {
+    api.listGammes()
+      .then(r => {
+        setGammes(r.gammes)
+        setForm(prev => {
+          if (prev.gamme || !r.gammes.length) return prev
+          const first = r.gammes[0]
+          return { ...prev, gamme: first.id, config: first.configs[0] || '' }
+        })
+      })
+      .catch(() => {})
     api.listColoris().then(r => setColoris(r.coloris)).catch(() => {})
   }, [])
 
   // Configs proposées = celles de la gamme sélectionnée.
   const configs = useMemo(
-    () => GAMMES.find(g => g.id === form.gamme)?.configs || [],
-    [form.gamme]
+    () => gammes.find(g => g.id === form.gamme)?.configs || [],
+    [gammes, form.gamme]
   )
 
   // Changer de gamme : recale la config sur la première de la nouvelle gamme.
   function setGamme(id) {
-    const first = GAMMES.find(g => g.id === id)?.configs[0] || ''
+    const first = gammes.find(g => g.id === id)?.configs[0] || ''
     setForm(prev => ({ ...prev, gamme: id, config: first }))
   }
 
@@ -75,28 +78,32 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
     onAdd({ gamme: form.gamme, config: form.config, type: form.type, L: Number(form.L), H: Number(form.H), Q: Number(form.Q), color: form.color })
-    // Réinitialise en conservant la gamme/config courantes.
     setForm(prev => ({ ...INIT, gamme: prev.gamme, config: prev.config }))
     setErrors({})
     setHighlighted({})
   }
 
-  const showGamme = GAMMES.length > 0
+  if (gammes.length === 0) {
+    return (
+      <div className="card chassis-form">
+        <div className="card-title">Nouveau châssis</div>
+        <p className="catalogue-loading" style={{ padding: '1rem 0' }}>Chargement des gammes…</p>
+      </div>
+    )
+  }
 
   return (
     <form className="card chassis-form" onSubmit={handleSubmit} noValidate>
       <div className="card-title">Nouveau châssis</div>
 
-      {showGamme && (
-        <div className="form-row">
-          <label style={{ flex: '1 1 100%' }}>
-            Marque / Gamme
-            <select value={form.gamme} onChange={e => setGamme(e.target.value)}>
-              {GAMMES.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
-            </select>
-          </label>
-        </div>
-      )}
+      <div className="form-row">
+        <label style={{ flex: '1 1 100%' }}>
+          Marque / Gamme
+          <select value={form.gamme} onChange={e => setGamme(e.target.value)}>
+            {gammes.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
+          </select>
+        </label>
+      </div>
 
       <div className="form-row">
         <label>
