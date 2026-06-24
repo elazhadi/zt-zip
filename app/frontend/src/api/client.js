@@ -37,10 +37,12 @@ async function req(method, path, body, { isForm = false } = {}) {
 
 export const api = {
   // Auth
-  login:    (email, password) => req("POST", "/auth/login", { email, password }),
-  me:       () => req("GET", "/auth/me"),
-  logout:   () => req("POST", "/auth/logout"),
-  register: (payload) => req("POST", "/auth/register", payload),
+  login:          (email, password) => req("POST", "/auth/login", { email, password }),
+  me:             () => req("GET", "/auth/me"),
+  logout:         () => req("POST", "/auth/logout"),
+  register:       (payload) => req("POST", "/auth/register", payload),
+  updateProfile:  (data) => req("PATCH", "/auth/profile", data),
+  changePassword: (data) => req("POST", "/auth/change-password", data),
 
   // Sites
   listSites:   () => req("GET", "/sites"),

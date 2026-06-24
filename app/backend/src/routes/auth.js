@@ -66,6 +66,36 @@ module.exports = function authRoutes(pool, { authenticate, requireRole }) {
     res.json({ ok: true });
   });
 
+  // PATCH /api/auth/profile — modifier son propre nom affiché
+  router.patch("/profile", authenticate, async (req, res) => {
+    const { nom } = req.body || {};
+    if (!nom || !nom.trim()) return res.status(400).json({ error: "nom requis" });
+    const r = await pool.query(
+      `UPDATE users SET nom = $1 WHERE id = $2
+       RETURNING id, nom, email, role, site_id, tenant_id`,
+      [nom.trim(), req.user.id]
+    );
+    res.json({ user: r.rows[0] });
+  });
+
+  // POST /api/auth/change-password — changer son propre mot de passe
+  router.post("/change-password", authenticate, async (req, res) => {
+    const { current_password, new_password } = req.body || {};
+    if (!current_password || !new_password) {
+      return res.status(400).json({ error: "Mot de passe actuel et nouveau requis" });
+    }
+    if (new_password.length < 8) {
+      return res.status(400).json({ error: "Le nouveau mot de passe doit faire au moins 8 caractères" });
+    }
+    const r = await pool.query("SELECT hash_mdp FROM users WHERE id = $1", [req.user.id]);
+    if (!r.rows[0] || !(await checkPassword(current_password, r.rows[0].hash_mdp))) {
+      return res.status(401).json({ error: "Mot de passe actuel incorrect" });
+    }
+    const hash = await hashPassword(new_password);
+    await pool.query("UPDATE users SET hash_mdp = $1 WHERE id = $2", [hash, req.user.id]);
+    res.json({ ok: true });
+  });
+
   // POST /api/auth/register — création d'un compte dans le même tenant (admin/responsable)
   // { nom, email, password, role, site_id }
   router.post("/register", authenticate, requireRole("admin", "responsable", "super_admin"), async (req, res) => {

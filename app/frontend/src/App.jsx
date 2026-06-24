@@ -15,6 +15,7 @@ import SiteManager from './components/SiteManager'
 import ColorisManager from './components/ColorisManager'
 import Backoffice from './components/Backoffice'
 import Catalogue from './components/Catalogue'
+import Profile from './components/Profile'
 
 const { debiterChantier } = M
 
@@ -140,7 +141,7 @@ export default function App() {
         <div className="app-user">
           {user ? (
             <>
-              <span className="user-badge">{user.nom} · {user.role}</span>
+              <span className="user-badge" style={{ cursor: 'pointer' }} onClick={() => handleNav('profile')}>{user.nom} · {user.role}</span>
               <button className="nav-link" onClick={handleLogout}>Déconnexion</button>
             </>
           ) : (
@@ -196,6 +197,12 @@ export default function App() {
       {activeView === 'catalogue' && user && (
         <main className="app-centered-wide">
           <Catalogue />
+        </main>
+      )}
+
+      {activeView === 'profile' && user && (
+        <main className="app-centered-wide">
+          <Profile />
         </main>
       )}
 

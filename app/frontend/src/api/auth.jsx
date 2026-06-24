@@ -33,8 +33,18 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
+  async function refreshUser() {
+    try {
+      const d = await api.me();
+      setUser(d.user);
+      return d.user;
+    } catch {
+      return null;
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

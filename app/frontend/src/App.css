@@ -840,3 +840,53 @@ body {
   .app-header { flex-direction: column; align-items: flex-start; gap: 4px; }
   .chassis-form .form-row { flex-direction: column; gap: 8px; }
 }
+
+/* ------------------------------------------------------------------ */
+/* Profile page                                                         */
+/* ------------------------------------------------------------------ */
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.profile-card { padding: 20px 24px; }
+
+.profile-info {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  row-gap: 8px;
+  column-gap: 12px;
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+.profile-info dt { color: var(--gray-500); font-weight: 500; align-self: center; }
+.profile-info dd { margin: 0; align-self: center; }
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+.profile-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+.profile-form input {
+  padding: 7px 10px;
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--gray-50);
+}
+.profile-form input:focus { outline: none; border-color: var(--blue); background: #fff; }
+
+.profile-hint { font-weight: 400; color: var(--gray-400); font-size: 12px; }
