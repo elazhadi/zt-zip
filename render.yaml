@@ -9,8 +9,7 @@ services:
     name: ao-manager-api
     runtime: python
     rootDir: ao-manager/backend
-    buildCommand: pip install -r requirements.txt
-    preDeployCommand: alembic upgrade head
+    buildCommand: pip install -r requirements.txt && alembic upgrade head
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     plan: free
     envVars:
