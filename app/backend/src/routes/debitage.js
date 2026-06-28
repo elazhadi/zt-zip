@@ -23,6 +23,7 @@ module.exports = function debitageRoutes(_pool, { authenticate }) {
         Q:      Number(c.Q) || 1,
         color:  c.color || "",
         ...(typeof c.renforce === "boolean" ? { renforce: c.renforce } : {}),
+        ...(c.epaisseurVitrage != null ? { epaisseurVitrage: Number(c.epaisseurVitrage) } : {}),
       }));
       const { debits, optim, vitrage, accessoires, stats } = debiterChantier(lot);
       res.json({ debits, optim, vitrage, accessoires, stats });

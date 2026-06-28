@@ -72,6 +72,7 @@ export default function App() {
         config: c.config, type: c.type_ouvrage, L: c.largeur, H: c.hauteur,
         Q: c.quantite, color: c.coloris || '',
         ...(c.renforce == null ? {} : { renforce: c.renforce }),
+        ...(c.epaisseur_vitrage != null ? { epaisseurVitrage: c.epaisseur_vitrage } : {}),
         _id: c.id,
       }))
       setLot(loaded)

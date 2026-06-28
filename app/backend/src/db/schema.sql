@@ -101,6 +101,7 @@ ALTER TABLE tenants ADD COLUMN IF NOT EXISTS vision_enabled BOOLEAN NOT NULL DEF
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS max_users INTEGER NOT NULL DEFAULT 5;
 ALTER TABLE coloris ADD COLUMN IF NOT EXISTS nom TEXT NOT NULL DEFAULT '';
 ALTER TABLE chassis ADD COLUMN IF NOT EXISTS renforce BOOLEAN;
+ALTER TABLE chassis ADD COLUMN IF NOT EXISTS epaisseur_vitrage INTEGER NOT NULL DEFAULT 12;
 -- Migration : supprime la restriction ulysse70-seul créée par l'ancien seed.
 -- Idempotent : après la première exécution tenant_gammes est vide, le DELETE ne trouve plus rien.
 -- Un tenant_gammes vide signifie "toutes les gammes accessibles".

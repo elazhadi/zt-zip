@@ -1,7 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
 import { api } from '../api/client'
 
-const INIT = { gamme: '', config: '', type: '', L: '', H: '', Q: 1, color: '', renforce: false, renforceTouched: false, _prefillId: null }
+const INIT = { gamme: '', config: '', type: '', L: '', H: '', Q: 1, color: '', renforce: false, renforceTouched: false, epaisseurVitrage: 12, _prefillId: null }
+
+const JOINTS_PL600 = [
+  { mm: 6, ref: '6101' }, { mm: 8, ref: '6102' }, { mm: 10, ref: '6103' },
+  { mm: 12, ref: '6104' }, { mm: 14, ref: '6105' }, { mm: 16, ref: '6106' },
+  { mm: 18, ref: '6107' }, { mm: 20, ref: '6108' }, { mm: 22, ref: '6109' },
+  { mm: 24, ref: '6110' }, { mm: 26, ref: '6111' },
+]
 
 export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
   const [gammes, setGammes] = useState([])
@@ -99,9 +106,9 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
-    onAdd({ gamme: form.gamme, config: form.config, type: form.type, L: Number(form.L), H: Number(form.H), Q: Number(form.Q), color: form.color, renforce, _prefillId: form._prefillId })
-    // Conserver gamme + type + config pour faciliter la saisie du prochain châssis similaire.
-    setForm(prev => ({ ...INIT, gamme: prev.gamme, config: prev.config, type: prev.type }))
+    onAdd({ gamme: form.gamme, config: form.config, type: form.type, L: Number(form.L), H: Number(form.H), Q: Number(form.Q), color: form.color, renforce, epaisseurVitrage: form.epaisseurVitrage, _prefillId: form._prefillId })
+    // Conserver gamme + type + config + épaisseur vitrage pour faciliter la saisie du prochain châssis similaire.
+    setForm(prev => ({ ...INIT, gamme: prev.gamme, config: prev.config, type: prev.type, epaisseurVitrage: prev.epaisseurVitrage }))
     setErrors({})
     setHighlighted({})
   }
@@ -227,22 +234,34 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
         </label>
       </div>
 
-      {/* 6. Montant renforcé — coulissants uniquement. Auto : H ≥ 2000 ⇒ renforcé. */}
+      {/* 6. Montant renforcé + Épaisseur vitrage — coulissants uniquement. */}
       {!isFrappeGamme && (
-        <div className="form-row">
-          <label className="checkbox-row" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
-            <input
-              type="checkbox"
-              checked={renforce}
-              onChange={e => setForm(prev => ({ ...prev, renforce: e.target.checked, renforceTouched: true }))}
-              style={{ width: 'auto' }}
-            />
-            Montant renforcé
-            <span className="field-hint" style={{ marginLeft: '0.25rem', opacity: 0.7 }}>
-              ({autoRenforce ? 'auto : H ≥ 2000' : 'auto : H < 2000'})
-            </span>
-          </label>
-        </div>
+        <>
+          <div className="form-row">
+            <label className="checkbox-row" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
+                checked={renforce}
+                onChange={e => setForm(prev => ({ ...prev, renforce: e.target.checked, renforceTouched: true }))}
+                style={{ width: 'auto' }}
+              />
+              Montant renforcé
+              <span className="field-hint" style={{ marginLeft: '0.25rem', opacity: 0.7 }}>
+                ({autoRenforce ? 'auto : H ≥ 2000' : 'auto : H < 2000'})
+              </span>
+            </label>
+          </div>
+          <div className="form-row">
+            <label style={{ flex: '1 1 100%' }}>
+              Épaisseur vitrage
+              <select value={form.epaisseurVitrage} onChange={e => set('epaisseurVitrage', Number(e.target.value))}>
+                {JOINTS_PL600.map(j => (
+                  <option key={j.mm} value={j.mm}>{j.mm} mm — {j.ref}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </>
       )}
 
       <button type="submit" className="btn-add">+ Ajouter au chantier</button>

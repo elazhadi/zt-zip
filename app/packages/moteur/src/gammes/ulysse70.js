@@ -53,6 +53,14 @@ function estRenforce(c) {
   return typeof c.renforce === "boolean" ? c.renforce : c.H >= 2000;
 }
 
+// Joint de vitrage EPDM SÉRIE COULISSANTE PL600 (catalogue atelier).
+const JOINTS_PL600 = {
+  6:"6101", 8:"6102", 10:"6103", 12:"6104",
+  14:"6105", 16:"6106", 18:"6107", 20:"6108",
+  22:"6109", 24:"6110", 26:"6111",
+};
+const DEFAULT_EP_VITRAGE = 12;
+
 // ---------------------------------------------------------------------------
 // DÉBITAGE d'un châssis
 // ---------------------------------------------------------------------------
@@ -129,7 +137,9 @@ function accessoiresChassis(c) {
   }
 
   const perim = 2*(c.L + c.H)/1000; // ml
-  add("6104", "Joint de vitrage 12 mm", Math.ceil(perim * a.vitQ), "ml");
+  const epVit    = c.epaisseurVitrage || DEFAULT_EP_VITRAGE;
+  const jointRef = JOINTS_PL600[epVit] || JOINTS_PL600[DEFAULT_EP_VITRAGE];
+  add(jointRef, `Joint de vitrage EPDM ${epVit} mm`, Math.ceil(perim * a.vitQ), "ml");
   add("FN69*550", "Joint brosse périphérique 7x6.5", Math.ceil(perim * v * 1.3), "ml");
 
   return acc;
