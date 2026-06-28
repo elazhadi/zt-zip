@@ -1,0 +1,35 @@
+databases:
+  - name: ao-manager-db
+    plan: free
+    databaseName: ao_manager
+    user: ao_manager
+
+services:
+  - type: web
+    name: ao-manager-api
+    runtime: python
+    rootDir: ao-manager/backend
+    buildCommand: pip install -r requirements.txt
+    preDeployCommand: alembic upgrade head
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ao-manager-db
+          property: connectionString
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: UPLOAD_DIR
+        value: /tmp/uploads
+
+  - type: static
+    name: ao-manager-web
+    rootDir: ao-manager/frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false
