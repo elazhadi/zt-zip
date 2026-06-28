@@ -459,29 +459,39 @@ def generate_demande_caution_definitive(
     delai_gar = (ao.delai_garantie or {}).get("valeur", "N/A") if ao.delai_garantie else "N/A"
     delai_gar_unit = (ao.delai_garantie or {}).get("unite", "") if ao.delai_garantie else ""
 
+    mo_nom = mo.get("nom", "l'Administration")
+    mo_nom2 = mo.get("nom", "")
+    ao_objet = ao.objet or ""
+    marche_num = marche.numero_marche or "N/A"
+    montant_ht = float(marche.montant_ht or 0)
+    rib = societe.rib or "N/A"
+    gerant = societe.gerant or "Le Gérant"
+    caution_fmt = f"{caution:,.0f}"
+    montant_fmt = f"{montant_ht:,.2f}"
+
     corps = f"""Monsieur,
 
-Nous vous demandons de bien vouloir émettre, en faveur de {mo.get('nom', 'l\'Administration')},
-une caution définitive d\'un montant de :
+Nous vous demandons de bien vouloir émettre, en faveur de {mo_nom},
+une caution définitive d'un montant de :
 
-{caution:,.0f} DH ({caution_lettres})
+{caution_fmt} DH ({caution_lettres})
 
 dans le cadre du marché suivant :
 
-• Administration intéressée  : {mo.get('nom', '')}
-• Objet du marché           : {ao.objet or ''}
-• Numéro du marché          : {marche.numero_marche or 'N/A'}
-• Montant HT du marché      : {float(marche.montant_ht or 0):,.2f} DH
-• Délai d\'exécution         : {delai_exec} {delai_unit}
+• Administration intéressée  : {mo_nom2}
+• Objet du marché           : {ao_objet}
+• Numéro du marché          : {marche_num}
+• Montant HT du marché      : {montant_fmt} DH
+• Délai d'exécution         : {delai_exec} {delai_unit}
 • Délai de réception défin. : {delai_gar} {delai_gar_unit}
-• Numéro de compte          : {societe.rib or 'N/A'}
+• Numéro de compte          : {rib}
 
 Nous restons à votre disposition pour toute information complémentaire.
 
-Veuillez agréer, Monsieur, l\'expression de nos salutations distinguées.
+Veuillez agréer, Monsieur, l'expression de nos salutations distinguées.
 
 
-{societe.gerant or 'Le Gérant'}
+{gerant}
 """
     for line in corps.split("\n"):
         doc.add_paragraph(line)
