@@ -247,6 +247,122 @@ def translate_specs_to_english(specs: str) -> str:
     return message.content[0].text
 
 
+def analyse_resultats_image(image_base64: str, media_type: str = "image/jpeg") -> dict:
+    prompt = """Tu es un expert en marchés publics marocains (Décret n° 2-22-431).
+
+Analyse cette capture d'écran de page de résultats d'un appel d'offres et extrais les informations suivantes en JSON valide uniquement, sans texte autour.
+
+Règles du Décret 2-22-431 pour le mieux disant :
+- L'offre la moins disante ADMISSIBLE est retenue (prix le plus bas parmi les soumissionnaires non écartés)
+- Un soumissionnaire peut être écarté si son offre est anormalement basse (< 25% de l'estimation) ou techniquement non conforme
+- Le classement est par ordre croissant de prix (offres admises uniquement)
+
+JSON à retourner :
+{
+  "objet": "intitulé du marché",
+  "maitre_ouvrage": "nom du maître d'ouvrage",
+  "date_seance": "date de la séance d'ouverture (YYYY-MM-DD ou texte)",
+  "estimation_mo": null,
+  "concurrents": [
+    {
+      "rang": 1,
+      "nom": "nom du concurrent",
+      "offre_ht": 0.0,
+      "pct_estimation": 0.0,
+      "statut": "admis"
+    }
+  ],
+  "mieux_disant": {
+    "nom": "nom du mieux disant",
+    "offre_ht": 0.0,
+    "pct_estimation": 0.0
+  },
+  "notes": "observations éventuelles"
+}
+
+Instructions :
+- Trie les concurrents par offre croissante (mieux disant en rang 1)
+- Calcule pct_estimation = (offre_ht / estimation_mo * 100) si estimation disponible, sinon null
+- statut: "admis" ou "ecarte" selon ce qui est indiqué dans le document
+- Si l'estimation n'est pas visible, mets null
+- Si un montant contient des espaces ou points comme séparateurs de milliers, convertis en nombre"""
+
+    message = client.messages.create(
+        model=MODEL,
+        max_tokens=2048,
+        messages=[{
+            "role": "user",
+            "content": [
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": media_type,
+                        "data": image_base64,
+                    }
+                },
+                {"type": "text", "text": prompt}
+            ]
+        }]
+    )
+    text = message.content[0].text.strip()
+    text = re.sub(r'^```json\s*', '', text)
+    text = re.sub(r'\s*```$', '', text)
+    return json.loads(text)
+
+
+def recommander_offre(historique: list, estimation: float, domaine: str = "") -> dict:
+    if not historique:
+        return {"pct_recommande": 92.0, "confiance": "faible", "explication": "Aucun historique disponible."}
+
+    rows = []
+    for r in historique:
+        for c in (r.get("concurrents") or []):
+            if c.get("statut") == "admis" and c.get("pct_estimation"):
+                rows.append({
+                    "nom": c.get("nom", ""),
+                    "pct": c.get("pct_estimation"),
+                    "rang": c.get("rang"),
+                    "gagnant": c.get("rang") == 1,
+                })
+
+    prompt = f"""Tu es un expert en marchés publics marocains. Voici l'historique des résultats d'appels d'offres similaires :
+
+Domaine : {domaine or 'non précisé'}
+Estimation MO actuelle : {estimation:,.0f} DH
+
+Historique des offres (% par rapport à l'estimation MO) :
+{json.dumps(rows[:50], ensure_ascii=False, indent=2)}
+
+En te basant sur cet historique et les pratiques du marché marocain :
+1. Quel pourcentage de l'estimation recommandes-tu pour être compétitif tout en restant rentable ?
+2. Quelle est la fourchette habituelle des offres gagnantes ?
+3. Y a-t-il des concurrents récurrents à surveiller ?
+
+Réponds en JSON uniquement :
+{{
+  "pct_recommande": 94.5,
+  "fourchette_min": 88.0,
+  "fourchette_max": 97.0,
+  "confiance": "élevée|moyenne|faible",
+  "concurrents_frequents": ["nom1", "nom2"],
+  "explication": "explication courte"
+}}"""
+
+    message = client.messages.create(
+        model=MODEL,
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    text = message.content[0].text.strip()
+    text = re.sub(r'^```json\s*', '', text)
+    text = re.sub(r'\s*```$', '', text)
+    try:
+        return json.loads(text)
+    except Exception:
+        return {"pct_recommande": 92.0, "confiance": "faible", "explication": text}
+
+
 def adapt_htm_note(base_htm: str, ao_context: str) -> str:
     prompt = f"""Adapte cette note de moyens humains et techniques (HTM) pour cet appel d'offres spécifique.
 Garde la structure mais personnalise le contenu selon le contexte du marché.

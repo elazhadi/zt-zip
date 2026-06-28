@@ -83,6 +83,20 @@ export const marcheApi = {
   dashboard: (id: number) => api.get(`/marches/${id}/dashboard`).then(r => r.data),
 }
 
+// Résultats AO
+export const resultatApi = {
+  uploadImage: (file: File) => {
+    const fd = new FormData(); fd.append('file', file)
+    return api.post('/resultats/upload-image', fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data)
+  },
+  list: (domaine?: string) => api.get('/resultats/', { params: domaine ? { domaine } : {} }).then(r => r.data),
+  stats: () => api.get('/resultats/stats').then(r => r.data),
+  recommander: (estimation: number, domaine?: string) =>
+    api.post('/resultats/recommander', null, { params: { estimation, domaine: domaine || '' } }).then(r => r.data),
+  update: (id: number, data: unknown) => api.put(`/resultats/${id}`, data).then(r => r.data),
+  delete: (id: number) => api.delete(`/resultats/${id}`),
+}
+
 // Documents
 export const documentApi = {
   exportDescriptif: (data: unknown) => api.post('/documents/descriptif-fournisseur', data).then(r => r.data),

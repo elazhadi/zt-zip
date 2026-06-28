@@ -9,6 +9,7 @@ import Referentiel from './pages/Referentiel'
 import SocieteDetail from './pages/SocieteDetail'
 import Parametres from './pages/Parametres'
 import MarcheDetail from './pages/MarcheDetail'
+import Resultats from './pages/Resultats'
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="referentiel" element={<Referentiel />} />
           <Route path="referentiel/:id" element={<SocieteDetail />} />
           <Route path="marche/:id" element={<MarcheDetail />} />
+          <Route path="resultats" element={<Resultats />} />
           <Route path="parametres" element={<Parametres />} />
         </Route>
       </Routes>

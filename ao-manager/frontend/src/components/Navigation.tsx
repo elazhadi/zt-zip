@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Search, Kanban, BarChart2, Archive, Settings } from 'lucide-react'
+import { LayoutDashboard, Search, Kanban, BarChart2, Archive, Settings, Trophy } from 'lucide-react'
 import clsx from 'clsx'
 
 const items = [
@@ -7,6 +7,7 @@ const items = [
   { to: '/analyse', icon: Search, label: 'Analyse DAO' },
   { to: '/pipeline', icon: Kanban, label: 'Pipeline' },
   { to: '/intelligence', icon: BarChart2, label: 'Intelligence' },
+  { to: '/resultats', icon: Trophy, label: 'Résultats AO' },
   { to: '/referentiel', icon: Archive, label: 'Référentiel' },
   { to: '/parametres', icon: Settings, label: 'Paramètres' },
 ]
