@@ -15,12 +15,14 @@ module.exports = function debitageRoutes(_pool, { authenticate }) {
     }
     try {
       const lot = chassis.map((c) => ({
+        gamme:  c.gamme,
         config: c.config,
         type:   c.type,
         L:      Number(c.L),
         H:      Number(c.H),
         Q:      Number(c.Q) || 1,
         color:  c.color || "",
+        ...(typeof c.renforce === "boolean" ? { renforce: c.renforce } : {}),
       }));
       const { debits, optim, vitrage, accessoires, stats } = debiterChantier(lot);
       res.json({ debits, optim, vitrage, accessoires, stats });

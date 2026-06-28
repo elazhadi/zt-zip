@@ -40,11 +40,18 @@ const TRAV_LABEL = {
 
 // Paramètres de mise en barre.
 const BARRE = { standard: 6030, montants: 6600, kerf: 5 };
-// Profilés débités sur barres de 6,60 m.
-const MONT_REFS = ["PL600.10-11", "PL600.20-21-22"];
+// Montants RENFORCÉS débités sur barres de 6,60 m (les simples sur 6,03 m).
+const MONT_REFS = ["PL600.11", "PL600.22"];
 // Ordre d'affichage des profilés.
-const REF_ORDER = ["6099BIS","PL600.01","PL600.03","PL600.04","PL600.10-11",
-                   "PL600.20-21-22","PL600.32","PL600.30","PL600.60"];
+const REF_ORDER = ["6099BIS","PL600.01","PL600.03","PL600.04",
+                   "PL600.10","PL600.11","PL600.20","PL600.22",
+                   "PL600.32","PL600.30","PL600.60"];
+
+// Règle atelier : montant SIMPLE si H < 2000, RENFORCÉ si H ≥ 2000.
+// La case à cocher du formulaire (champ `renforce`) prime si elle est fournie.
+function estRenforce(c) {
+  return typeof c.renforce === "boolean" ? c.renforce : c.H >= 2000;
+}
 
 // ---------------------------------------------------------------------------
 // DÉBITAGE d'un châssis
@@ -57,13 +64,18 @@ function debiterChassis(c) {
   const add = (ref, des, coupe, formule, long, qte) =>
     lignes.push({ ref, des, coupe, formule, long: round1(long), qte: qte * c.Q });
 
+  const renforce = estRenforce(c);
+  const latRef  = renforce ? "PL600.11" : "PL600.10";
+  const centRef = renforce ? "PL600.22" : "PL600.20";
+  const suffixe = renforce ? " renforcé" : " simple";
+
   add("6099BIS", "Rail bombé", "Droite", "L − 86", L-86, a.railQ);
   add(a.dormant, "Dormant — traverse haute", "Onglet 45°", "L", L, 1);
   add(a.dormant, "Dormant — traverse basse", "Onglet 45°", "L", L, 1);
   add(a.dormant, "Dormant — montant G", "Onglet 45°", "H", H, 1);
   add(a.dormant, "Dormant — montant D", "Onglet 45°", "H", H, 1);
-  add("PL600.10-11", "Montant latéral", "Droite", "H − 70", H-70, a.latQ);
-  add("PL600.20-21-22", "Montant central", "Droite", "H − 70", H-70, a.centrQ);
+  add(latRef,  "Montant latéral" + suffixe, "Droite", "H − 70", H-70, a.latQ);
+  add(centRef, "Montant central" + suffixe, "Droite", "H − 70", H-70, a.centrQ);
   if (a.jonction) add("PL600.32", "Profil de jonction", "Droite", "selon config", a.jonction(H), a.jonctionQ||1);
   add("PL600.30", "Traverse vantail", "Droite", TRAV_LABEL[c.config], a.trav(L), a.travQ);
 
@@ -92,9 +104,10 @@ function vitrageChassis(c) {
 function accessoiresChassis(c) {
   const a = CONFIGS[c.config], v = a.vantaux, Q = c.Q, acc = [];
   const add = (ref, des, qte, unite) => { if (qte > 0) acc.push({ ref, des, qte: qte*Q, unite }); };
+  const renforce = estRenforce(c);
 
   add("RS_0603", "Galet réglable simple 80 kg", 2*v, "unité");          // 2 par vantail
-  add("1303", "Équerre à pion 36 x 10", 8, "unité");                    // cadre dormant
+  add("1303", "Équerre à pion 36 x 10", 4, "unité");                    // 4 coins du dormant
   add("6312", "Busette d'évacuation", 2, "unité");
   add("6318", "Clapet anti-retour à bille", 2, "unité");
   add("BUT0195", "Butée pour coulissant", 2, "unité");
@@ -106,8 +119,14 @@ function accessoiresChassis(c) {
 
   add("BR0630", "Couple bouchon montant latéral", a.latQ, "lot");
   add("BR0634", "Couple bouchon montant central", a.centrQ, "lot");
-  add("ST6193PD", "Poignée coudée 3 pts + mécanisme — D", 1, "unité");
-  add("ST6193PG", "Poignée coudée 3 pts + mécanisme — G", 1, "unité");
+  // Poignée : 2 points si montant simple, 3 points si renforcé.
+  if (renforce) {
+    add("ST6193PD", "Poignée coudée 3 pts + mécanisme — D", 1, "unité");
+    add("ST6193PG", "Poignée coudée 3 pts + mécanisme — G", 1, "unité");
+  } else {
+    add("ST6192PD", "Poignée coudée 2 pts + mécanisme — D", 1, "unité");
+    add("ST6192PG", "Poignée coudée 2 pts + mécanisme — G", 1, "unité");
+  }
 
   const perim = 2*(c.L + c.H)/1000; // ml
   add("6104", "Joint de vitrage 12 mm", Math.ceil(perim * a.vitQ), "ml");

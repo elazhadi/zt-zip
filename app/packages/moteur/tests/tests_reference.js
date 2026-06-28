@@ -26,10 +26,11 @@ check("Rail 6099BIS = 2809mm",        find(L1,"6099BIS",2809)?.long, 2809);
 check("Rail quantité = 3",            find(L1,"6099BIS",2809)?.qte, 3);
 check("Dormant horizontal = 2895",    find(L1,"PL600.03",2895)?.long, 2895);
 check("Dormant montant = 2500",       find(L1,"PL600.03",2500)?.long, 2500);
-check("Montant latéral = 2430mm",     find(L1,"PL600.10-11",2430)?.long, 2430);
-check("Montant latéral quantité = 2", find(L1,"PL600.10-11",2430)?.qte, 2);
-check("Montant central = 2430mm",     find(L1,"PL600.20-21-22",2430)?.long, 2430);
-check("Montant central quantité = 4", find(L1,"PL600.20-21-22",2430)?.qte, 4);
+// H=2500 ≥ 2000 → montants RENFORCÉS (PL600.11 latéral / PL600.22 central).
+check("Montant latéral renforcé = 2430mm",  find(L1,"PL600.11",2430)?.long, 2430);
+check("Montant latéral quantité = 2",       find(L1,"PL600.11",2430)?.qte, 2);
+check("Montant central renforcé = 2430mm",  find(L1,"PL600.22",2430)?.long, 2430);
+check("Montant central quantité = 4",       find(L1,"PL600.22",2430)?.qte, 4);
 check("Traverse = 953mm",             find(L1,"PL600.30",953)?.long, 953);
 check("Traverse quantité = 6",        find(L1,"PL600.30",953)?.qte, 6);
 
@@ -46,7 +47,8 @@ check("Vitrage quantité = 3",   r1.vitrage[0].qte, 3);
 const acc1 = r1.accessoires;
 const accQ = ref => acc1.find(a => a.ref===ref)?.qte;
 check("Galets RS_0603 = 6",   accQ("RS_0603"), 6);
-check("Équerres 1303 = 8",    accQ("1303"), 8);
+check("Équerres 1303 = 4",    accQ("1303"), 4);
+check("Poignée 3 pts (renforcé) ST6193PD", acc1.some(a=>a.ref==="ST6193PD"), true);
 check("Kit étanchéité KE_0621 (3 rails)", acc1.some(a=>a.ref==="KE_0621"), true);
 check("Bouchon latéral BR0630 = 2",  accQ("BR0630"), 2);
 check("Bouchon central BR0634 = 4",  accQ("BR0634"), 4);
@@ -64,8 +66,8 @@ const r3 = M.debiterChantier([
 check("Total barres = 18", r3.stats.barres, 18);
 check("6099BIS = 3 barres",        r3.optim["6099BIS"].bars.length, 3);
 check("PL600.03 = 4 barres",       r3.optim["PL600.03"].bars.length, 4);
-check("PL600.10-11 = 2 barres",    r3.optim["PL600.10-11"].bars.length, 2);
-check("PL600.20-21-22 = 4 barres", r3.optim["PL600.20-21-22"].bars.length, 4);
+check("PL600.11 (renforcé) = 2 barres",  r3.optim["PL600.11"].bars.length, 2);
+check("PL600.22 (renforcé) = 4 barres",  r3.optim["PL600.22"].bars.length, 4);
 check("PL600.30 = 2 barres",       r3.optim["PL600.30"].bars.length, 2);
 check("PL600.60 = 3 barres",       r3.optim["PL600.60"].bars.length, 3);
 
@@ -74,6 +76,18 @@ const r4 = M.debiterChantier([{ config:"8VT/4R", type:"porte", L:6000, H:2400, Q
 check("8VT/4R rail = 5914",     r4.debits[0].lignes.find(l=>l.ref==="6099BIS")?.long, 5914);
 check("8VT/4R jonction présente", r4.debits[0].lignes.some(l=>l.ref==="PL600.32"), true);
 check("8VT/4R traverse = 758",  r4.debits[0].lignes.find(l=>l.ref==="PL600.30")?.long, 758);
+
+// --- CAS 5 : H < 2000 → montants SIMPLES + poignée 2 points ---
+const r5 = M.debiterChantier([{ config:"2VT/2R", type:"fenetre", L:2450, H:1750, Q:1 }]);
+const L5 = r5.debits[0].lignes;
+check("Montant latéral simple PL600.10", L5.some(l=>l.ref==="PL600.10"), true);
+check("Montant central simple PL600.20", L5.some(l=>l.ref==="PL600.20"), true);
+check("Pas de montant renforcé PL600.11", L5.some(l=>l.ref==="PL600.11"), false);
+check("Poignée 2 pts ST6192PD (simple)", r5.accessoires.some(a=>a.ref==="ST6192PD"), true);
+
+// --- CAS 6 : case à cocher `renforce` force le choix malgré H < 2000 ---
+const r6 = M.debiterChantier([{ config:"2VT/2R", type:"fenetre", L:2450, H:1750, Q:1, renforce:true }]);
+check("renforce=true force PL600.11 malgré H<2000", r6.debits[0].lignes.some(l=>l.ref==="PL600.11"), true);
 
 console.log(`\n${pass} réussis, ${fail} échoués`);
 process.exit(fail ? 1 : 0);

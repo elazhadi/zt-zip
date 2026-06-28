@@ -70,7 +70,9 @@ export default function App() {
       const loaded = chassis.map(c => ({
         gamme: c.gamme || 'ulysse70',
         config: c.config, type: c.type_ouvrage, L: c.largeur, H: c.hauteur,
-        Q: c.quantite, color: c.coloris || '', _id: c.id,
+        Q: c.quantite, color: c.coloris || '',
+        ...(c.renforce == null ? {} : { renforce: c.renforce }),
+        _id: c.id,
       }))
       setLot(loaded)
       setResults(debiterChantier(loaded))

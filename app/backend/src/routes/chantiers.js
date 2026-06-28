@@ -26,6 +26,7 @@ function toMoteur(row) {
     H:      row.hauteur,
     Q:      row.quantite,
     color:  row.coloris || "",
+    ...(row.renforce == null ? {} : { renforce: row.renforce }),
   };
 }
 
@@ -95,7 +96,7 @@ module.exports = function chantiersRoutes(pool, { authenticate }) {
       `SELECT c.id, c.reference_client, c.statut, c.date_creation,
               u.nom AS vendeur_nom, s.nom AS site_nom,
               ch.repere, ch.gamme, ch.config, ch.type_ouvrage,
-              ch.largeur, ch.hauteur, ch.quantite, ch.coloris
+              ch.largeur, ch.hauteur, ch.quantite, ch.coloris, ch.renforce
          FROM chantiers c
          JOIN users u ON u.id = c.user_id
          JOIN sites s ON s.id = c.site_id
@@ -119,6 +120,7 @@ module.exports = function chantiersRoutes(pool, { authenticate }) {
           repere: row.repere, gamme: row.gamme, config: row.config,
           type_ouvrage: row.type_ouvrage, largeur: row.largeur,
           hauteur: row.hauteur, quantite: row.quantite, coloris: row.coloris,
+          renforce: row.renforce,
         });
       }
     }
@@ -160,9 +162,10 @@ module.exports = function chantiersRoutes(pool, { authenticate }) {
     let repere = 1;
     for (const c of chassis) {
       await pool.query(
-        `INSERT INTO chassis (chantier_id, repere, gamme, config, type_ouvrage, largeur, hauteur, quantite, coloris)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-        [chantier.id, repere++, c.gamme || "ulysse70", c.config, c.type, c.L, c.H, c.Q || 1, c.color || null]
+        `INSERT INTO chassis (chantier_id, repere, gamme, config, type_ouvrage, largeur, hauteur, quantite, coloris, renforce)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+        [chantier.id, repere++, c.gamme || "ulysse70", c.config, c.type, c.L, c.H, c.Q || 1, c.color || null,
+         typeof c.renforce === "boolean" ? c.renforce : null]
       );
     }
     res.status(201).json({ chantier });
@@ -192,9 +195,10 @@ module.exports = function chantiersRoutes(pool, { authenticate }) {
       let repere = 1;
       for (const c of chassis) {
         await pool.query(
-          `INSERT INTO chassis (chantier_id, repere, gamme, config, type_ouvrage, largeur, hauteur, quantite, coloris)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-          [chantier.id, repere++, c.gamme || "ulysse70", c.config, c.type, c.L, c.H, c.Q || 1, c.color || null]
+          `INSERT INTO chassis (chantier_id, repere, gamme, config, type_ouvrage, largeur, hauteur, quantite, coloris, renforce)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+          [chantier.id, repere++, c.gamme || "ulysse70", c.config, c.type, c.L, c.H, c.Q || 1, c.color || null,
+           typeof c.renforce === "boolean" ? c.renforce : null]
         );
       }
     }
@@ -222,6 +226,7 @@ function normalizeChassisInput(c) {
     H:      Number(c.H),
     Q:      Number(c.Q) || 1,
     color:  c.color || "",
+    ...(typeof c.renforce === "boolean" ? { renforce: c.renforce } : {}),
   };
 }
 

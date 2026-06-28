@@ -60,7 +60,8 @@ CREATE TABLE IF NOT EXISTS chassis (
   largeur      INTEGER NOT NULL,
   hauteur      INTEGER NOT NULL,
   quantite     INTEGER NOT NULL DEFAULT 1,
-  coloris      TEXT
+  coloris      TEXT,
+  renforce     BOOLEAN
 );
 
 -- Registre descriptif des gammes par tenant.
@@ -99,6 +100,7 @@ ALTER TABLE abaques ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenant
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS vision_enabled BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE tenants ADD COLUMN IF NOT EXISTS max_users INTEGER NOT NULL DEFAULT 5;
 ALTER TABLE coloris ADD COLUMN IF NOT EXISTS nom TEXT NOT NULL DEFAULT '';
+ALTER TABLE chassis ADD COLUMN IF NOT EXISTS renforce BOOLEAN;
 -- Migration : supprime la restriction ulysse70-seul créée par l'ancien seed.
 -- Idempotent : après la première exécution tenant_gammes est vide, le DELETE ne trouve plus rien.
 -- Un tenant_gammes vide signifie "toutes les gammes accessibles".

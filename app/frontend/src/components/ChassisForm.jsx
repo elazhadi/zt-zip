@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { api } from '../api/client'
 
-const INIT = { gamme: '', config: '', type: '', L: '', H: '', Q: 1, color: '', _prefillId: null }
+const INIT = { gamme: '', config: '', type: '', L: '', H: '', Q: 1, color: '', renforce: false, renforceTouched: false, _prefillId: null }
 
 export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
   const [gammes, setGammes] = useState([])
@@ -35,6 +35,11 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
     const g = gammes.find(g => g.id === form.gamme)
     return Boolean(g?.configs?.some(c => c.startsWith('FEN-') || c.startsWith('PORTE-')))
   }, [gammes, form.gamme])
+
+  // Montant renforcé : par défaut H ≥ 2000 ⇒ renforcé, sinon simple.
+  // Tant que l'utilisateur n'a pas coché manuellement, la case suit la hauteur.
+  const autoRenforce = Number(form.H) >= 2000
+  const renforce = form.renforceTouched ? form.renforce : autoRenforce
 
   // Changer de gamme : réinitialise config et type pour forcer un choix explicite.
   // Choix manuel ⇒ on rompt le lien avec le croquis source.
@@ -94,7 +99,7 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
-    onAdd({ gamme: form.gamme, config: form.config, type: form.type, L: Number(form.L), H: Number(form.H), Q: Number(form.Q), color: form.color, _prefillId: form._prefillId })
+    onAdd({ gamme: form.gamme, config: form.config, type: form.type, L: Number(form.L), H: Number(form.H), Q: Number(form.Q), color: form.color, renforce, _prefillId: form._prefillId })
     // Conserver gamme + type + config pour faciliter la saisie du prochain châssis similaire.
     setForm(prev => ({ ...INIT, gamme: prev.gamme, config: prev.config, type: prev.type }))
     setErrors({})
@@ -221,6 +226,24 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
           </select>
         </label>
       </div>
+
+      {/* 6. Montant renforcé — coulissants uniquement. Auto : H ≥ 2000 ⇒ renforcé. */}
+      {!isFrappeGamme && (
+        <div className="form-row">
+          <label className="checkbox-row" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
+            <input
+              type="checkbox"
+              checked={renforce}
+              onChange={e => setForm(prev => ({ ...prev, renforce: e.target.checked, renforceTouched: true }))}
+              style={{ width: 'auto' }}
+            />
+            Montant renforcé
+            <span className="field-hint" style={{ marginLeft: '0.25rem', opacity: 0.7 }}>
+              ({autoRenforce ? 'auto : H ≥ 2000' : 'auto : H < 2000'})
+            </span>
+          </label>
+        </div>
+      )}
 
       <button type="submit" className="btn-add">+ Ajouter au chantier</button>
     </form>

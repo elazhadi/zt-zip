@@ -18,6 +18,7 @@ export default function LotPanel({ lot, onRemove, onCalculate }) {
               <th>L</th>
               <th>H</th>
               <th>Q</th>
+              <th>Renf.</th>
               <th>Coloris</th>
               <th></th>
             </tr>
@@ -31,6 +32,7 @@ export default function LotPanel({ lot, onRemove, onCalculate }) {
                 <td>{c.L}</td>
                 <td>{c.H}</td>
                 <td>{c.Q}</td>
+                <td>{c.renforce ? 'R' : '—'}</td>
                 <td style={{ maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.color || '—'}</td>
                 <td>
                   <button className="btn-remove" onClick={() => onRemove(c._id)} title="Supprimer">✕</button>
