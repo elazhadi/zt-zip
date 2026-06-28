@@ -116,7 +116,8 @@ function accessoiresChassis(c) {
 
   add("RS_0603", "Galet réglable simple 80 kg", 2*v, "unité");          // 2 par vantail
   add("1303", "Équerre à pion 36 x 10", 4, "unité");                    // 4 coins du dormant
-  add("6312", "Busette d'évacuation", 2, "unité");
+  add("ED0505", "Équerre d'alignement dormant", 4, "unité");             // 4 par dormant
+  add("6312", "Busette d'évacuation", a.rails * 2, "unité");             // 2 par rail (1 par extrémité)
   add("6318", "Clapet anti-retour à bille", 2, "unité");
   add("BUT0195", "Butée pour coulissant", 2, "unité");
 
@@ -124,6 +125,7 @@ function accessoiresChassis(c) {
                 3:["KE_0621","Kit étanchéité 3 rails dormant"],
                 4:["KE_0622","Kit étanchéité 4 rails"] }[a.rails];
   add(kit[0], kit[1], 1, "unité");
+  add("BU0650", "Bouchon d'extrémité dormant", a.rails * 2, "unité");   // 2 par rail (gauche + droite)
 
   if (renforce) {
     add("BR0630", "Couple bouchon montant latéral renforcé", a.latQ, "lot");

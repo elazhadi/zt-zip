@@ -201,19 +201,19 @@ function accessoiresChassis(c) {
   add('1302', 'Équerre à pion 35,9×14 dormant', 4, 'unité');
 
   if (isOB) {
-    // Oscillo-battant : même paumelles que OF.
-    // Ferrage OB (compas + mécanisme oscillo-battant) à confirmer selon abaque atelier.
     const isPorteOB = isPorte;
     add(isPorteOB ? '5601' : '5600',
         isPorteOB ? 'Paumelle réversible lourde 100 Kg' : 'Paumelle réversible 60 Kg',
         2, 'unité');
     add('ST5711', 'Crémone + Mécanisme OB Classique', 1, 'pièce');
+    add('4303BIS', 'Équerre vantail OB', 4, 'unité');                    // 4 coins par vantail
     add('5304', 'Jeu bouchon pour battue', 1, 'unité');
   } else if (!isPorte && !cfg.includes('FIXE')) {
     // Ouvrant fenêtre : paumelles + crémone OF
     add('5600', 'Paumelle réversible 60 Kg', is2vt ? 4 : 2, 'unité');
     add('PITALIA', 'Crémone OF ITALIA + Kit', is2vt ? 2 : 1, 'unité');
     if (is2vt) add('2V.OF/NR', 'Complément Kit OF 2 vantaux', 1, 'unité');
+    add('4303BIS', 'Équerre vantail OF', is2vt ? 8 : 4, 'unité');        // 4 coins × vantaux
     add('5304', 'Jeu bouchon pour battue', 1, 'unité');
   } else if (isPorte) {
     // Porte : paumelles lourdes + crémone + poignée
@@ -221,6 +221,7 @@ function accessoiresChassis(c) {
     add('PITALIA', 'Crémone OF ITALIA + Kit', is2vt ? 2 : 1, 'unité');
     add('B 0510', 'Béquille pure line ITALIA', 1, 'unité');
     add('SR-0506', 'Serrure 1 point Ø35 + Canon et gâche', 1, 'unité');
+    add('4303BIS', 'Équerre vantail porte', is2vt ? 8 : 4, 'unité');     // 4 coins × vantaux
     add('5304', 'Jeu bouchon pour battue', 1, 'unité');
   }
 
