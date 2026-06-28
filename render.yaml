@@ -1,9 +1,3 @@
-databases:
-  - name: ao-manager-db
-    plan: free
-    databaseName: ao_manager
-    user: ao_manager
-
 services:
   - type: web
     name: ao-manager-api
@@ -16,9 +10,7 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: DATABASE_URL
-        fromDatabase:
-          name: ao-manager-db
-          property: connectionString
+        sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: UPLOAD_DIR
