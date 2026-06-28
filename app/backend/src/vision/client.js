@@ -98,6 +98,20 @@ function mapConfig(vantaux, rails) {
   return CONFIGS_CONNUES.has(c) ? c : null;
 }
 
+// Déduit la config d'un châssis frappe PL500 depuis le texte du croquis.
+// Exemples ProGES : "Oscillo-battant PL500.07 CLASSIQUE", "Remplissage fixe PL500".
+function mapConfigFrappe(gamme, text) {
+  if (gamme !== "ulysse_pl500" || !text) return null;
+  if (/oscillo|battant/i.test(text)) {
+    if (/PL500\.07|porte/i.test(text)) return "PORTE-OB-1VT";
+    if (/PL500\.06/i.test(text))       return "FEN-OB-1VT";
+  }
+  if (/remplissage|fixe/i.test(text))  return "FEN-FIXE";
+  if (/soufflet/i.test(text))          return "FEN-SOUFFLET";
+  if (/porte/i.test(text))             return "PORTE-OF-1VT";
+  return null;
+}
+
 // Récupère les objets complets d'un tableau JSON éventuellement tronqué.
 // Utile quand la réponse du modèle est coupée (max_tokens) au milieu du
 // tableau "chassis" : on conserve les châssis entiers déjà lus.
@@ -218,7 +232,9 @@ async function lireCroquis(client, { mediaType, base64 }) {
     // 3. Config : si le modèle n'a rien proposé, on la déduit ; on la valide
     //    contre les configurations réelles de la gamme reconnue.
     const validConfigs = configsForGamme(c.gamme);
-    const proposed = c.config_suggeree || mapConfig(c.vantaux, rails);
+    // Pour les gammes à frappe (PL500…), inférer depuis le texte du croquis.
+    const frappe = mapConfigFrappe(c.gamme, c.gamme_texte || "");
+    const proposed = c.config_suggeree || frappe || mapConfig(c.vantaux, rails);
     if (proposed && !validConfigs.has(proposed)) {
       avertissements.push(`Config "${proposed}" non reconnue pour cette gamme — laissée vide.`);
       c.config_suggeree = null;
@@ -230,4 +246,4 @@ async function lireCroquis(client, { mediaType, base64 }) {
   return { chassis, avertissements };
 }
 
-module.exports = { createVisionClient, lireCroquis, mapConfig, mapGamme, inferRails, parseJsonLoose, SYSTEM_PROMPT };
+module.exports = { createVisionClient, lireCroquis, mapConfig, mapConfigFrappe, mapGamme, inferRails, parseJsonLoose, SYSTEM_PROMPT };

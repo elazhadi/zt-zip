@@ -124,6 +124,12 @@ body {
 
 /* Sidebar actions */
 .sidebar-actions { display: flex; flex-direction: column; gap: 8px; }
+.btn-new-chantier {
+  width: 100%; padding: 10px; background: white; color: var(--gray-600);
+  border: 1.5px dashed var(--gray-300); border-radius: 6px;
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s;
+}
+.btn-new-chantier:hover { background: var(--gray-100); border-color: var(--gray-400); }
 .btn-save {
   width: 100%; padding: 10px; background: white; color: var(--blue);
   border: 1.5px solid var(--blue-light); border-radius: 6px;

@@ -33,6 +33,7 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
     if (!configId) return null
     if (configId === 'FEN-FIXE') return 'fixe'
     if (configId === 'FEN-SOUFFLET') return 'basculant'
+    if (configId.includes('-OB-')) return 'oscillo_battant'
     if (configId.startsWith('FEN-')) return 'ouvrant_pf'
     if (configId.startsWith('PORTE-')) return 'ouvrant_pf'
     return null

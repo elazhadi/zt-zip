@@ -116,6 +116,33 @@ const CONFIGS = {
     ],
     vitL: L => L/2-181.6, vitH: H => H-186.6, vitQ: 2,
   },
+  // Oscillo-battant fenêtre 1 vantail — même profilés et même coupes que FEN-OF-1VT
+  // (PL500.06 dormant + ouvrant). Seule la quincaillerie diffère (ferrage OB).
+  'FEN-OB-1VT': {
+    cuts: (L, H) => [
+      { ref: 'PL500.02', des: 'Dormant — traverse',  coupe: O, formule: 'L',          long: L,        qte: 2 },
+      { ref: 'PL500.02', des: 'Dormant — montant',   coupe: O, formule: 'H',          long: H,        qte: 2 },
+      { ref: 'PL500.06', des: 'Ouvrant — traverse',  coupe: O, formule: 'L − 39,6',  long: L-39.6,   qte: 2 },
+      { ref: 'PL500.06', des: 'Ouvrant — montant',   coupe: O, formule: 'H − 39,6',  long: H-39.6,   qte: 2 },
+      { ref: PC,         des: 'Parclose — largeur',  coupe: D, formule: 'L − 126',   long: L-126,    qte: 2 },
+      { ref: PC,         des: 'Parclose — hauteur',  coupe: D, formule: 'H − 170',   long: H-170,    qte: 2 },
+    ],
+    vitL: L => L-137, vitH: H => H-137, vitQ: 1,
+  },
+  // Oscillo-battant porte 1 vantail — même profilés et même coupes que PORTE-OF-1VT
+  // (PL500.07 dormant + ouvrant). Seule la quincaillerie diffère (ferrage OB).
+  'PORTE-OB-1VT': {
+    cuts: (L, H) => [
+      { ref: 'PL500.02', des: 'Dormant — traverse haute', coupe: O, formule: 'L',          long: L,        qte: 1 },
+      { ref: 'PL500.02', des: 'Dormant — montant',        coupe: O, formule: 'H',          long: H,        qte: 2 },
+      { ref: 'PL500.07', des: 'Ouvrant — traverse',       coupe: O, formule: 'L − 39,6',  long: L-39.6,   qte: 2 },
+      { ref: 'PL500.07', des: 'Ouvrant — montant',        coupe: O, formule: 'H − 27,8',  long: H-27.8,   qte: 2 },
+      { ref: PC,         des: 'Parclose — largeur',       coupe: D, formule: 'L − 187,6', long: L-187.6,  qte: 2 },
+      { ref: PC,         des: 'Parclose — hauteur',       coupe: D, formule: 'H − 219,8', long: H-219.8,  qte: 2 },
+      { ref: '5081',     des: 'Porte brosse',             coupe: D, formule: 'L − 82,4',  long: L-82.4,   qte: 1 },
+    ],
+    vitL: L => L-198.6, vitH: H => H-186.8, vitQ: 1,
+  },
   'FEN-FIXE': {
     cuts: (L, H) => [
       { ref: 'PL500.02', des: 'Dormant — traverse',  coupe: O, formule: 'L',         long: L,       qte: 2 },
@@ -168,11 +195,20 @@ function accessoiresChassis(c) {
   const cfg = c.config;
   const is2vt = cfg.endsWith('2VT');
   const isPorte = cfg.startsWith('PORTE');
+  const isOB = cfg.includes('-OB-');
 
   // Équerres pour assemblage dormant (4 coins)
   add('1302', 'Équerre à pion 35,9×14 dormant', 4, 'unité');
 
-  if (!isPorte && !cfg.includes('FIXE')) {
+  if (isOB) {
+    // Oscillo-battant : même paumelles que OF.
+    // Ferrage OB (compas + mécanisme oscillo-battant) à confirmer selon abaque atelier.
+    const isPorteOB = isPorte;
+    add(isPorteOB ? '5601' : '5600',
+        isPorteOB ? 'Paumelle réversible lourde 100 Kg' : 'Paumelle réversible 60 Kg',
+        2, 'unité');
+    add('5304', 'Jeu bouchon pour battue', 1, 'unité');
+  } else if (!isPorte && !cfg.includes('FIXE')) {
     // Ouvrant fenêtre : paumelles + crémone OF
     add('5600', 'Paumelle réversible 60 Kg', is2vt ? 4 : 2, 'unité');
     add('PITALIA', 'Crémone OF ITALIA + Kit', is2vt ? 2 : 1, 'unité');

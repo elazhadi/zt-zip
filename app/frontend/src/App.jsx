@@ -84,6 +84,30 @@ export default function App() {
     }
   }
 
+  async function newChantier() {
+    if (lot.length > 0) {
+      const wantSave = window.confirm('Enregistrer le chantier en cours avant de commencer un nouveau ?')
+      if (wantSave) {
+        const ref = window.prompt('Référence client pour ce chantier ?', '')
+        if (ref === null) return  // annulé par l'utilisateur → on ne vide pas
+        try {
+          await api.createChantier({ reference_client: ref, chassis: lot })
+        } catch (e) {
+          setError(e.message)
+          return
+        }
+      }
+    }
+    setLot([])
+    setResults(null)
+    setRefClient('')
+    setError(null)
+    setSaveMsg(null)
+    setDevisMode(false)
+    setPrefill(null)
+    setConsumedCroquis(null)
+  }
+
   async function saveChantier() {
     if (!user) { setView('login'); return }
     if (lot.length === 0) return
@@ -256,6 +280,9 @@ export default function App() {
             )}
             <LotPanel lot={lot} onRemove={removeChassis} onCalculate={calculate} />
             <div className="sidebar-actions">
+              <button className="btn-new-chantier" onClick={newChantier}>
+                ✦ Nouveau chantier
+              </button>
               <button className="btn-save" onClick={saveChantier} disabled={lot.length === 0}>
                 💾 Enregistrer le chantier
               </button>
