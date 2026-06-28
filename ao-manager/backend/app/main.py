@@ -35,12 +35,27 @@ uploads_dir = settings.UPLOAD_DIR
 os.makedirs(uploads_dir, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
+# Serve frontend (built React app) — only if dist/ exists
+FRONTEND_DIST = os.path.join(os.path.dirname(__file__), "..", "..", "frontend_dist")
+if os.path.isdir(FRONTEND_DIST):
+    from fastapi.responses import FileResponse
+    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets")
 
-@app.get("/")
-def root():
-    return {"app": "AO Manager", "version": "3.0.0", "status": "running"}
+    @app.get("/health")
+    def health():
+        return {"status": "ok"}
 
+    @app.get("/{full_path:path}")
+    def serve_spa(full_path: str):
+        file_path = os.path.join(FRONTEND_DIST, full_path)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(FRONTEND_DIST, "index.html"))
+else:
+    @app.get("/health")
+    def health():
+        return {"status": "ok"}
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
+    @app.get("/")
+    def root():
+        return {"app": "AO Manager", "version": "3.0.0", "status": "running"}
