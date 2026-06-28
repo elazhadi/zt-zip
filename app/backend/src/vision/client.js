@@ -44,7 +44,42 @@ function mapConfig(vantaux, rails) {
   return CONFIGS_CONNUES.has(c) ? c : null;
 }
 
-// Extrait le premier objet JSON d'un texte (robustesse si le modèle ajoute du bavardage).
+// Récupère les objets complets d'un tableau JSON éventuellement tronqué.
+// Utile quand la réponse du modèle est coupée (max_tokens) au milieu du
+// tableau "chassis" : on conserve les châssis entiers déjà lus.
+function salvageArrayObjects(text, key) {
+  const keyIdx = text.indexOf(`"${key}"`);
+  if (keyIdx < 0) return null;
+  const arrStart = text.indexOf("[", keyIdx);
+  if (arrStart < 0) return null;
+
+  const objects = [];
+  let depth = 0, objStart = -1, inStr = false, esc = false;
+  for (let i = arrStart + 1; i < text.length; i++) {
+    const ch = text[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === "\\") esc = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') { inStr = true; continue; }
+    if (ch === "{") { if (depth === 0) objStart = i; depth++; }
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0 && objStart >= 0) {
+        try { objects.push(JSON.parse(text.slice(objStart, i + 1))); } catch (_) { /* objet incomplet — on arrête */ }
+        objStart = -1;
+      }
+    } else if (ch === "]" && depth === 0) {
+      break; // fin normale du tableau
+    }
+  }
+  return objects;
+}
+
+// Parse la réponse JSON du modèle. Robuste au bavardage Markdown ET aux
+// réponses tronquées (récupère alors les châssis complets).
 function parseJsonLoose(text) {
   const trimmed = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
   try {
@@ -52,7 +87,17 @@ function parseJsonLoose(text) {
   } catch (_) {
     const start = trimmed.indexOf("{");
     const end = trimmed.lastIndexOf("}");
-    if (start >= 0 && end > start) return JSON.parse(trimmed.slice(start, end + 1));
+    if (start >= 0 && end > start) {
+      try { return JSON.parse(trimmed.slice(start, end + 1)); } catch (_2) { /* tombe sur le salvage */ }
+    }
+    // Dernier recours : réponse tronquée — on récupère les châssis complets.
+    const chassis = salvageArrayObjects(trimmed, "chassis");
+    if (chassis && chassis.length) {
+      return {
+        chassis,
+        avertissements: ["Réponse de lecture tronquée : certains châssis en fin de croquis peuvent manquer. Vérifiez la liste."],
+      };
+    }
     throw new Error("Réponse vision non parsable en JSON");
   }
 }
@@ -76,7 +121,9 @@ function createVisionClient(opts = {}) {
         : { type: "image",    source: { type: "base64", media_type: mediaType,          data: base64 } };
       const resp = await anthropic.messages.create({
         model,
-        max_tokens: 2048,
+        // Un croquis peut comporter de nombreux châssis (chacun produit un objet
+        // JSON détaillé). 2048 tokens étaient insuffisants → réponse tronquée.
+        max_tokens: 8192,
         system: SYSTEM_PROMPT,
         messages: [
           {
