@@ -45,14 +45,21 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
   // Pré-remplissage depuis une photo : remplit + surligne les champs lus.
   useEffect(() => {
     if (!prefill) return
-    setForm(prev => ({
-      ...prev,
-      config: prefill.config || prev.config,
-      L: prefill.L !== '' && prefill.L != null ? String(prefill.L) : prev.L,
-      H: prefill.H !== '' && prefill.H != null ? String(prefill.H) : prev.H,
-      Q: prefill.Q != null ? prefill.Q : prev.Q,
-    }))
+    setForm(prev => {
+      const next = { ...prev }
+      if (prefill.gamme) next.gamme = prefill.gamme
+      if (prefill.config) {
+        next.config = prefill.config
+        const derivedType = typeFromFrappeConfig(prefill.config)
+        if (derivedType) next.type = derivedType
+      }
+      if (prefill.L !== '' && prefill.L != null) next.L = String(prefill.L)
+      if (prefill.H !== '' && prefill.H != null) next.H = String(prefill.H)
+      if (prefill.Q != null) next.Q = prefill.Q
+      return next
+    })
     setHighlighted({
+      gamme: Boolean(prefill.gamme),
       config: Boolean(prefill.config),
       L: prefill.L !== '' && prefill.L != null,
       H: prefill.H !== '' && prefill.H != null,
@@ -109,7 +116,7 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
       <div className="form-row">
         <label style={{ flex: '1 1 100%' }}>
           Marque / Gamme
-          <select value={form.gamme} onChange={e => setGamme(e.target.value)}>
+          <select className={cls('gamme')} value={form.gamme} onChange={e => setGamme(e.target.value)}>
             <option value="">— Choisir une gamme —</option>
             {gammes.map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
           </select>

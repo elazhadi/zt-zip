@@ -30,6 +30,7 @@ export default function PhotoUpload({ onPrefill, loggedIn, onNeedLogin }) {
   // Envoie un châssis lu vers le formulaire (pré-remplissage surligné).
   function useChassis(c) {
     onPrefill({
+      gamme: c.gamme || '',
       config: c.config_suggeree || '',
       L: c.largeur_mm ?? '',
       H: c.hauteur_mm ?? '',
@@ -66,6 +67,7 @@ export default function PhotoUpload({ onPrefill, loggedIn, onNeedLogin }) {
           {result.chassis.map((c, i) => (
             <div key={i} className="photo-chassis">
               <div className="photo-chassis-vals">
+                {c.gamme_label && <span>{c.gamme_label}</span>}
                 <span>{c.config_suggeree || '?'}</span>
                 <span>{c.largeur_mm ?? '—'} × {c.hauteur_mm ?? '—'} mm</span>
                 <span>×{c.quantite ?? 1}</span>
