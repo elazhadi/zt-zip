@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    // Skip TypeScript type checking during build (tsc runs separately)
+    rollupOptions: {},
+  },
   server: {
     port: 5173,
     proxy: {
