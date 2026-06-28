@@ -207,6 +207,7 @@ function accessoiresChassis(c) {
     add(isPorteOB ? '5601' : '5600',
         isPorteOB ? 'Paumelle réversible lourde 100 Kg' : 'Paumelle réversible 60 Kg',
         2, 'unité');
+    add('ST5711', 'Crémone + Mécanisme OB Classique', 1, 'pièce');
     add('5304', 'Jeu bouchon pour battue', 1, 'unité');
   } else if (!isPorte && !cfg.includes('FIXE')) {
     // Ouvrant fenêtre : paumelles + crémone OF

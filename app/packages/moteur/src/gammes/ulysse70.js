@@ -87,10 +87,10 @@ function debiterChassis(c) {
   if (a.jonction) add("PL600.32", "Profil de jonction", "Droite", "selon config", a.jonction(H), a.jonctionQ||1);
   add("PL600.30", "Traverse vantail", "Droite", TRAV_LABEL[c.config], a.trav(L), a.travQ);
 
-  // Couvre-joint PL600.60 — piloté par le type d'ouvrage.
+  // Couvre-joint PL600.60 — périmètre complet pour tous types (ProGES).
   add("PL600.60", "Couvre-joint — haut", "Droite", "L", L, 1);
+  add("PL600.60", "Couvre-joint — bas", "Droite", "L", L, 1);
   add("PL600.60", "Couvre-joint — montant G/D", "Droite", "H", H, 2);
-  if (c.type === "fenetre") add("PL600.60", "Couvre-joint — bas", "Droite", "L", L, 1);
 
   return { chassis: c, lignes };
 }
@@ -125,8 +125,10 @@ function accessoiresChassis(c) {
                 4:["KE_0622","Kit étanchéité 4 rails"] }[a.rails];
   add(kit[0], kit[1], 1, "unité");
 
-  add("BR0630", "Couple bouchon montant latéral", a.latQ, "lot");
-  add("BR0634", "Couple bouchon montant central", a.centrQ, "lot");
+  if (renforce) {
+    add("BR0630", "Couple bouchon montant latéral renforcé", a.latQ, "lot");
+    add("BR0634", "Couple bouchon montant central renforcé", a.centrQ, "lot");
+  }
   // Poignée : 2 points si montant simple, 3 points si renforcé.
   if (renforce) {
     add("ST6193PD", "Poignée coudée 3 pts + mécanisme — D", 1, "unité");
