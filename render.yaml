@@ -25,11 +25,15 @@ services:
       - key: UPLOAD_DIR
         value: /tmp/uploads
 
-  - type: static
+  - type: web
     name: ao-manager-web
+    runtime: node
     rootDir: ao-manager/frontend
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    startCommand: npx serve -s dist -l $PORT
+    plan: free
     envVars:
+      - key: NODE_VERSION
+        value: 20.0.0
       - key: VITE_API_URL
         sync: false
