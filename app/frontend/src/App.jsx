@@ -32,6 +32,7 @@ export default function App() {
   const [refClient, setRefClient] = useState('')
   const [error, setError] = useState(null)
   const [prefill, setPrefill] = useState(null)
+  const [consumedCroquis, setConsumedCroquis] = useState(null) // { id, n } — châssis du croquis ajouté au chantier
   const [saveMsg, setSaveMsg] = useState(null)
   const [devisMode, setDevisMode] = useState(false)
 
@@ -41,9 +42,13 @@ export default function App() {
   }
 
   function addChassis(chassis) {
-    setLot(prev => [...prev, { ...chassis, _id: Date.now() + Math.random() }])
+    // _prefillId : présent si le châssis vient d'un croquis lu. On le retire
+    // de l'objet stocké et on signale à PhotoUpload de l'ôter de sa liste.
+    const { _prefillId, ...clean } = chassis
+    setLot(prev => [...prev, { ...clean, _id: Date.now() + Math.random() }])
     setResults(null)
     setRefClient('')
+    if (_prefillId != null) setConsumedCroquis({ id: _prefillId, n: Date.now() })
   }
   function removeChassis(id) {
     setLot(prev => prev.filter(c => c._id !== id))
@@ -244,7 +249,7 @@ export default function App() {
           <aside className="app-sidebar">
             <ChassisForm onAdd={addChassis} prefill={prefill} onPrefillConsumed={() => setPrefill(null)} />
             {user.vision_enabled !== false && (
-              <PhotoUpload onPrefill={setPrefill} loggedIn={Boolean(user)} onNeedLogin={() => setView('login')} />
+              <PhotoUpload onPrefill={setPrefill} loggedIn={Boolean(user)} onNeedLogin={() => setView('login')} consumed={consumedCroquis} />
             )}
             <LotPanel lot={lot} onRemove={removeChassis} onCalculate={calculate} />
             <div className="sidebar-actions">

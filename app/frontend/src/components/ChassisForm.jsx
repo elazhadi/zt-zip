@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { api } from '../api/client'
 
-const INIT = { gamme: '', config: '', type: '', L: '', H: '', Q: 1, color: '' }
+const INIT = { gamme: '', config: '', type: '', L: '', H: '', Q: 1, color: '', _prefillId: null }
 
 export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
   const [gammes, setGammes] = useState([])
@@ -37,8 +37,9 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
   }, [gammes, form.gamme])
 
   // Changer de gamme : réinitialise config et type pour forcer un choix explicite.
+  // Choix manuel ⇒ on rompt le lien avec le croquis source.
   function setGamme(id) {
-    setForm(prev => ({ ...prev, gamme: id, config: '', type: '' }))
+    setForm(prev => ({ ...prev, gamme: id, config: '', type: '', _prefillId: null }))
     setErrors(prev => ({ ...prev, gamme: undefined, config: undefined, type: undefined }))
   }
 
@@ -47,6 +48,7 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
     if (!prefill) return
     setForm(prev => {
       const next = { ...prev }
+      next._prefillId = prefill._prefillId ?? null
       if (prefill.gamme) next.gamme = prefill.gamme
       if (prefill.config) {
         next.config = prefill.config
@@ -92,7 +94,7 @@ export default function ChassisForm({ onAdd, prefill, onPrefillConsumed }) {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
-    onAdd({ gamme: form.gamme, config: form.config, type: form.type, L: Number(form.L), H: Number(form.H), Q: Number(form.Q), color: form.color })
+    onAdd({ gamme: form.gamme, config: form.config, type: form.type, L: Number(form.L), H: Number(form.H), Q: Number(form.Q), color: form.color, _prefillId: form._prefillId })
     // Conserver gamme + type + config pour faciliter la saisie du prochain châssis similaire.
     setForm(prev => ({ ...INIT, gamme: prev.gamme, config: prev.config, type: prev.type }))
     setErrors({})

@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { api } from '../api/client'
 
 // Bloc lecture croquis : photo → backend (vision) → pré-remplissage.
 // La photo NE déclenche AUCUN calcul : le vendeur valide les valeurs lues.
-export default function PhotoUpload({ onPrefill, loggedIn, onNeedLogin }) {
+export default function PhotoUpload({ onPrefill, loggedIn, onNeedLogin, consumed }) {
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
@@ -19,6 +19,10 @@ export default function PhotoUpload({ onPrefill, loggedIn, onNeedLogin }) {
     setResult(null)
     try {
       const data = await api.lireCroquis(file)
+      // Chaque châssis lu reçoit un id stable, pour pouvoir le retirer de la
+      // liste une fois ajouté au chantier.
+      const stamp = Date.now()
+      data.chassis = (data.chassis || []).map((c, i) => ({ ...c, _id: `${stamp}-${i}` }))
       setResult(data)
     } catch (err) {
       setError(err.message)
@@ -27,9 +31,22 @@ export default function PhotoUpload({ onPrefill, loggedIn, onNeedLogin }) {
     }
   }
 
+  // Retire de la liste le châssis lu qui vient d'être ajouté au chantier.
+  // Quand la liste est vidée, on masque le bloc résultat.
+  useEffect(() => {
+    if (!consumed) return
+    setResult(prev => {
+      if (!prev) return prev
+      const chassis = prev.chassis.filter(c => c._id !== consumed.id)
+      return chassis.length ? { ...prev, chassis } : null
+    })
+  }, [consumed])
+
   // Envoie un châssis lu vers le formulaire (pré-remplissage surligné).
+  // _prefillId permet de le retirer de la liste après ajout au chantier.
   function useChassis(c) {
     onPrefill({
+      _prefillId: c._id,
       gamme: c.gamme || '',
       config: c.config_suggeree || '',
       L: c.largeur_mm ?? '',
