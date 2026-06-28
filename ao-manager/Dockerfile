@@ -2,7 +2,7 @@
 FROM node:20-alpine AS frontend-builder
 WORKDIR /frontend
 COPY frontend/package*.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 COPY frontend/ ./
 ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
@@ -11,22 +11,16 @@ RUN npm run build
 # Stage 2 — Backend + frontend dist
 FROM python:3.11-slim
 
-# System deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    tesseract-ocr tesseract-ocr-fra tesseract-ocr-ara \
-    libreoffice-writer libpq-dev gcc \
+    libpq-dev gcc \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Python deps
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Backend code
 COPY backend/ ./
-
-# Frontend dist → served by FastAPI
 COPY --from=frontend-builder /frontend/dist ./frontend_dist
 
 EXPOSE 8000
