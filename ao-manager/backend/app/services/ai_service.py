@@ -8,10 +8,47 @@ client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
 MODEL = "claude-sonnet-4-6"
 
 DAO_ANALYSIS_PROMPT = """Tu es un expert en marchés publics marocains (Décret 2-22-431).
-Analyse ce document de dossier d'appel d'offres et extrais toutes les informations dans le JSON ci-dessous.
+Analyse ces documents de dossier d'appel d'offres et extrais TOUTES les informations dans le JSON ci-dessous.
 Si une information n'est pas trouvée, mets null.
 
-Réponds UNIQUEMENT avec le JSON valide, sans texte autour.
+INSTRUCTIONS CRITIQUES — lis attentivement chaque point :
+
+1. RÉFÉRENCE : cherche "N°..." ou "numéro..." dans l'avis ou l'entête du CPS/RC. Inclure la société ou l'organisme dans le numéro si présent.
+
+2. DATE ET HEURE LIMITE : dans l'avis, cherche "il sera procédé le...", "date et heure limite de remise des plis", ou "ouverture des plis". Extrais la date ET l'heure exacte (HH:MM). Format strict : "YYYY-MM-DD HH:MM". Si heure inconnue, mets "10:00" par défaut.
+
+3. ESTIMATION MO : dans l'avis, cherche "l'estimation des coûts établie par le maître d'ouvrage" ou "montant estimatif". C'est le montant TTC. Convertis obligatoirement le texte en nombre entier (ex: "cinquante-six millions six cent quatre-vingt-dix-neuf mille" → 56699000). Ne pas mettre de virgules ni points dans le JSON, juste le nombre.
+
+4. CAUTION PROVISOIRE : dans l'avis ou RC, cherche "cautionnement provisoire est fixé à". Convertis en nombre entier.
+
+5. DÉLAI D'EXÉCUTION : cherche dans le CPS l'article intitulé "DELAI D'EXECUTION" (souvent Article 10 ou Article 9). Exemple : "Le délai global d'exécution est fixé à 90 (quatre-vingt-dix) jours". Extrais valeur (90) et unite ("jours"). Si c'est en mois, unite = "mois".
+
+6. DÉLAI DE GARANTIE : cherche "délai de garantie" ou "retenue de garantie" dans le CPS. Extrais valeur et unité (mois ou ans).
+
+7. BORDEREAU DES PRIX - DETAIL ESTIMATIF : cherche le tableau "BORDEREAU DES PRIX" ou "B.P.D.E". C'est un tableau avec colonnes : N°, Désignation, Qté, Unité, P.U., Montant. Extrais ABSOLUMENT TOUS les articles :
+   - numero : entier (1, 2, 3...) ou sous-numéro comme "1.1"
+   - designation : libellé COMPLET de la prestation ou fourniture
+   - quantite : la valeur numérique (null si forfaitaire ou non précisé)
+   - unite : l'unité (U, m², ml, F, FT, lot, ens, kg...)
+   - specifications_techniques : caractéristiques techniques issues du CPS pour cet article (dimensions, normes, matériaux...)
+   - marque_exigee : marque si explicitement exigée, sinon null
+   Si le bordereau n'a qu'une seule ligne globale, mets-la quand même.
+
+8. LOTS : si l'AO est divisé en lots, crée un objet lot par lot avec ses articles. Sinon, crée un unique lot numéroté 1 avec comme désignation l'objet du marché, et liste tous les articles dedans.
+
+9. MAÎTRE D'OUVRAGE : nom complet de l'organisme commanditaire, adresse, ville, type (ministère/collectivité/établissement public...).
+
+10. PROCÉDURE : "appel d'offres ouvert" (le plus courant), "restreint", "concours", ou "bon de commande".
+
+11. RÉSERVÉ TPME : true si le document mentionne explicitement "réservé à la TPE et PME", "réservé aux jeunes entreprises innovantes" ou équivalent.
+
+12. PROSPECTUS EXIGÉ : true si le RC mentionne le dépôt obligatoire de prospectus/documentation technique.
+
+13. OFFRE TECHNIQUE EXIGÉE : true si le dossier de consultation prévoit un dossier technique noté séparément.
+
+14. CRITÈRES DE NOTATION : si offre technique, liste chaque critère avec son poids (%).
+
+Réponds UNIQUEMENT avec le JSON valide ci-dessous, sans texte autour, sans markdown.
 
 {
   "reference": "numéro/référence de l'AO",
@@ -23,9 +60,8 @@ Réponds UNIQUEMENT avec le JSON valide, sans texte autour.
     "type": ""
   },
   "date_limite": "YYYY-MM-DD HH:MM",
-  "heure_limite": "HH:MM",
   "procedure": "appel d'offres ouvert|restreint|concours|bon de commande",
-  "domaine": "domaine d'activité (fournitures/services/travaux/informatique...)",
+  "domaine": "fournitures|services|travaux|informatique",
   "reserve_tpme": false,
   "estimation": null,
   "lots": [
@@ -47,31 +83,23 @@ Réponds UNIQUEMENT avec le JSON valide, sans texte autour.
     }
   ],
   "caution_provisoire": null,
-  "delai_execution": {"valeur": null, "unite": "jours|mois"},
-  "delai_garantie": {"valeur": null, "unite": "mois|ans"},
+  "delai_execution": {"valeur": null, "unite": "jours"},
+  "delai_garantie": {"valeur": null, "unite": "mois"},
   "lieu_realisation": "",
   "marque_specifique": {"exigee": false, "details": ""},
   "prospectus_exige": false,
   "echantillon_exige": false,
   "tete_de_serie": false,
   "offre_technique_exigee": false,
-  "criteres_notation": [
-    {"critere": "", "poids": null, "details": ""}
-  ],
+  "criteres_notation": [],
   "notation_technique": {
     "seuil_elimination": null,
     "note_maximale": null
   },
-  "structure_offre": {
-    "dossier_administratif": [],
-    "dossier_technique": [],
-    "offre_financiere": []
-  },
-  "tva": 20,
-  "caution_provisoire_calcul": "1.5% estimation"
+  "tva": 20
 }
 
-Document DAO:
+Documents DAO :
 """
 
 PRICE_DISTRIBUTION_PROMPT = """Tu es un expert en prix de marchés publics marocains.
@@ -219,7 +247,7 @@ def analyse_historique_images(images_b64: list[str]) -> dict:
 def analyse_dao_images(images_b64: list[str]) -> dict:
     """Analyse DAO from PDF page images (scanned PDF) using Claude Vision."""
     content = []
-    for img_b64 in images_b64[:15]:
+    for img_b64 in images_b64[:20]:
         content.append({
             "type": "image",
             "source": {"type": "base64", "media_type": "image/png", "data": img_b64}
@@ -230,7 +258,7 @@ def analyse_dao_images(images_b64: list[str]) -> dict:
     })
     message = client.messages.create(
         model=MODEL,
-        max_tokens=4096,
+        max_tokens=8192,
         messages=[{"role": "user", "content": content}]
     )
     raw = message.content[0].text.strip()
@@ -240,10 +268,10 @@ def analyse_dao_images(images_b64: list[str]) -> dict:
 
 
 def analyse_dao(text: str) -> dict:
-    prompt = DAO_ANALYSIS_PROMPT + text[:50000]
+    prompt = DAO_ANALYSIS_PROMPT + text[:80000]
     message = client.messages.create(
         model=MODEL,
-        max_tokens=4096,
+        max_tokens=8192,
         messages=[{"role": "user", "content": prompt}]
     )
     raw = message.content[0].text.strip()

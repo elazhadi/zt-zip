@@ -120,21 +120,19 @@ async def upload_and_analyse_dao(
                 all_text_parts.append(f"=== {file.filename} ===\n{text}")
 
     if not all_text_parts:
-        # Fallback: Claude Vision for scanned PDFs
+        # Fallback: Claude Vision for scanned PDFs — process all PDFs
         from ..services.ocr_service import pdf_to_images_base64
         all_images = []
         for fp in saved_files:
             if fp.lower().endswith(".pdf"):
                 imgs = pdf_to_images_base64(fp)
                 all_images.extend(imgs)
-                if all_images:
-                    break  # one PDF is enough for first attempt
 
         if not all_images:
             return {"error": "Impossible d'extraire le texte des fichiers fournis. Assurez-vous d'uploader un PDF ou DOCX lisible.", "extracted_data": None}
 
         try:
-            extracted = ai_service.analyse_dao_images(all_images)
+            extracted = ai_service.analyse_dao_images(all_images[:20])
             warnings = _generate_warnings(extracted)
             return {"extracted_data": extracted, "saved_files": saved_files, "warnings": warnings}
         except Exception as e:
@@ -383,10 +381,4 @@ def _generate_warnings(extracted: dict) -> list:
         warnings.append("⚠️ Date limite non détectée")
     if not extracted.get("estimation"):
         warnings.append("⚠️ Estimation MO non détectée")
-    est = extracted.get("estimation")
-    caut = extracted.get("caution_provisoire")
-    if est and caut:
-        expected = est * 0.015
-        if abs(caut - expected) / expected > 0.1:
-            warnings.append(f"⚠️ Caution provisoire {caut} ≠ 1.5% estimation ({expected:.0f})")
     return warnings

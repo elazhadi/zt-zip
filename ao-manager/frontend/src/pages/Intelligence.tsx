@@ -7,6 +7,7 @@ import { STATUT_CONFIG, DOMAINES } from '../types'
 import { Search, TrendingUp, BarChart2, Users } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import clsx from 'clsx'
+import { fmtDate } from '../lib/format'
 
 export default function Intelligence() {
   const navigate = useNavigate()
@@ -129,7 +130,7 @@ export default function Intelligence() {
                         <span className={clsx('badge', cfg.bg, cfg.color)}>{cfg.label}</span>
                       </td>
                       <td className="px-4 py-3 text-gray-500 text-xs">
-                        {a.date_limite ? new Date(a.date_limite).toLocaleDateString('fr-MA') : '—'}
+                        {fmtDate(a.date_limite)}
                       </td>
                       <td className="px-4 py-3 text-gray-700">
                         {a.estimation ? `${(a.estimation / 1000).toFixed(0)}K` : '—'}

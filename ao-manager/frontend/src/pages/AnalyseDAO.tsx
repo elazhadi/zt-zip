@@ -278,8 +278,13 @@ export default function AnalyseDAO() {
               <input className="input" value={extracted.reference || ''} onChange={e => setExtracted({ ...extracted, reference: e.target.value })} />
             </div>
             <div>
-              <label className="label">Date limite</label>
-              <input className="input" type="date" value={extracted.date_limite?.slice(0, 10) || ''} onChange={e => setExtracted({ ...extracted, date_limite: e.target.value })} />
+              <label className="label">Date et heure limite</label>
+              <input
+                className="input"
+                type="datetime-local"
+                value={extracted.date_limite ? extracted.date_limite.replace(' ', 'T').slice(0, 16) : ''}
+                onChange={e => setExtracted({ ...extracted, date_limite: e.target.value.replace('T', ' ') })}
+              />
             </div>
             <div className="col-span-2">
               <label className="label">Objet</label>
@@ -295,11 +300,17 @@ export default function AnalyseDAO() {
             </div>
             <div>
               <label className="label">Estimation MO (DH TTC)</label>
-              <input className="input" type="number" value={extracted.estimation || ''} onChange={e => setExtracted({ ...extracted, estimation: parseFloat(e.target.value) || undefined })} />
+              <input className="input" type="number" value={extracted.estimation ?? ''} onChange={e => setExtracted({ ...extracted, estimation: parseFloat(e.target.value) || undefined })} />
+              {extracted.estimation != null && (
+                <p className="text-xs text-gray-400 mt-1">{fmtNum(extracted.estimation)} DH TTC</p>
+              )}
             </div>
             <div>
               <label className="label">Caution provisoire (DH)</label>
-              <input className="input" type="number" value={extracted.caution_provisoire || ''} onChange={e => setExtracted({ ...extracted, caution_provisoire: parseFloat(e.target.value) || undefined })} />
+              <input className="input" type="number" value={extracted.caution_provisoire ?? ''} onChange={e => setExtracted({ ...extracted, caution_provisoire: parseFloat(e.target.value) || undefined })} />
+              {extracted.caution_provisoire != null && (
+                <p className="text-xs text-gray-400 mt-1">{fmtNum(extracted.caution_provisoire)} DH</p>
+              )}
             </div>
             <div>
               <label className="label">Domaine</label>
@@ -307,7 +318,24 @@ export default function AnalyseDAO() {
             </div>
             <div>
               <label className="label">Délai exécution</label>
-              <input className="input bg-gray-50 text-gray-600" value={(extracted.delai_execution as any)?.valeur != null ? `${(extracted.delai_execution as any).valeur} ${(extracted.delai_execution as any).unite}` : ''} readOnly />
+              <div className="flex gap-2">
+                <input
+                  className="input w-24"
+                  type="number"
+                  placeholder="ex: 90"
+                  value={(extracted.delai_execution as any)?.valeur ?? ''}
+                  onChange={e => setExtracted({ ...extracted, delai_execution: { ...(extracted.delai_execution as any), valeur: parseInt(e.target.value) || null } as any })}
+                />
+                <select
+                  className="input flex-1"
+                  value={(extracted.delai_execution as any)?.unite || 'jours'}
+                  onChange={e => setExtracted({ ...extracted, delai_execution: { ...(extracted.delai_execution as any), unite: e.target.value } as any })}
+                >
+                  <option value="jours">jours</option>
+                  <option value="mois">mois</option>
+                  <option value="semaines">semaines</option>
+                </select>
+              </div>
             </div>
             <div className="col-span-2">
               <label className="label">URL portail marchés publics</label>

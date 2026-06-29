@@ -9,7 +9,7 @@ import { aoApi, societeApi } from '../lib/api'
 import type { AppelOffre, AOStatut, Societe } from '../types'
 import { STATUT_CONFIG } from '../types'
 import { Calendar, Building2, AlertTriangle, ChevronDown, ChevronRight, X } from 'lucide-react'
-import { fmtDH } from '../lib/format'
+import { fmtDH, fmtDate } from '../lib/format'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
 
@@ -29,7 +29,7 @@ const COLUMNS: AOStatut[] = [
 function AOCard({ ao, isDragging }: { ao: AppelOffre; isDragging?: boolean }) {
   const navigate = useNavigate()
   const isUrgent = ao.date_limite
-    ? new Date(ao.date_limite).getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000
+    ? new Date(ao.date_limite.replace(' ', 'T')).getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000
     : false
 
   return (
@@ -59,7 +59,7 @@ function AOCard({ ao, isDragging }: { ao: AppelOffre; isDragging?: boolean }) {
         <div className={clsx('flex items-center gap-1 mt-2 text-xs', isUrgent ? 'text-warning-600 font-medium' : 'text-gray-400')}>
           {isUrgent && <AlertTriangle size={11} />}
           <Calendar size={11} />
-          {new Date(ao.date_limite).toLocaleDateString('fr-FR')}
+          {fmtDate(ao.date_limite)}
         </div>
       )}
       {ao.estimation && (

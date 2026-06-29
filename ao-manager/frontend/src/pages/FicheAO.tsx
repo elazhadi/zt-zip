@@ -8,7 +8,7 @@ import {
   ArrowLeft, AlertTriangle, CheckCircle, XCircle, FileDown,
   Building2, Calendar, Tag, Loader2, ExternalLink, Clock
 } from 'lucide-react'
-import { fmtNum } from '../lib/format'
+import { fmtNum, fmtDate } from '../lib/format'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
 
@@ -296,11 +296,11 @@ export default function FicheAO() {
               {ao.date_limite && (
                 <div className={clsx(
                   'flex items-center gap-2 text-sm',
-                  new Date(ao.date_limite).getTime() - Date.now() < 3 * 24 * 3600 * 1000
+                  new Date(ao.date_limite.replace(' ', 'T')).getTime() - Date.now() < 3 * 24 * 3600 * 1000
                     ? 'text-warning-600 font-medium' : 'text-gray-700'
                 )}>
                   <Clock size={14} />
-                  <span>Limite : {new Date(ao.date_limite).toLocaleDateString('fr-MA')}</span>
+                  <span>Limite : {fmtDate(ao.date_limite, true)}</span>
                 </div>
               )}
               <p className="text-xs text-gray-400">Créé le {new Date(ao.created_at).toLocaleDateString('fr-MA')}</p>

@@ -4,7 +4,7 @@ import { aoApi } from '../lib/api'
 import type { AppelOffre } from '../types'
 import { STATUT_CONFIG } from '../types'
 import { AlertTriangle, TrendingUp, FileText, Clock } from 'lucide-react'
-import { fmtNum } from '../lib/format'
+import { fmtNum, fmtDate } from '../lib/format'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import clsx from 'clsx'
 
@@ -95,7 +95,7 @@ export default function Dashboard() {
                 >
                   <span className="font-medium truncate">{a.reference || a.objet}</span>
                   <span className="text-warning-600 flex-shrink-0">
-                    — {new Date(a.date_limite!).toLocaleDateString('fr-MA')}
+                    — {fmtDate(a.date_limite)}
                   </span>
                 </button>
               ))}
