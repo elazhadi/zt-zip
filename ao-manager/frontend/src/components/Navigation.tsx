@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Search, Kanban, BarChart2, Archive, Settings, Trophy } from 'lucide-react'
+import { LayoutDashboard, Search, Kanban, BarChart2, Archive, Settings, Trophy, X } from 'lucide-react'
 import clsx from 'clsx'
 
 const items = [
@@ -12,13 +12,17 @@ const items = [
   { to: '/parametres', icon: Settings, label: 'Paramètres' },
 ]
 
-export default function Navigation() {
+interface Props {
+  onClose?: () => void
+}
+
+export default function Navigation({ onClose }: Props) {
   return (
-    <nav className="w-56 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+    <nav className="w-56 h-full bg-white border-r border-gray-200 flex flex-col">
       {/* Logo */}
-      <div className="p-5 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-sm">AO</span>
           </div>
           <div>
@@ -26,14 +30,21 @@ export default function Navigation() {
             <p className="text-xs text-gray-500 mt-0.5">Marchés Publics MA</p>
           </div>
         </div>
+        {/* Close button — mobile only */}
+        {onClose && (
+          <button onClick={onClose} className="md:hidden p-1 text-gray-400 hover:text-gray-700">
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       {/* Nav items */}
-      <ul className="flex-1 p-3 space-y-1">
+      <ul className="flex-1 p-3 space-y-1 overflow-y-auto">
         {items.map(({ to, icon: Icon, label }) => (
           <li key={to}>
             <NavLink
               to={to}
+              onClick={onClose}
               className={({ isActive }) =>
                 clsx(
                   'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',

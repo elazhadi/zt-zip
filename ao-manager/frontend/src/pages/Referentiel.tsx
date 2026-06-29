@@ -23,23 +23,41 @@ function SocieteModal({ onClose }: { onClose: () => void }) {
       toast.success('Société créée')
       onClose()
     },
-    onError: () => toast.error('Erreur lors de la création'),
+    onError: (err: any) => {
+      const msg = err?.response?.data?.detail || 'Erreur lors de la création'
+      toast.error(typeof msg === 'string' ? msg : JSON.stringify(msg))
+    },
   })
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
 
+  const handleCreate = () => {
+    // Convert empty strings to null for optional fields
+    const payload: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(form)) {
+      if (k === 'capital') {
+        payload[k] = v ? parseFloat(v) : null
+      } else if (k === 'code' || k === 'raison_sociale') {
+        payload[k] = v
+      } else {
+        payload[k] = v || null
+      }
+    }
+    createMut.mutate(payload)
+  }
+
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="card w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
+    <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+      <div className="card w-full sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto rounded-b-none sm:rounded-xl">
+        <div className="flex items-center justify-between mb-4 sticky top-0 bg-white py-1">
           <h2 className="text-base font-semibold text-gray-900">Nouvelle société</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[
-            { k: 'code', l: 'Code (unique) *', req: true },
-            { k: 'raison_sociale', l: 'Raison sociale *', req: true },
+            { k: 'code', l: 'Code (unique) *' },
+            { k: 'raison_sociale', l: 'Raison sociale *' },
             { k: 'forme_juridique', l: 'Forme juridique' },
             { k: 'rc', l: 'RC' },
             { k: 'if_fiscal', l: 'IF fiscal' },
@@ -58,20 +76,25 @@ function SocieteModal({ onClose }: { onClose: () => void }) {
           ].map(({ k, l }) => (
             <div key={k}>
               <label className="label">{l}</label>
-              <input className="input" value={(form as any)[k]} onChange={e => set(k, e.target.value)} />
+              <input
+                className="input"
+                type={k === 'capital' ? 'number' : 'text'}
+                value={(form as any)[k]}
+                onChange={e => set(k, e.target.value)}
+              />
             </div>
           ))}
         </div>
 
-        <div className="flex gap-3 mt-6">
+        <div className="flex gap-3 mt-6 pb-2">
           <button
-            className="btn btn-primary"
-            onClick={() => createMut.mutate({ ...form, capital: form.capital ? parseFloat(form.capital) : undefined })}
+            className="btn btn-primary flex-1 sm:flex-none"
+            onClick={handleCreate}
             disabled={!form.code || !form.raison_sociale || createMut.isPending}
           >
             {createMut.isPending ? 'Création...' : 'Créer'}
           </button>
-          <button className="btn btn-secondary" onClick={onClose}>Annuler</button>
+          <button className="btn btn-secondary flex-1 sm:flex-none" onClick={onClose}>Annuler</button>
         </div>
       </div>
     </div>
@@ -106,7 +129,7 @@ export default function Referentiel() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {societes.map(s => (
             <button
               key={s.id}
