@@ -10,3 +10,4 @@ test.log
 .sonar
 pom.xml.versionsBackup
 release.sh
+ao-manager/frontend/public/gen-icons.js
