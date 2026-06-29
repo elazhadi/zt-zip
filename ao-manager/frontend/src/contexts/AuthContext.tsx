@@ -14,6 +14,7 @@ export interface AuthUser {
   role_label: string
   permissions: UserPerms
   is_super_admin: boolean
+  societes_autorisees: number[] | null
 }
 
 interface AuthCtx {
@@ -23,6 +24,7 @@ interface AuthCtx {
   login: (email: string, password: string) => Promise<void>
   logout: () => void
   can: (module: string, action: string) => boolean
+  canAccessSociete: (id: number) => boolean
 }
 
 const Ctx = createContext<AuthCtx>({} as AuthCtx)
@@ -72,8 +74,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return !!user.permissions?.[module]?.[action]
   }
 
+  const canAccessSociete = (id: number): boolean => {
+    if (!user) return false
+    if (user.is_super_admin || user.societes_autorisees === null) return true
+    return (user.societes_autorisees ?? []).includes(id)
+  }
+
   return (
-    <Ctx.Provider value={{ user, token, loading, login, logout, can }}>
+    <Ctx.Provider value={{ user, token, loading, login, logout, can, canAccessSociete }}>
       {children}
     </Ctx.Provider>
   )

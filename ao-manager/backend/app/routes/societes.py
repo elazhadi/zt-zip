@@ -8,16 +8,24 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models import Societe, DocumentRef
+from ..models.user import User
 from ..schemas import SocieteCreate, SocieteUpdate, SocieteOut
 from ..config import settings
 from ..services import ai_service
+from .auth import get_current_user
 
 router = APIRouter(prefix="/societes", tags=["Sociétés"])
 
 
 @router.get("/", response_model=List[SocieteOut])
-def list_societes(db: Session = Depends(get_db)):
-    return db.query(Societe).order_by(Societe.code).all()
+def list_societes(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    q = db.query(Societe).order_by(Societe.code)
+    if not current_user.is_super_admin and current_user.societes_autorisees is not None:
+        q = q.filter(Societe.id.in_(current_user.societes_autorisees or []))
+    return q.all()
 
 
 @router.post("/", response_model=SocieteOut, status_code=201)
@@ -32,10 +40,16 @@ def create_societe(data: SocieteCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/{societe_id}", response_model=SocieteOut)
-def get_societe(societe_id: int, db: Session = Depends(get_db)):
+def get_societe(
+    societe_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     s = db.query(Societe).get(societe_id)
     if not s:
         raise HTTPException(404, "Société non trouvée")
+    if not current_user.can_access_societe(societe_id):
+        raise HTTPException(403, "Accès refusé à cette société")
     return s
 
 

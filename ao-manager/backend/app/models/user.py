@@ -104,7 +104,14 @@ class User(Base):
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
     last_login = Column(TIMESTAMP, nullable=True)
 
+    societes_autorisees = Column(JSONB, nullable=True)  # null = toutes, [] ou [1,2] = restreint
+
     def has_permission(self, module: str, action: str) -> bool:
         if self.is_super_admin:
             return True
         return bool((self.permissions or {}).get(module, {}).get(action, False))
+
+    def can_access_societe(self, societe_id: int) -> bool:
+        if self.is_super_admin or self.societes_autorisees is None:
+            return True
+        return societe_id in (self.societes_autorisees or [])

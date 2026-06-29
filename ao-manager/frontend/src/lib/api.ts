@@ -103,6 +103,8 @@ export const userApi = {
   create: (data: unknown) => api.post('/users/', data).then(r => r.data),
   update: (id: number, data: unknown) => api.put(`/users/${id}`, data).then(r => r.data),
   updatePermissions: (id: number, data: unknown) => api.put(`/users/${id}/permissions`, data).then(r => r.data),
+  updateSocietes: (id: number, societes_autorisees: number[] | null) =>
+    api.put(`/users/${id}/societes`, { societes_autorisees }).then(r => r.data),
   resetPassword: (id: number, nouveau_mdp: string) => api.put(`/users/${id}/reset-password`, { nouveau_mdp }).then(r => r.data),
   delete: (id: number) => api.delete(`/users/${id}`),
   meta: () => api.get('/users/meta/roles').then(r => r.data),

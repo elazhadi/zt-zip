@@ -1,11 +1,12 @@
 from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..models.user import User, ROLES_PRESETS, MODULES, MODULE_ACTIONS, MODULE_LABELS, ROLE_LABELS
+from ..models import Societe
 from ..services.auth_service import hash_password
 from .auth import get_current_user, require_permission
 
@@ -41,6 +42,7 @@ def _user_out(u: User) -> dict:
         "permissions": u.permissions,
         "is_super_admin": u.is_super_admin,
         "is_active": u.is_active,
+        "societes_autorisees": u.societes_autorisees,
         "last_login": u.last_login,
         "created_at": u.created_at,
     }
@@ -177,10 +179,32 @@ def delete_user(
     db.commit()
 
 
+@router.put("/{user_id}/societes")
+def update_societes(
+    user_id: int,
+    data: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("utilisateurs", "modifier")),
+):
+    u = db.query(User).filter(User.id == user_id).first()
+    if not u:
+        raise HTTPException(404, "Utilisateur introuvable")
+    if u.is_super_admin and not current_user.is_super_admin:
+        raise HTTPException(403, "Impossible de modifier un super-admin")
+    # null = all, list of ints = restricted
+    ids = data.get("societes_autorisees")
+    u.societes_autorisees = ids  # None means all access
+    db.commit()
+    db.refresh(u)
+    return _user_out(u)
+
+
 @router.get("/meta/roles")
-def get_roles_meta(current_user: User = Depends(get_current_user)):
+def get_roles_meta(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    societes = db.query(Societe.id, Societe.code, Societe.nom_commercial).order_by(Societe.code).all()
     return {
         "roles": ROLE_LABELS,
         "presets": ROLES_PRESETS,
         "modules": {m: {"label": MODULE_LABELS[m], "actions": MODULE_ACTIONS[m]} for m in MODULES},
+        "societes": [{"id": s.id, "code": s.code, "nom": s.nom_commercial} for s in societes],
     }

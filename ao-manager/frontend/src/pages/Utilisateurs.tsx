@@ -4,7 +4,7 @@ import { api } from '../lib/api'
 import { useAuth } from '../contexts/AuthContext'
 import {
   Users, Plus, Edit2, Trash2, X, Check, Shield, Key,
-  ChevronDown, ChevronRight, UserCheck, UserX, Loader2
+  ChevronDown, ChevronRight, UserCheck, UserX, Loader2, Building2
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
@@ -52,6 +52,7 @@ const usersApi = {
   list: () => api.get('/users/').then(r => r.data),
   create: (d: any) => api.post('/users/', d).then(r => r.data),
   updatePermissions: (id: number, d: any) => api.put(`/users/${id}/permissions`, d).then(r => r.data),
+  updateSocietes: (id: number, ids: number[] | null) => api.put(`/users/${id}/societes`, { societes_autorisees: ids }).then(r => r.data),
   toggleActive: (id: number, is_active: boolean) => api.put(`/users/${id}`, { is_active }).then(r => r.data),
   delete: (id: number) => api.delete(`/users/${id}`),
   resetPassword: (id: number, pwd: string) => api.put(`/users/${id}/reset-password`, { nouveau_mdp: pwd }).then(r => r.data),
@@ -280,22 +281,118 @@ function CreateUserModal({ presets, onClose }: { presets: any; onClose: () => vo
   )
 }
 
+// ── Sociétés access selector ───────────────────────────────────────────────────
+
+function SocietesAccess({
+  societes, value, onChange,
+}: {
+  societes: { id: number; code: string; nom: string }[]
+  value: number[] | null
+  onChange: (v: number[] | null) => void
+}) {
+  const allAccess = value === null
+
+  const toggle = (id: number) => {
+    if (allAccess) {
+      // switching from all to restricted — exclude this one
+      onChange(societes.filter(s => s.id !== id).map(s => s.id))
+    } else {
+      const next = value!.includes(id) ? value!.filter(x => x !== id) : [...value!, id]
+      onChange(next.length === societes.length ? null : next)
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => onChange(null)}
+          className={clsx(
+            'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
+            allAccess
+              ? 'bg-primary-600 text-white border-primary-600'
+              : 'bg-white text-gray-600 border-gray-300 hover:border-primary-400'
+          )}
+        >
+          Toutes les sociétés
+        </button>
+        <button
+          onClick={() => onChange([])}
+          className={clsx(
+            'px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
+            !allAccess && value?.length === 0
+              ? 'bg-red-600 text-white border-red-600'
+              : 'bg-white text-gray-600 border-gray-300 hover:border-red-400'
+          )}
+        >
+          Aucune société
+        </button>
+      </div>
+      {societes.length === 0 ? (
+        <p className="text-xs text-gray-400 italic">Aucune société dans le référentiel</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+          {societes.map(s => {
+            const checked = allAccess || (value ?? []).includes(s.id)
+            return (
+              <button
+                key={s.id}
+                onClick={() => toggle(s.id)}
+                className={clsx(
+                  'flex items-center gap-2 px-3 py-2 rounded-lg border text-left transition-all',
+                  checked
+                    ? 'bg-primary-50 border-primary-300 text-primary-800'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                )}
+              >
+                <div className={clsx(
+                  'w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0',
+                  checked ? 'bg-primary-600 border-primary-600' : 'border-gray-300'
+                )}>
+                  {checked && <Check size={10} className="text-white" strokeWidth={3} />}
+                </div>
+                <span className="text-xs font-medium truncate">{s.code}</span>
+                <span className="text-xs text-gray-400 truncate flex-1">{s.nom}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+      <p className="text-xs text-gray-400">
+        {allAccess
+          ? 'Accès à toutes les sociétés du référentiel'
+          : `${value?.length ?? 0} société(s) autorisée(s)`}
+      </p>
+    </div>
+  )
+}
+
 // ── Edit permissions panel ─────────────────────────────────────────────────────
 
 function EditPermPanel({
-  user, presets, onClose,
+  user, presets, societes, onClose,
 }: {
-  user: any; presets: any; onClose: () => void
+  user: any; presets: any; societes: any[]; onClose: () => void
 }) {
   const qc = useQueryClient()
   const [permissions, setPermissions] = useState<any>(user.permissions || {})
   const [role, setRole] = useState(user.role_predefini)
   const [showReset, setShowReset] = useState(false)
+  const [showSocietes, setShowSocietes] = useState(false)
   const [newPwd, setNewPwd] = useState('')
+  const [societeAccess, setSocieteAccess] = useState<number[] | null>(
+    user.societes_autorisees ?? null
+  )
 
   const saveMut = useMutation({
     mutationFn: () => usersApi.updatePermissions(user.id, { permissions, role_predefini: role }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); toast.success('Permissions enregistrées'); onClose() },
+    onError: (e: any) => toast.error(e?.response?.data?.detail || 'Erreur'),
+  })
+
+  const saveSocietesMut = useMutation({
+    mutationFn: () => usersApi.updateSocietes(user.id, societeAccess),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); toast.success('Accès sociétés mis à jour') },
     onError: (e: any) => toast.error(e?.response?.data?.detail || 'Erreur'),
   })
 
@@ -330,6 +427,34 @@ function EditPermPanel({
             permissions={permissions}
             onChange={p => { setPermissions(p); setRole('custom') }}
           />
+        </div>
+
+        {/* Sociétés access section */}
+        <div className="mx-5 mb-3 p-4 border border-gray-200 rounded-xl">
+          <button
+            className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 w-full"
+            onClick={() => setShowSocietes(v => !v)}
+          >
+            <Building2 size={15} />
+            Accès aux sociétés
+            <span className="ml-2 text-xs text-gray-400">
+              {societeAccess === null ? '(toutes)' : `(${societeAccess.length} sélectionnée(s))`}
+            </span>
+            {showSocietes ? <ChevronDown size={15} className="ml-auto" /> : <ChevronRight size={15} className="ml-auto" />}
+          </button>
+          {showSocietes && (
+            <div className="mt-3 space-y-3">
+              <SocietesAccess societes={societes} value={societeAccess} onChange={setSocieteAccess} />
+              <button
+                className="btn btn-secondary text-xs"
+                onClick={() => saveSocietesMut.mutate()}
+                disabled={saveSocietesMut.isPending}
+              >
+                {saveSocietesMut.isPending ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                Enregistrer l'accès sociétés
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Reset password section */}
@@ -369,9 +494,9 @@ function EditPermPanel({
             disabled={saveMut.isPending}
           >
             {saveMut.isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-            Enregistrer
+            Enregistrer les permissions
           </button>
-          <button className="btn btn-secondary" onClick={onClose}>Annuler</button>
+          <button className="btn btn-secondary" onClick={onClose}>Fermer</button>
         </div>
       </div>
     </div>
@@ -484,6 +609,11 @@ export default function Utilisateurs() {
                       <span className={clsx('badge text-xs', ROLE_COLOR[u.role_predefini] || 'bg-gray-100 text-gray-600')}>
                         {u.role_label}
                       </span>
+                      {u.societes_autorisees !== null && (
+                        <span className="ml-1 badge text-xs bg-amber-100 text-amber-700" title="Accès restreint aux sociétés">
+                          {u.societes_autorisees.length} sté
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-center">
                       {u.is_active ? (
@@ -561,7 +691,12 @@ export default function Utilisateurs() {
         <CreateUserModal presets={meta.presets} onClose={() => setShowCreate(false)} />
       )}
       {editUser && meta && (
-        <EditPermPanel user={editUser} presets={meta.presets} onClose={() => setEditUser(null)} />
+        <EditPermPanel
+          user={editUser}
+          presets={meta.presets}
+          societes={meta.societes ?? []}
+          onClose={() => setEditUser(null)}
+        />
       )}
     </div>
   )

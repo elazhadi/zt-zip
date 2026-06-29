@@ -29,6 +29,7 @@ def _user_out(u: User) -> dict:
         "permissions": u.permissions,
         "is_super_admin": u.is_super_admin,
         "is_active": u.is_active,
+        "societes_autorisees": u.societes_autorisees,
         "last_login": u.last_login,
         "created_at": u.created_at,
     }
