@@ -7,6 +7,19 @@ import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import clsx from 'clsx'
 
+function BuildInfo() {
+  const raw = import.meta.env.VITE_BUILD_DATE as string | undefined
+  if (!raw) return <p className="text-xs text-gray-300">dev</p>
+  const d = new Date(raw)
+  const date = d.toLocaleDateString('fr-MA', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  const time = d.toLocaleTimeString('fr-MA', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+  return (
+    <p className="text-xs text-gray-300" title={`Déployé le ${date} à ${time} UTC`}>
+      Déployé le {date} à {time}
+    </p>
+  )
+}
+
 const NAV_ITEMS = [
   { to: '/dashboard',    icon: LayoutDashboard, label: 'Tableau de bord', module: 'pipeline' },
   { to: '/analyse',      icon: Search,          label: 'Analyse DAO',     module: 'analyse' },
@@ -109,7 +122,10 @@ export default function Navigation({ onClose }: Props) {
             </div>
           )}
         </div>
-        <p className="text-xs text-gray-400 text-center mt-2">v3.0 — Décret 2-22-431</p>
+        <div className="mt-2 text-center space-y-0.5">
+          <p className="text-xs text-gray-400">v3.0 — Décret 2-22-431</p>
+          <BuildInfo />
+        </div>
       </div>
     </nav>
   )

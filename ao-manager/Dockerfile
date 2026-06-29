@@ -6,7 +6,7 @@ RUN npm install --legacy-peer-deps
 COPY frontend/ ./
 ARG VITE_API_URL=""
 ENV VITE_API_URL=$VITE_API_URL
-RUN npm run build
+RUN VITE_BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ") npm run build
 
 # Stage 2 — Backend + frontend dist
 FROM python:3.11-slim
