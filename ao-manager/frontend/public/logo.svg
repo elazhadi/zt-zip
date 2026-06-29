@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Folder shadow/back -->
+  <path d="M44 160 Q44 130 74 130 H220 L252 96 H440 Q470 96 470 126 V390 Q470 420 440 420 H74 Q44 420 44 390 Z" fill="#1D4ED8"/>
+  <!-- Folder body -->
+  <path d="M44 190 Q44 160 74 160 H440 Q470 160 470 190 V390 Q470 420 440 420 H74 Q44 420 44 390 Z" fill="#2563EB"/>
+  <!-- Folder top highlight -->
+  <path d="M44 190 Q44 160 74 160 H440 Q470 160 470 190 V200 H44 Z" fill="#3B82F6" opacity="0.5"/>
+  <!-- Folder left edge highlight -->
+  <rect x="44" y="190" width="6" height="230" fill="#1E40AF" opacity="0.4"/>
+  <!-- White inner card -->
+  <rect x="80" y="200" width="352" height="190" rx="8" fill="white" opacity="0.15"/>
+
+  <!-- Bar chart - bar 1 (left, gray-blue) -->
+  <rect x="118" y="290" width="52" height="80" rx="6" fill="#93C5FD"/>
+  <!-- Bar chart - bar 2 (middle-left, taller, dark blue) -->
+  <rect x="186" y="255" width="52" height="115" rx="6" fill="#1E40AF"/>
+  <!-- Bar chart - bar 3 (middle-right, medium, light) -->
+  <rect x="254" y="275" width="52" height="95" rx="6" fill="#BFDBFE"/>
+  <!-- Bar chart - bar 4 (right, tallest, blue) -->
+  <rect x="322" y="235" width="52" height="135" rx="6" fill="#3B82F6"/>
+
+  <!-- Baseline -->
+  <rect x="105" y="370" width="292" height="5" rx="2.5" fill="white" opacity="0.4"/>
+
+  <!-- Cursive signature "S" element bottom right -->
+  <path d="M378 310 C390 300 405 305 405 318 C405 330 392 335 385 342 C378 350 382 360 395 358" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.9"/>
+</svg>

@@ -28,6 +28,39 @@ def _run_migrations():
 
 _run_migrations()
 
+
+def _ensure_admin():
+    """Create or reset the default super-admin account."""
+    from .models.user import User, ROLES_PRESETS
+    from .services.auth_service import hash_password
+    db = SessionLocal()
+    try:
+        admin = db.query(User).filter(User.email == "admin@ao-manager.ma").first()
+        if admin is None:
+            admin = User(
+                nom="Administrateur", prenom="",
+                email="admin@ao-manager.ma",
+                password_hash=hash_password("Admin@2024"),
+                role_predefini="admin",
+                permissions=ROLES_PRESETS["admin"],
+                is_active=True, is_super_admin=True,
+            )
+            db.add(admin)
+            db.commit()
+            print("✅ Compte admin créé : admin@ao-manager.ma / Admin@2024")
+        else:
+            # Reset password on every deploy so it stays known
+            admin.password_hash = hash_password("Admin@2024")
+            admin.is_active = True
+            admin.is_super_admin = True
+            admin.permissions = ROLES_PRESETS["admin"]
+            db.commit()
+            print("✅ Compte admin synchronisé")
+    finally:
+        db.close()
+
+_ensure_admin()
+
 app = FastAPI(
     title="AO Manager API",
     description="Gestion & Réponse aux Appels d'Offres Publics Marocains",
@@ -60,30 +93,6 @@ uploads_dir = settings.UPLOAD_DIR
 os.makedirs(uploads_dir, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
-# Create default super-admin on first startup
-def _create_default_admin():
-    from .models.user import User, ROLES_PRESETS
-    from .services.auth_service import hash_password
-    db = SessionLocal()
-    try:
-        if db.query(User).count() == 0:
-            admin = User(
-                nom="Administrateur",
-                prenom="",
-                email="admin@ao-manager.ma",
-                password_hash=hash_password("Admin@2024"),
-                role_predefini="admin",
-                permissions=ROLES_PRESETS["admin"],
-                is_active=True,
-                is_super_admin=True,
-            )
-            db.add(admin)
-            db.commit()
-            print("✅ Compte admin créé : admin@ao-manager.ma / Admin@2024")
-    finally:
-        db.close()
-
-_create_default_admin()
 
 # Serve frontend (built React app)
 FRONTEND_DIST = os.path.join(os.path.dirname(__file__), "..", "frontend_dist")

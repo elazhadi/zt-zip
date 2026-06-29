@@ -1,0 +1,51 @@
+{
+  "name": "AO Manager — Marchés Publics",
+  "short_name": "AO Manager",
+  "description": "Gestion et réponse aux appels d'offres publics marocains — Décret 2-22-431",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#2563EB",
+  "background_color": "#f9fafb",
+  "lang": "fr",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Pipeline AO",
+      "url": "/pipeline",
+      "description": "Voir le pipeline des appels d'offres"
+    },
+    {
+      "name": "Analyse DAO",
+      "url": "/analyse",
+      "description": "Analyser un nouveau dossier d'appel d'offres"
+    }
+  ]
+}
