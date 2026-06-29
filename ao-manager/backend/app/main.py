@@ -1,13 +1,15 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from .database import Base, engine
+from .database import Base, engine, SessionLocal
 from .routes import societes, aos, reponses, marches, documents, resultats
+from .routes import auth as auth_router
+from .routes import users as users_router
+from .routes.auth import get_current_user
 from .config import settings
 
-# Create tables if not exist (dev only; use Alembic in prod)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -24,19 +26,50 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(societes.router)
-app.include_router(aos.router)
-app.include_router(reponses.router)
-app.include_router(marches.router)
-app.include_router(documents.router)
-app.include_router(resultats.router)
+# Public routes (no auth)
+app.include_router(auth_router.router)
+
+# Protected routes — require authentication
+_auth = [Depends(get_current_user)]
+app.include_router(societes.router, dependencies=_auth)
+app.include_router(aos.router, dependencies=_auth)
+app.include_router(reponses.router, dependencies=_auth)
+app.include_router(marches.router, dependencies=_auth)
+app.include_router(documents.router, dependencies=_auth)
+app.include_router(resultats.router, dependencies=_auth)
+app.include_router(users_router.router, dependencies=_auth)
 
 # Serve uploads
 uploads_dir = settings.UPLOAD_DIR
 os.makedirs(uploads_dir, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
-# Serve frontend (built React app) — only if dist/ exists
+# Create default super-admin on first startup
+def _create_default_admin():
+    from .models.user import User, ROLES_PRESETS
+    from .services.auth_service import hash_password
+    db = SessionLocal()
+    try:
+        if db.query(User).count() == 0:
+            admin = User(
+                nom="Administrateur",
+                prenom="",
+                email="admin@ao-manager.ma",
+                password_hash=hash_password("Admin@2024"),
+                role_predefini="admin",
+                permissions=ROLES_PRESETS["admin"],
+                is_active=True,
+                is_super_admin=True,
+            )
+            db.add(admin)
+            db.commit()
+            print("✅ Compte admin créé : admin@ao-manager.ma / Admin@2024")
+    finally:
+        db.close()
+
+_create_default_admin()
+
+# Serve frontend (built React app)
 FRONTEND_DIST = os.path.join(os.path.dirname(__file__), "..", "frontend_dist")
 if os.path.isdir(FRONTEND_DIST):
     from fastapi.responses import FileResponse

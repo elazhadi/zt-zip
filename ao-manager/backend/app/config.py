@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = ""
     UPLOAD_DIR: str = "./uploads"
     MAX_FILE_SIZE_MB: int = 100
+    SECRET_KEY: str = "ao-manager-secret-key-change-in-production-2024"
 
     class Config:
         env_file = ".env"

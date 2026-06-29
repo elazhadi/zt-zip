@@ -5,3 +5,4 @@ from .reponse import Reponse
 from .marche import Marche
 from .concurrent import Concurrent
 from .resultat_ao import ResultatAO
+from .user import User

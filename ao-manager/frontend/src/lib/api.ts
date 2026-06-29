@@ -97,6 +97,17 @@ export const resultatApi = {
   delete: (id: number) => api.delete(`/resultats/${id}`),
 }
 
+// Utilisateurs
+export const userApi = {
+  list: () => api.get('/users/').then(r => r.data),
+  create: (data: unknown) => api.post('/users/', data).then(r => r.data),
+  update: (id: number, data: unknown) => api.put(`/users/${id}`, data).then(r => r.data),
+  updatePermissions: (id: number, data: unknown) => api.put(`/users/${id}/permissions`, data).then(r => r.data),
+  resetPassword: (id: number, nouveau_mdp: string) => api.put(`/users/${id}/reset-password`, { nouveau_mdp }).then(r => r.data),
+  delete: (id: number) => api.delete(`/users/${id}`),
+  meta: () => api.get('/users/meta/roles').then(r => r.data),
+}
+
 // Documents
 export const documentApi = {
   exportDescriptif: (data: unknown) => api.post('/documents/descriptif-fournisseur', data).then(r => r.data),
