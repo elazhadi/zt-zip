@@ -60,8 +60,14 @@ def require_permission(module: str, action: str):
 
 @router.post("/login")
 def login(data: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == data.email.lower().strip()).first()
-    if not user or not verify_password(data.password, user.password_hash):
+    email = data.email.lower().strip()
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        print(f"🔐 login: user not found for {email}")
+        raise HTTPException(401, "Email ou mot de passe incorrect")
+    ok = verify_password(data.password, user.password_hash)
+    print(f"🔐 login: {email} — hash_prefix={user.password_hash[:10] if user.password_hash else 'NULL'} — verify={ok}")
+    if not ok:
         raise HTTPException(401, "Email ou mot de passe incorrect")
     if not user.is_active:
         raise HTTPException(403, "Compte désactivé")
