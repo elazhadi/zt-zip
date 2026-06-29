@@ -1,15 +1,27 @@
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { aoApi, reponseApi } from '../lib/api'
-import type { AppelOffre, Lot } from '../types'
+import { aoApi, reponseApi, societeApi } from '../lib/api'
+import type { AppelOffre, Lot, Societe } from '../types'
 import { fmtNum } from '../lib/format'
-import { Upload, FileText, CheckCircle, XCircle, ChevronRight, AlertTriangle, Loader2, Trash2, Eye } from 'lucide-react'
+import {
+  Upload, FileText, CheckCircle, XCircle, ChevronRight, ChevronLeft,
+  AlertTriangle, Loader2, Trash2, Eye, FileDown,
+} from 'lucide-react'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
 
 type Step = 'upload' | 'analysing' | 'review' | 'decision' | 'pricing' | 'generating' | 'done'
+
+const STEP_ORDER: Step[] = ['upload', 'analysing', 'review', 'decision', 'pricing', 'generating', 'done']
+
+const DOC_LABELS: Record<string, string> = {
+  dh: 'Déclaration sur l\'honneur',
+  ae: 'Acte d\'engagement',
+  bp: 'Bordereau des prix',
+  statut: 'Statuts société',
+}
 
 export default function AnalyseDAO() {
   const navigate = useNavigate()
@@ -24,6 +36,11 @@ export default function AnalyseDAO() {
   const [result, setResult] = useState<any>(null)
   const [savedFiles, setSavedFiles] = useState<string[]>([])
   const [showDocs, setShowDocs] = useState(false)
+
+  const { data: societes = [] } = useQuery<Societe[]>({
+    queryKey: ['societes'],
+    queryFn: () => societeApi.list(),
+  })
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: useCallback((accepted: File[]) => setFiles(prev => {
@@ -41,7 +58,7 @@ export default function AnalyseDAO() {
   const removeFile = (idx: number) => setFiles(prev => prev.filter((_, i) => i !== idx))
 
   const analyseMutation = useMutation({
-    mutationFn: (files: File[]) => aoApi.uploadAnalyse(files),
+    mutationFn: (fs: File[]) => aoApi.uploadAnalyse(fs),
     onMutate: () => setStep('analysing'),
     onSuccess: (data) => {
       if (!data.extracted_data) {
@@ -54,10 +71,7 @@ export default function AnalyseDAO() {
       setWarnings(data.warnings || [])
       setStep('review')
     },
-    onError: () => {
-      setStep('upload')
-      toast.error('Erreur lors de l\'analyse')
-    },
+    onError: () => { setStep('upload'); toast.error('Erreur lors de l\'analyse') },
   })
 
   const saveMutation = useMutation({
@@ -77,12 +91,8 @@ export default function AnalyseDAO() {
     mutationFn: ({ id, decision }: { id: number; decision: string }) =>
       aoApi.setDecision(id, decision),
     onSuccess: (_, vars) => {
-      if (vars.decision === 'oui') {
-        setStep('pricing')
-      } else {
-        toast.success('AO enregistré comme refusé')
-        navigate('/pipeline')
-      }
+      if (vars.decision === 'oui') setStep('pricing')
+      else { toast.success('AO enregistré comme refusé'); navigate('/pipeline') }
     },
   })
 
@@ -95,40 +105,24 @@ export default function AnalyseDAO() {
       setStep('done')
       queryClient.invalidateQueries({ queryKey: ['aos'] })
     },
-    onError: () => {
-      setStep('pricing')
-      toast.error('Erreur lors de la génération')
-    },
+    onError: () => { setStep('pricing'); toast.error('Erreur lors de la génération') },
   })
 
-  const handleAnalyse = () => {
-    if (!files.length) return
-    analyseMutation.mutate(files)
+  // ── Navigation helpers ─────────────────────────────────────────────────────
+
+  const goBack = () => {
+    const idx = STEP_ORDER.indexOf(step)
+    if (idx <= 0) return
+    let prev = STEP_ORDER[idx - 1]
+    if (prev === 'analysing') prev = 'upload'
+    if (prev === 'generating') prev = 'pricing'
+    setStep(prev)
   }
 
-  const handleSave = () => {
-    if (!extracted) return
-    saveMutation.mutate({ extracted_data: extracted, saved_files: savedFiles })
-  }
+  const canGoBack = step !== 'upload' && step !== 'analysing' && step !== 'generating'
 
-  const handleDecision = (decision: 'oui' | 'non') => {
-    if (!savedAO) return
-    decisionMutation.mutate({ id: savedAO.id, decision })
-  }
+  // ── Article helpers ────────────────────────────────────────────────────────
 
-  const handleGenerate = () => {
-    if (!savedAO || !societeId) {
-      toast.error('Sélectionnez une société')
-      return
-    }
-    generateMutation.mutate({
-      ao_id: savedAO.id,
-      societe_id: parseInt(societeId),
-      pct_estimation: parseFloat(pct),
-    })
-  }
-
-  // Helpers for editing articles in the lots
   const updateArticle = (li: number, ai: number, field: string, value: any) => {
     if (!extracted?.lots) return
     const lots: Lot[] = JSON.parse(JSON.stringify(extracted.lots))
@@ -137,19 +131,21 @@ export default function AnalyseDAO() {
     if (field === 'prix_unitaire' || field === 'quantite') {
       art.montant = parseFloat(((art.prix_unitaire || 0) * (art.quantite || 0)).toFixed(2))
     }
-    if (field === 'montant' && (art.quantite || 0) > 0) {
-      art.prix_unitaire = parseFloat((value / art.quantite).toFixed(2))
-    }
     setExtracted({ ...extracted, lots })
   }
 
-  const lotTotal = (lot: Lot) =>
-    lot.articles.reduce((s, a: any) => s + (a.montant || 0), 0)
+  const lotTotal = (lot: Lot) => lot.articles.reduce((s, a: any) => s + (a.montant || 0), 0)
+  const grandTotal = () => (extracted?.lots || []).reduce((s, l) => s + lotTotal(l), 0)
 
-  const grandTotal = () =>
-    (extracted?.lots || []).reduce((s, l) => s + lotTotal(l), 0)
+  // ── Pricing calc (TTC) ────────────────────────────────────────────────────
 
-  const steps = [
+  const estimationTTC = savedAO?.estimation ?? 0
+  const montantTTC = Math.round((parseFloat(pct) / 100) * estimationTTC * 100) / 100
+  const montantHT = Math.round((montantTTC / 1.20) * 100) / 100
+
+  // ── Stepper ───────────────────────────────────────────────────────────────
+
+  const STEPS = [
     { key: 'upload', label: 'Téléversement' },
     { key: 'analysing', label: 'Analyse IA' },
     { key: 'review', label: 'Vérification' },
@@ -158,15 +154,18 @@ export default function AnalyseDAO() {
     { key: 'generating', label: 'Génération' },
     { key: 'done', label: 'Terminé' },
   ]
-  const currentIdx = steps.findIndex(s => s.key === step)
+  const currentIdx = STEPS.findIndex(s => s.key === step)
+
+  // ── Persistent DAO docs banner ─────────────────────────────────────────────
+  const showDocsBanner = files.length > 0 && step !== 'upload' && step !== 'analysing'
 
   return (
     <div className="max-w-4xl mx-auto">
       <h1 className="text-xl font-bold text-gray-900 mb-6">Analyse DAO</h1>
 
       {/* Stepper */}
-      <div className="flex items-center gap-1 mb-8 overflow-x-auto">
-        {steps.map((s, i) => (
+      <div className="flex items-center gap-1 mb-6 overflow-x-auto">
+        {STEPS.map((s, i) => (
           <div key={s.key} className="flex items-center gap-1 flex-shrink-0">
             <div className={clsx(
               'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
@@ -177,12 +176,37 @@ export default function AnalyseDAO() {
               {i < currentIdx ? <CheckCircle size={14} /> : i + 1}
             </div>
             <span className={clsx('text-xs', i === currentIdx ? 'text-primary-700 font-medium' : 'text-gray-400')}>{s.label}</span>
-            {i < steps.length - 1 && <ChevronRight size={14} className="text-gray-300" />}
+            {i < STEPS.length - 1 && <ChevronRight size={14} className="text-gray-300" />}
           </div>
         ))}
       </div>
 
-      {/* Upload */}
+      {/* Persistent DAO documents banner */}
+      {showDocsBanner && (
+        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl px-4 py-2">
+          <button
+            className="flex items-center gap-2 text-sm text-blue-700 font-medium w-full text-left"
+            onClick={() => setShowDocs(v => !v)}
+          >
+            <Eye size={15} />
+            Documents DAO chargés ({files.length})
+            <ChevronRight size={13} className={clsx('ml-auto transition-transform', showDocs && 'rotate-90')} />
+          </button>
+          {showDocs && (
+            <div className="mt-2 space-y-1 border-t border-blue-200 pt-2">
+              {files.map((f, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs text-blue-800">
+                  <FileText size={12} className="flex-shrink-0" />
+                  <span className="font-mono truncate">{f.name}</span>
+                  <span className="text-blue-400 flex-shrink-0">({(f.size / 1024).toFixed(0)} Ko)</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Upload ────────────────────────────────────────────────────────── */}
       {step === 'upload' && (
         <div className="card">
           <h2 className="text-base font-semibold text-gray-900 mb-4">Déposer les fichiers DAO</h2>
@@ -196,7 +220,7 @@ export default function AnalyseDAO() {
             <input {...getInputProps()} />
             <Upload className="mx-auto mb-3 text-gray-400" size={36} />
             <p className="text-sm text-gray-600 font-medium">Glissez vos fichiers DAO ici</p>
-            <p className="text-xs text-gray-400 mt-1">PDF, DOCX, ZIP — plusieurs fichiers acceptés</p>
+            <p className="text-xs text-gray-400 mt-1">Avis, CPS, RC — PDF, DOCX, ZIP — plusieurs fichiers acceptés</p>
           </div>
           {files.length > 0 && (
             <div className="mt-4 space-y-2">
@@ -216,19 +240,15 @@ export default function AnalyseDAO() {
               ))}
             </div>
           )}
-          <div className="mt-6 flex gap-3">
-            <button
-              className="btn btn-primary"
-              disabled={!files.length}
-              onClick={handleAnalyse}
-            >
+          <div className="mt-6">
+            <button className="btn btn-primary" disabled={!files.length} onClick={() => analyseMutation.mutate(files)}>
               Analyser avec l'IA
             </button>
           </div>
         </div>
       )}
 
-      {/* Analysing */}
+      {/* ── Analysing ─────────────────────────────────────────────────────── */}
       {step === 'analysing' && (
         <div className="card flex flex-col items-center py-16 gap-4">
           <Loader2 className="animate-spin text-primary-600" size={48} />
@@ -237,38 +257,17 @@ export default function AnalyseDAO() {
         </div>
       )}
 
-      {/* Review */}
+      {/* ── Review ────────────────────────────────────────────────────────── */}
       {step === 'review' && extracted && (
         <div className="card">
           <h2 className="text-base font-semibold text-gray-900 mb-4">Données extraites — Vérification</h2>
 
-          {/* Warnings */}
           {warnings.length > 0 && (
             <div className="warning-banner mb-4">
               <AlertTriangle size={16} className="flex-shrink-0" />
               <ul className="text-sm space-y-0.5">
                 {warnings.map((w, i) => <li key={i}>{w}</li>)}
               </ul>
-            </div>
-          )}
-
-          {/* Document list */}
-          {savedFiles.length > 0 && (
-            <div className="mb-4">
-              <button
-                className="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-800 font-medium mb-2"
-                onClick={() => setShowDocs(v => !v)}
-              >
-                <Eye size={15} />
-                {showDocs ? 'Masquer' : 'Voir'} les documents chargés ({savedFiles.length})
-              </button>
-              {showDocs && (
-                <div className="bg-gray-50 rounded-lg p-3 space-y-1">
-                  {savedFiles.map((p, i) => (
-                    <p key={i} className="text-xs text-gray-600 font-mono truncate">{p.split('/').pop()}</p>
-                  ))}
-                </div>
-              )}
             </div>
           )}
 
@@ -322,14 +321,21 @@ export default function AnalyseDAO() {
                 <input
                   className="input w-24"
                   type="number"
+                  min={1}
                   placeholder="ex: 90"
                   value={(extracted.delai_execution as any)?.valeur ?? ''}
-                  onChange={e => setExtracted({ ...extracted, delai_execution: { ...(extracted.delai_execution as any), valeur: parseInt(e.target.value) || null } as any })}
+                  onChange={e => setExtracted({
+                    ...extracted,
+                    delai_execution: { ...(extracted.delai_execution as any || {}), valeur: parseInt(e.target.value) || null } as any
+                  })}
                 />
                 <select
                   className="input flex-1"
                   value={(extracted.delai_execution as any)?.unite || 'jours'}
-                  onChange={e => setExtracted({ ...extracted, delai_execution: { ...(extracted.delai_execution as any), unite: e.target.value } as any })}
+                  onChange={e => setExtracted({
+                    ...extracted,
+                    delai_execution: { ...(extracted.delai_execution as any || {}), unite: e.target.value } as any
+                  })}
                 >
                   <option value="jours">jours</option>
                   <option value="mois">mois</option>
@@ -349,7 +355,7 @@ export default function AnalyseDAO() {
             </div>
           </div>
 
-          {/* Bordereau des prix complet */}
+          {/* Bordereau des prix */}
           {extracted.lots && extracted.lots.length > 0 && (
             <div className="mb-6">
               <h3 className="text-sm font-semibold text-gray-800 mb-3">Bordereau des prix — Articles détectés</h3>
@@ -375,18 +381,31 @@ export default function AnalyseDAO() {
                           <tr key={ai} className="border-t border-gray-100 hover:bg-gray-50">
                             <td className="px-2 py-1.5 font-mono text-gray-400">{art.numero}</td>
                             <td className="px-2 py-1.5 text-gray-800">
-                              <div>{art.designation}</div>
+                              <input
+                                className="w-full text-xs border-0 bg-transparent focus:outline-none focus:bg-white focus:border focus:border-gray-300 focus:rounded px-0.5"
+                                value={art.designation}
+                                onChange={e => updateArticle(li, ai, 'designation', e.target.value)}
+                              />
                               {(art as any).specifications_techniques && (
-                                <div className="text-gray-400 text-xs mt-0.5 line-clamp-2">{(art as any).specifications_techniques}</div>
-                              )}
-                              {(art as any).marque_exigee && (
-                                <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700">
-                                  Marque : {(art as any).marque_exigee}
-                                </span>
+                                <div className="text-gray-400 mt-0.5 line-clamp-2">{(art as any).specifications_techniques}</div>
                               )}
                             </td>
-                            <td className="px-2 py-1.5 text-right text-gray-700">{art.quantite ?? '—'}</td>
-                            <td className="px-2 py-1.5 text-gray-500">{art.unite}</td>
+                            <td className="px-2 py-1.5">
+                              <input
+                                type="number"
+                                className="w-full text-right border border-gray-200 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:border-primary-400"
+                                placeholder="—"
+                                value={art.quantite ?? ''}
+                                onChange={e => updateArticle(li, ai, 'quantite', parseFloat(e.target.value) || null)}
+                              />
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <input
+                                className="w-full text-xs border border-gray-200 rounded px-1.5 py-0.5 focus:outline-none focus:border-primary-400"
+                                value={art.unite || ''}
+                                onChange={e => updateArticle(li, ai, 'unite', e.target.value)}
+                              />
+                            </td>
                             <td className="px-2 py-1.5">
                               <input
                                 type="number"
@@ -424,7 +443,7 @@ export default function AnalyseDAO() {
           )}
 
           <div className="flex gap-3">
-            <button className="btn btn-primary" onClick={handleSave} disabled={saveMutation.isPending}>
+            <button className="btn btn-primary" onClick={() => saveMutation.mutate({ extracted_data: extracted, saved_files: savedFiles })} disabled={saveMutation.isPending}>
               {saveMutation.isPending ? 'Enregistrement...' : 'Confirmer et enregistrer'}
             </button>
             <button className="btn btn-secondary" onClick={() => setStep('upload')}>Recommencer</button>
@@ -432,79 +451,99 @@ export default function AnalyseDAO() {
         </div>
       )}
 
-      {/* Decision */}
+      {/* ── Decision ──────────────────────────────────────────────────────── */}
       {step === 'decision' && savedAO && (
         <div className="card">
           <h2 className="text-base font-semibold text-gray-900 mb-2">Décision de répondre</h2>
-          <p className="text-sm text-gray-600 mb-6">{savedAO.objet}</p>
+          <p className="text-sm text-gray-600 mb-1 font-medium">{savedAO.reference}</p>
+          <p className="text-sm text-gray-500 mb-6">{savedAO.objet}</p>
           <div className="flex gap-4">
             <button
               className="btn btn-primary flex items-center gap-2 flex-1 justify-center"
-              onClick={() => handleDecision('oui')}
+              onClick={() => decisionMutation.mutate({ id: savedAO.id, decision: 'oui' })}
               disabled={decisionMutation.isPending}
             >
-              <CheckCircle size={18} />
-              Oui, nous répondons
+              <CheckCircle size={18} /> Oui, nous répondons
             </button>
             <button
               className="btn btn-danger flex items-center gap-2 flex-1 justify-center"
-              onClick={() => handleDecision('non')}
+              onClick={() => decisionMutation.mutate({ id: savedAO.id, decision: 'non' })}
               disabled={decisionMutation.isPending}
             >
-              <XCircle size={18} />
-              Non, nous déclinons
+              <XCircle size={18} /> Non, nous déclinons
             </button>
           </div>
-          <button className="mt-3 text-sm text-gray-400 hover:text-gray-600" onClick={() => navigate(`/ao/${savedAO.id}`)}>
-            Voir la fiche complète →
-          </button>
+          <div className="flex items-center gap-4 mt-4">
+            <button className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-700" onClick={goBack}>
+              <ChevronLeft size={15} /> Précédent
+            </button>
+            <button className="text-sm text-gray-400 hover:text-gray-600" onClick={() => navigate(`/ao/${savedAO.id}`)}>
+              Voir la fiche complète →
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Pricing */}
+      {/* ── Pricing ───────────────────────────────────────────────────────── */}
       {step === 'pricing' && savedAO && (
         <div className="card">
           <h2 className="text-base font-semibold text-gray-900 mb-4">Tarification</h2>
+
           {savedAO.estimation && (
-            <div className="bg-blue-50 rounded-lg p-3 mb-4 text-sm text-blue-800">
+            <div className="bg-blue-50 rounded-lg p-3 mb-6 text-sm text-blue-800">
               Estimation MO : <strong>{fmtNum(savedAO.estimation)} DH TTC</strong>
             </div>
           )}
+
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
-              <label className="label">% de l'estimation</label>
+              <label className="label">% de l'estimation TTC</label>
               <input
                 className="input"
                 type="number"
-                min={50}
-                max={100}
-                step={0.5}
+                min={50} max={100} step={0.5}
                 value={pct}
                 onChange={e => setPct(e.target.value)}
               />
               {savedAO.estimation && (
-                <p className="text-xs text-gray-500 mt-1">
-                  → {fmtNum((parseFloat(pct) / 100) * savedAO.estimation, 2)} DH HT
-                </p>
+                <div className="mt-1 space-y-0.5">
+                  <p className="text-xs text-primary-700 font-medium">→ {fmtNum(montantTTC, 2)} DH TTC</p>
+                  <p className="text-xs text-gray-400">soit {fmtNum(montantHT, 2)} DH HT</p>
+                </div>
               )}
             </div>
             <div>
               <label className="label">Société soumissionnaire</label>
-              <input
+              <select
                 className="input"
-                placeholder="ID société"
                 value={societeId}
                 onChange={e => setSocieteId(e.target.value)}
-              />
+              >
+                <option value="">— Sélectionner une société —</option>
+                {societes.map(s => (
+                  <option key={s.id} value={String(s.id)}>
+                    {s.code} — {s.raison_sociale}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
-          <button className="btn btn-primary" onClick={handleGenerate} disabled={!societeId}>
-            Générer les documents et le ZIP
-          </button>
+
+          <div className="flex items-center gap-3">
+            <button className="btn btn-primary" onClick={() => {
+              if (!societeId) { toast.error('Sélectionnez une société'); return }
+              generateMutation.mutate({ ao_id: savedAO.id, societe_id: parseInt(societeId), pct_estimation: parseFloat(pct) })
+            }}>
+              Générer les documents et le ZIP
+            </button>
+            <button className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-700" onClick={goBack}>
+              <ChevronLeft size={15} /> Précédent
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Generating */}
+      {/* ── Generating ────────────────────────────────────────────────────── */}
       {step === 'generating' && (
         <div className="card flex flex-col items-center py-16 gap-4">
           <Loader2 className="animate-spin text-primary-600" size={48} />
@@ -513,7 +552,7 @@ export default function AnalyseDAO() {
         </div>
       )}
 
-      {/* Done */}
+      {/* ── Done ──────────────────────────────────────────────────────────── */}
       {step === 'done' && result && (
         <div className="card">
           <div className="flex items-center gap-2 mb-4">
@@ -526,20 +565,37 @@ export default function AnalyseDAO() {
               <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold text-sm mb-1">Avertissements (non bloquants)</p>
-                <ul className="text-sm space-y-0.5">
-                  {warnings.map((w, i) => <li key={i}>• {w}</li>)}
-                </ul>
+                <ul className="text-sm space-y-0.5">{warnings.map((w, i) => <li key={i}>• {w}</li>)}</ul>
               </div>
             </div>
           )}
 
-          <div className="flex gap-3">
-            <a
-              href={reponseApi.downloadZip(result.reponse_id)}
-              className="btn btn-primary"
-              download
-            >
-              Télécharger le ZIP
+          {/* Individual document previews */}
+          {result.generated_files && (
+            <div className="mb-6">
+              <p className="text-sm font-semibold text-gray-700 mb-3">Prévisualiser les documents :</p>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(result.generated_files as Record<string, string>)
+                  .filter(([key, val]) => val && typeof val === 'string' && !Array.isArray(val))
+                  .map(([key, _]) => (
+                    <a
+                      key={key}
+                      href={reponseApi.downloadDoc(result.reponse_id, key)}
+                      className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg hover:border-primary-400 hover:bg-primary-50 transition-colors text-sm text-gray-700 group"
+                      download
+                    >
+                      <FileDown size={16} className="text-gray-400 group-hover:text-primary-600 flex-shrink-0" />
+                      <span className="truncate">{DOC_LABELS[key] || key.toUpperCase()}</span>
+                    </a>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* ZIP download */}
+          <div className="flex gap-3 flex-wrap">
+            <a href={reponseApi.downloadZip(result.reponse_id)} className="btn btn-primary flex items-center gap-2" download>
+              <FileDown size={16} /> Télécharger le ZIP complet
             </a>
             {savedAO && (
               <button className="btn btn-secondary" onClick={() => navigate(`/ao/${savedAO.id}`)}>
@@ -547,7 +603,7 @@ export default function AnalyseDAO() {
               </button>
             )}
             <button className="btn btn-secondary" onClick={() => {
-              setStep('upload'); setFiles([]); setExtracted(null); setSavedAO(null); setResult(null)
+              setStep('upload'); setFiles([]); setExtracted(null); setSavedAO(null); setResult(null); setWarnings([])
             }}>
               Nouvelle analyse
             </button>

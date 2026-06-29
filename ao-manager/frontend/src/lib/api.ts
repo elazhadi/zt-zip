@@ -66,6 +66,7 @@ export const reponseApi = {
   distributePrices: (data: unknown) => api.post('/reponses/distribute-prices', data).then(r => r.data),
   generate: (data: unknown) => api.post('/reponses/generate', data).then(r => r.data),
   downloadZip: (id: number) => `${BASE}/reponses/${id}/download-zip`,
+  downloadDoc: (id: number, docType: string) => `${BASE}/reponses/${id}/doc/${docType}`,
   generateMaintien: (id: number, data: unknown) => api.post(`/reponses/${id}/maintien-offre`, data).then(r => r.data),
   generateRefus: (id: number) => api.post(`/reponses/${id}/refus-maintien`).then(r => r.data),
 }

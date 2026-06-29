@@ -268,7 +268,7 @@ def analyse_dao_images(images_b64: list[str]) -> dict:
 
 
 def analyse_dao(text: str) -> dict:
-    prompt = DAO_ANALYSIS_PROMPT + text[:80000]
+    prompt = DAO_ANALYSIS_PROMPT + text[:120000]
     message = client.messages.create(
         model=MODEL,
         max_tokens=8192,

@@ -36,9 +36,10 @@ def distribute_prices(body: dict, db: Session = Depends(get_db)):
         raise HTTPException(400, "Estimation MO manquante")
 
     pct = float(body["pct_estimation"]) / 100
-    montant_ht = round(float(ao.estimation) * pct, 2)
     tva_rate = 0.20
-    montant_ttc = round(montant_ht * (1 + tva_rate), 2)
+    # estimation is TTC — pct applies on TTC
+    montant_ttc = round(float(ao.estimation) * pct, 2)
+    montant_ht = round(montant_ttc / (1 + tva_rate), 2)
 
     # Extract articles from lots
     articles = _extract_articles(ao.lots)
@@ -78,8 +79,9 @@ def generate_response(body: dict, db: Session = Depends(get_db)):
         raise HTTPException(404, "Société non trouvée")
 
     pct = float(body["pct_estimation"]) / 100
-    montant_ht = round(float(ao.estimation or 0) * pct, 2)
-    montant_ttc = round(montant_ht * 1.20, 2)
+    # estimation is TTC — pct applies on TTC
+    montant_ttc = round(float(ao.estimation or 0) * pct, 2)
+    montant_ht = round(montant_ttc / 1.20, 2)
     prix_detail = body.get("prix_detail", [])
 
     # Check doc warnings (non-blocking)
@@ -168,6 +170,17 @@ def generate_response(body: dict, db: Session = Depends(get_db)):
         "generated_files": generated,
         "warnings": warnings,
     }
+
+
+@router.get("/{reponse_id}/doc/{doc_type}")
+def download_doc_type(reponse_id: int, doc_type: str, db: Session = Depends(get_db)):
+    r = db.query(Reponse).get(reponse_id)
+    if not r or not r.fichiers_generes:
+        raise HTTPException(404, "Réponse ou documents non trouvés")
+    path = r.fichiers_generes.get(doc_type)
+    if not path or not os.path.exists(str(path)):
+        raise HTTPException(404, f"Document '{doc_type}' non trouvé")
+    return FileResponse(str(path), filename=os.path.basename(str(path)))
 
 
 @router.get("/{reponse_id}/download-zip")
