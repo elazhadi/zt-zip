@@ -30,47 +30,50 @@ _run_migrations()
 
 
 def _ensure_admin():
-    """Create or reset the default super-admin — always runs, fully logged."""
+    """Create or reset the default super-admin using raw SQL — no ORM, no passlib."""
+    import json
+    import bcrypt as _bcrypt
+    from sqlalchemy import text
+    from .models.user import ROLES_PRESETS
+
+    pwd = "Admin@2024"
     try:
-        from .models.user import User, ROLES_PRESETS
-        from .services.auth_service import hash_password, verify_password
-
-        # Validate bcrypt works before touching DB
-        test_hash = hash_password("Admin@2024")
-        assert verify_password("Admin@2024", test_hash), "bcrypt verify failed"
-        print(f"🔑 bcrypt OK")
-
-        db = SessionLocal()
-        try:
-            admin = db.query(User).filter(User.email == "admin@ao-manager.ma").first()
-            if admin is None:
-                admin = User(
-                    nom="Administrateur", prenom="",
-                    email="admin@ao-manager.ma",
-                    password_hash=test_hash,
-                    role_predefini="admin",
-                    permissions=ROLES_PRESETS["admin"],
-                    is_active=True, is_super_admin=True,
-                )
-                db.add(admin)
-                db.commit()
-                db.refresh(admin)
-                print(f"✅ Admin créé — hash: {admin.password_hash[:20]}...")
-            else:
-                admin.password_hash = test_hash
-                admin.is_active = True
-                admin.is_super_admin = True
-                admin.permissions = ROLES_PRESETS["admin"]
-                db.commit()
-                db.refresh(admin)
-                print(f"✅ Admin MàJ — hash: {admin.password_hash[:20]}...")
-        except Exception as e:
-            print(f"❌ _ensure_admin DB error: {e}")
-            db.rollback()
-        finally:
-            db.close()
+        h = _bcrypt.hashpw(pwd.encode("utf-8"), _bcrypt.gensalt(rounds=12)).decode("utf-8")
+        assert _bcrypt.checkpw(pwd.encode("utf-8"), h.encode("utf-8")), "bcrypt self-test failed"
+        print(f"🔑 bcrypt self-test OK — hash prefix: {h[:15]}")
     except Exception as e:
-        print(f"❌ _ensure_admin error: {e}")
+        print(f"❌ bcrypt error: {e}")
+        return
+
+    perms_json = json.dumps(ROLES_PRESETS["admin"])
+    try:
+        with engine.connect() as conn:
+            row = conn.execute(
+                text("SELECT id, password_hash FROM users WHERE email = 'admin@ao-manager.ma'")
+            ).first()
+            if row is None:
+                conn.execute(text("""
+                    INSERT INTO users
+                      (nom, prenom, email, password_hash, role_predefini, permissions, is_active, is_super_admin)
+                    VALUES
+                      ('Administrateur', '', 'admin@ao-manager.ma', :h, 'admin', :p::jsonb, true, true)
+                """), {"h": h, "p": perms_json})
+                print(f"✅ Admin créé — hash: {h[:20]}...")
+            else:
+                old = row[1] or "NULL"
+                conn.execute(text("""
+                    UPDATE users
+                    SET password_hash = :h,
+                        is_active     = true,
+                        is_super_admin= true,
+                        permissions   = :p::jsonb
+                    WHERE email = 'admin@ao-manager.ma'
+                """), {"h": h, "p": perms_json})
+                print(f"✅ Admin MàJ — old hash: {old[:15]} → new: {h[:15]}")
+            conn.commit()
+    except Exception as e:
+        import traceback
+        print(f"❌ _ensure_admin SQL error: {e}\n{traceback.format_exc()}")
 
 _ensure_admin()
 
