@@ -3,6 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { societeApi, documentApi } from '../lib/api'
 import type { Societe, DocumentRef } from '../types'
+
+// Normalize upload paths — old rows stored full path like "./uploads/logos/x.png",
+// new rows store only "logos/x.png". Always return a URL starting with /uploads/.
+function uploadUrl(p: string): string {
+  const clean = p.replace(/^\.?\//, '').replace(/^uploads\//, '')
+  return `/uploads/${clean}`
+}
 import { DOMAINES } from '../types'
 import { ArrowLeft, Upload, AlertTriangle, CheckCircle, FileText, Loader2, X } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -94,7 +101,7 @@ export default function SocieteDetail() {
     setDescriptifLoading(true)
     try {
       const result = await documentApi.exportDescriptif({ societe_id: numId, langue: descriptifLang })
-      window.open(`/uploads/${result.file_path}`, '_blank')
+      window.open(uploadUrl(result.file_path), '_blank')
     } catch {
       toast.error('Erreur génération descriptif')
     } finally {
@@ -124,7 +131,7 @@ export default function SocieteDetail() {
         </button>
         <div className="flex items-center gap-3 flex-1">
           {societe.logo_path ? (
-            <img src={`/uploads/${societe.logo_path}`} alt={societe.code} className="w-12 h-12 object-contain rounded-lg border border-gray-200" />
+            <img src={uploadUrl(societe.logo_path)} alt={societe.code} className="w-12 h-12 object-contain rounded-lg border border-gray-200" />
           ) : (
             <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
               <span className="text-primary-700 font-bold">{societe.code.slice(0, 2)}</span>
@@ -354,7 +361,7 @@ export default function SocieteDetail() {
           <div className="card">
             <h2 className="text-sm font-semibold text-gray-700 mb-3">Logo</h2>
             {societe.logo_path && (
-              <img src={`/uploads/${societe.logo_path}`} alt="Logo" className="w-full object-contain h-20 mb-3" />
+              <img src={uploadUrl(societe.logo_path)} alt="Logo" className="w-full object-contain h-20 mb-3" />
             )}
             <label className="btn btn-secondary text-xs w-full cursor-pointer text-center block">
               <Upload size={13} className="inline mr-1" />

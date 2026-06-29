@@ -84,12 +84,13 @@ async def upload_logo(societe_id: int, file: UploadFile = File(...), db: Session
     ext = Path(file.filename).suffix.lower()
     if ext not in (".png", ".jpg", ".jpeg"):
         raise HTTPException(400, "Format accepté : PNG, JPG")
-    dest = os.path.join(dest_dir, f"logo_{societe_id}{ext}")
+    rel_path = f"logos/logo_{societe_id}{ext}"
+    dest = os.path.join(settings.UPLOAD_DIR, rel_path)
     with open(dest, "wb") as f:
         shutil.copyfileobj(file.file, f)
-    s.logo_path = dest
+    s.logo_path = rel_path
     db.commit()
-    return {"logo_path": dest}
+    return {"logo_path": rel_path}
 
 
 @router.post("/{societe_id}/entete")
@@ -99,12 +100,13 @@ async def upload_entete(societe_id: int, file: UploadFile = File(...), db: Sessi
         raise HTTPException(404, "Société non trouvée")
     dest_dir = os.path.join(settings.UPLOAD_DIR, "entetes")
     Path(dest_dir).mkdir(parents=True, exist_ok=True)
-    dest = os.path.join(dest_dir, f"entete_{societe_id}.docx")
+    rel_path = f"entetes/entete_{societe_id}.docx"
+    dest = os.path.join(settings.UPLOAD_DIR, rel_path)
     with open(dest, "wb") as f:
         shutil.copyfileobj(file.file, f)
-    s.entete_path = dest
+    s.entete_path = rel_path
     db.commit()
-    return {"entete_path": dest}
+    return {"entete_path": rel_path}
 
 
 # --- Documents référentiel ---
