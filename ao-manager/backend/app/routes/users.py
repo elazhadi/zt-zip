@@ -201,10 +201,10 @@ def update_societes(
 
 @router.get("/meta/roles")
 def get_roles_meta(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    societes = db.query(Societe.id, Societe.code, Societe.nom_commercial).order_by(Societe.code).all()
+    societes = db.query(Societe.id, Societe.code, Societe.raison_sociale).order_by(Societe.code).all()
     return {
         "roles": ROLE_LABELS,
         "presets": ROLES_PRESETS,
         "modules": {m: {"label": MODULE_LABELS[m], "actions": MODULE_ACTIONS[m]} for m in MODULES},
-        "societes": [{"id": s.id, "code": s.code, "nom": s.nom_commercial} for s in societes],
+        "societes": [{"id": s.id, "code": s.code, "nom": s.raison_sociale} for s in societes],
     }
