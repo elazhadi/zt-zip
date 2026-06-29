@@ -2,12 +2,43 @@ import os
 import base64
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import or_, func
 from ..database import get_db
 from ..models.resultat_ao import ResultatAO
+from ..models.ao import AppelOffre
 from ..services import ai_service
 from ..config import settings
 
 router = APIRouter(prefix="/resultats", tags=["resultats"])
+
+
+def _auto_link_ao(db: Session, objet: str | None, maitre_ouvrage: str | None) -> int | None:
+    """Try to find an existing AO matching this result by fuzzy text similarity."""
+    if not objet:
+        return None
+    # Normalize: lowercase, strip whitespace
+    objet_lower = (objet or "").lower().strip()
+    candidates = db.query(AppelOffre).all()
+    best_id = None
+    best_score = 0
+    for ao in candidates:
+        ao_objet = (ao.objet or "").lower().strip()
+        # Simple word-overlap score
+        words_result = set(objet_lower.split())
+        words_ao = set(ao_objet.split())
+        if not words_ao:
+            continue
+        common = words_result & words_ao
+        score = len(common) / max(len(words_result), len(words_ao))
+        # Bonus if maitre_ouvrage matches
+        if maitre_ouvrage and ao.maitre_ouvrage:
+            mo_str = str(ao.maitre_ouvrage).lower()
+            if maitre_ouvrage.lower() in mo_str:
+                score += 0.2
+        if score > best_score and score >= 0.5:
+            best_score = score
+            best_id = ao.id
+    return best_id
 
 
 @router.post("/upload-image")
@@ -38,10 +69,16 @@ async def upload_image(
     # Save to DB
     concurrents = extracted.get("concurrents") or []
     md = extracted.get("mieux_disant") or {}
+    objet = extracted.get("objet")
+    maitre_ouvrage = extracted.get("maitre_ouvrage")
+
+    # Auto-link with existing AO
+    ao_id = _auto_link_ao(db, objet, maitre_ouvrage)
 
     resultat = ResultatAO(
-        objet=extracted.get("objet"),
-        maitre_ouvrage=extracted.get("maitre_ouvrage"),
+        ao_id=ao_id,
+        objet=objet,
+        maitre_ouvrage=maitre_ouvrage,
         date_seance=extracted.get("date_seance"),
         estimation_mo=extracted.get("estimation_mo"),
         image_path=fpath,
@@ -56,6 +93,7 @@ async def upload_image(
 
     return {
         "id": resultat.id,
+        "ao_id": resultat.ao_id,
         "objet": resultat.objet,
         "maitre_ouvrage": resultat.maitre_ouvrage,
         "date_seance": resultat.date_seance,
@@ -67,6 +105,7 @@ async def upload_image(
             "pct_estimation": resultat.mieux_disant_pct,
         },
         "notes": extracted.get("notes"),
+        "ao_lie": ao_id is not None,
     }
 
 
@@ -78,7 +117,32 @@ def list_resultats(
     q = db.query(ResultatAO)
     if domaine:
         q = q.filter(ResultatAO.domaine == domaine)
-    return q.order_by(ResultatAO.created_at.desc()).all()
+    rows = q.order_by(ResultatAO.created_at.desc()).all()
+    result = []
+    for r in rows:
+        ao_ref = None
+        if r.ao_id and r.ao:
+            ao_ref = {"id": r.ao_id, "reference": r.ao.reference, "objet": r.ao.objet}
+        result.append({
+            "id": r.id,
+            "ao_id": r.ao_id,
+            "ao_lie": ao_ref,
+            "objet": r.objet,
+            "maitre_ouvrage": r.maitre_ouvrage,
+            "domaine": r.domaine,
+            "date_seance": r.date_seance,
+            "estimation_mo": r.estimation_mo,
+            "image_path": r.image_path,
+            "concurrents": r.concurrents,
+            "mieux_disant_nom": r.mieux_disant_nom,
+            "mieux_disant_offre": r.mieux_disant_offre,
+            "mieux_disant_pct": r.mieux_disant_pct,
+            "notre_societe": r.notre_societe,
+            "notre_offre": r.notre_offre,
+            "notre_rang": r.notre_rang,
+            "created_at": r.created_at,
+        })
+    return result
 
 
 @router.get("/stats")

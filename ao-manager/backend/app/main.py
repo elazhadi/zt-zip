@@ -37,7 +37,7 @@ os.makedirs(uploads_dir, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 # Serve frontend (built React app) — only if dist/ exists
-FRONTEND_DIST = os.path.join(os.path.dirname(__file__), "..", "..", "frontend_dist")
+FRONTEND_DIST = os.path.join(os.path.dirname(__file__), "..", "frontend_dist")
 if os.path.isdir(FRONTEND_DIST):
     from fastapi.responses import FileResponse
     app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets")

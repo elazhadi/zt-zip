@@ -1,11 +1,13 @@
 import { useState, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { useDropzone } from 'react-dropzone'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { resultatApi } from '../lib/api'
 import { DOMAINES } from '../types'
 import {
   Upload, Trophy, Users, TrendingUp, BarChart2, Loader2,
-  Trash2, AlertTriangle, CheckCircle, Target, ChevronDown, ChevronUp
+  Trash2, AlertTriangle, CheckCircle, Target, ChevronDown, ChevronUp,
+  LinkIcon
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
@@ -20,6 +22,8 @@ interface Concurrent {
 
 interface Resultat {
   id: number
+  ao_id?: number
+  ao_lie?: { id: number; reference?: string; objet?: string } | null
   objet?: string
   maitre_ouvrage?: string
   date_seance?: string
@@ -93,6 +97,15 @@ function ResultatCard({ r, onDelete }: { r: Resultat; onDelete: () => void }) {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <p className="text-sm font-semibold text-gray-900 line-clamp-1">{r.objet || 'Sans objet'}</p>
+            {r.ao_lie ? (
+              <Link
+                to={`/ao/${r.ao_lie.id}`}
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-primary-50 text-primary-700 hover:bg-primary-100"
+              >
+                <LinkIcon size={10} />
+                AO#{r.ao_lie.id}
+              </Link>
+            ) : null}
           </div>
           <div className="flex items-center gap-3 text-xs text-gray-500">
             {r.maitre_ouvrage && <span>{r.maitre_ouvrage}</span>}

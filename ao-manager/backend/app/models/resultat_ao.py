@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float, Text, DateTime, JSON
+from sqlalchemy import Column, Integer, String, Float, Text, DateTime, JSON, ForeignKey
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from ..database import Base
 
 
@@ -7,12 +8,15 @@ class ResultatAO(Base):
     __tablename__ = "resultats_ao"
 
     id = Column(Integer, primary_key=True, index=True)
+    ao_id = Column(Integer, ForeignKey("appels_offres.id", ondelete="SET NULL"), nullable=True, index=True)
     objet = Column(Text)
     maitre_ouvrage = Column(String(255))
     domaine = Column(String(100))
     date_seance = Column(String(20))
     estimation_mo = Column(Float)
     image_path = Column(String(500))
+
+    ao = relationship("AppelOffre", foreign_keys=[ao_id])
 
     # JSON: [{nom, offre_ht, pct_estimation, rang, statut: admis|ecarte}]
     concurrents = Column(JSON, default=list)
