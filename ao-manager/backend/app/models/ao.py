@@ -34,6 +34,7 @@ class AppelOffre(Base):
     statut = Column(String(30), default="en_instance")
     decision = Column(String(20))  # oui|non|en_attente
     notes = Column(Text)
+    url_portail = Column(Text)
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
 
     reponses = relationship("Reponse", back_populates="ao", cascade="all, delete-orphan")

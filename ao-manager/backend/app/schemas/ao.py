@@ -26,6 +26,7 @@ class AOBase(BaseModel):
     offre_technique_exigee: bool = False
     criteres_notation: Optional[Any] = None
     notes: Optional[str] = None
+    url_portail: Optional[str] = None
 
 
 class AOCreate(AOBase):
@@ -51,6 +52,7 @@ class AOUpdate(BaseModel):
     statut: Optional[str] = None
     decision: Optional[str] = None
     notes: Optional[str] = None
+    url_portail: Optional[str] = None
 
 
 class AOOut(AOBase):

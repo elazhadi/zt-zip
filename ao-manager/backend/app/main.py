@@ -19,6 +19,7 @@ def _run_migrations():
     with engine.connect() as conn:
         for sql in [
             "ALTER TABLE users ADD COLUMN IF NOT EXISTS societes_autorisees JSONB",
+            "ALTER TABLE appels_offres ADD COLUMN IF NOT EXISTS url_portail TEXT",
         ]:
             try:
                 conn.execute(text(sql))

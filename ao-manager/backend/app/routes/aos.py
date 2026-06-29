@@ -194,6 +194,7 @@ def save_ao_from_analyse(
         offre_technique_exigee=bool(extracted.get("offre_technique_exigee", False)),
         criteres_notation=extracted.get("criteres_notation"),
         fichiers_dao=dao_files or [],
+        url_portail=extracted.get("url_portail"),
         statut="en_instance",
     )
 

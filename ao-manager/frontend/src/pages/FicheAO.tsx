@@ -1,13 +1,14 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { aoApi, reponseApi } from '../lib/api'
 import type { AppelOffre, Reponse } from '../types'
 import { STATUT_CONFIG } from '../types'
 import {
-  ArrowLeft, AlertTriangle, CheckCircle, XCircle, FileDown, Clock,
-  Building2, Calendar, MapPin, Tag, Loader2
+  ArrowLeft, AlertTriangle, CheckCircle, XCircle, FileDown,
+  Building2, Calendar, MapPin, Tag, Loader2, ExternalLink
 } from 'lucide-react'
+import { fmtNum } from '../lib/format'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
 
@@ -27,6 +28,9 @@ export default function FicheAO() {
   const queryClient = useQueryClient()
   const [showMaintien, setShowMaintien] = useState(false)
   const [maintienData, setMaintienData] = useState({ date_ouverture_plis: '', duree_jours: 30 })
+  const [editingUrl, setEditingUrl] = useState(false)
+  const [urlValue, setUrlValue] = useState('')
+  const urlInputRef = useRef<HTMLInputElement>(null)
 
   const { data: ao, isLoading } = useQuery<AppelOffre>({
     queryKey: ['ao', id],
@@ -54,6 +58,15 @@ export default function FicheAO() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ao', id] })
       toast.success('Statut mis à jour')
+    },
+  })
+
+  const urlMut = useMutation({
+    mutationFn: (url: string) => aoApi.update(Number(id), { url_portail: url }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ao', id] })
+      setEditingUrl(false)
+      toast.success('URL mise à jour')
     },
   })
 
@@ -97,6 +110,44 @@ export default function FicheAO() {
             {ao.decision === 'non' && <span className="badge bg-red-100 text-red-700">Décision : NON</span>}
           </div>
           <h1 className="text-xl font-bold text-gray-900">{ao.objet || 'Sans objet'}</h1>
+          {/* Portail URL */}
+          <div className="mt-2 flex items-center gap-2">
+            {!editingUrl && ao.url_portail && (
+              <a
+                href={ao.url_portail}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-800 hover:underline"
+              >
+                <ExternalLink size={13} />
+                Portail marchés publics
+              </a>
+            )}
+            {!editingUrl && (
+              <button
+                className="text-xs text-gray-400 hover:text-gray-600"
+                onClick={() => { setUrlValue(ao.url_portail || ''); setEditingUrl(true); setTimeout(() => urlInputRef.current?.focus(), 50) }}
+              >
+                {ao.url_portail ? 'Modifier URL' : '+ Ajouter URL portail'}
+              </button>
+            )}
+            {editingUrl && (
+              <div className="flex items-center gap-2 flex-1">
+                <input
+                  ref={urlInputRef}
+                  className="input text-xs py-1 flex-1"
+                  placeholder="https://www.marchespublics.gov.ma/..."
+                  value={urlValue}
+                  onChange={e => setUrlValue(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') urlMut.mutate(urlValue); if (e.key === 'Escape') setEditingUrl(false) }}
+                />
+                <button className="btn btn-primary py-1 text-xs" onClick={() => urlMut.mutate(urlValue)} disabled={urlMut.isPending}>
+                  Enregistrer
+                </button>
+                <button className="btn btn-secondary py-1 text-xs" onClick={() => setEditingUrl(false)}>Annuler</button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -124,10 +175,10 @@ export default function FicheAO() {
             <div className="grid grid-cols-3 gap-3">
               <Field label="Domaine" value={ao.domaine} />
               <Field label="Procédure" value={ao.procedure} />
-              <Field label="Estimation HT" value={ao.estimation ? `${ao.estimation.toLocaleString('fr-MA')} DH` : undefined} />
-              <Field label="Caution provisoire" value={ao.caution_provisoire ? `${ao.caution_provisoire.toLocaleString('fr-MA')} DH` : undefined} />
-              <Field label="Délai exécution" value={ao.delai_execution ? `${ao.delai_execution.valeur} ${ao.delai_execution.unite}` : undefined} />
-              <Field label="Délai garantie" value={ao.delai_garantie ? `${ao.delai_garantie.valeur} ${ao.delai_garantie.unite}` : undefined} />
+              <Field label="Estimation MO" value={ao.estimation ? `${fmtNum(ao.estimation)} DH` : undefined} />
+              <Field label="Caution provisoire" value={ao.caution_provisoire ? `${fmtNum(ao.caution_provisoire)} DH` : undefined} />
+              <Field label="Délai exécution" value={(ao.delai_execution as any)?.valeur != null ? `${(ao.delai_execution as any).valeur} ${(ao.delai_execution as any).unite}` : undefined} />
+              <Field label="Délai garantie" value={(ao.delai_garantie as any)?.valeur != null ? `${(ao.delai_garantie as any).valeur} ${(ao.delai_garantie as any).unite}` : undefined} />
               <Field label="Lieu de réalisation" value={ao.lieu_realisation} />
             </div>
             <div className="mt-3 flex flex-wrap gap-2">

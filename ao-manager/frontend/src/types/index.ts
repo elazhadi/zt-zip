@@ -76,6 +76,7 @@ export interface AppelOffre {
   statut: AOStatut
   decision?: 'oui' | 'non' | 'en_attente'
   notes?: string
+  url_portail?: string
   created_at: string
 }
 

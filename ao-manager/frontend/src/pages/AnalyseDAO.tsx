@@ -307,7 +307,17 @@ export default function AnalyseDAO() {
             </div>
             <div>
               <label className="label">Délai exécution</label>
-              <input className="input bg-gray-50 text-gray-600" value={extracted.delai_execution ? `${(extracted.delai_execution as any).valeur} ${(extracted.delai_execution as any).unite}` : ''} readOnly />
+              <input className="input bg-gray-50 text-gray-600" value={(extracted.delai_execution as any)?.valeur != null ? `${(extracted.delai_execution as any).valeur} ${(extracted.delai_execution as any).unite}` : ''} readOnly />
+            </div>
+            <div className="col-span-2">
+              <label className="label">URL portail marchés publics</label>
+              <input
+                className="input"
+                type="url"
+                placeholder="https://www.marchespublics.gov.ma/..."
+                value={(extracted as any).url_portail || ''}
+                onChange={e => setExtracted({ ...extracted, url_portail: e.target.value } as any)}
+              />
             </div>
           </div>
 
