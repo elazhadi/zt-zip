@@ -21,6 +21,7 @@ export default function AnalyseDAO() {
   const [societeId, setSocieteId] = useState<string>('')
   const [warnings, setWarnings] = useState<string[]>([])
   const [result, setResult] = useState<any>(null)
+  const [savedFiles, setSavedFiles] = useState<string[]>([])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: useCallback((accepted: File[]) => setFiles(accepted), []),
@@ -32,7 +33,14 @@ export default function AnalyseDAO() {
     mutationFn: (files: File[]) => aoApi.uploadAnalyse(files),
     onMutate: () => setStep('analysing'),
     onSuccess: (data) => {
-      setExtracted(data)
+      if (!data.extracted_data) {
+        toast.error(data.error || 'Impossible d\'extraire les données du document')
+        setStep('upload')
+        return
+      }
+      setExtracted(data.extracted_data)
+      setSavedFiles(data.saved_files || [])
+      setWarnings(data.warnings || [])
       setStep('review')
     },
     onError: () => {
@@ -86,7 +94,7 @@ export default function AnalyseDAO() {
 
   const handleSave = () => {
     if (!extracted) return
-    saveMutation.mutate(extracted)
+    saveMutation.mutate({ extracted_data: extracted, saved_files: savedFiles })
   }
 
   const handleDecision = (decision: 'oui' | 'non') => {
