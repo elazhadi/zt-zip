@@ -77,6 +77,7 @@ export interface AppelOffre {
   decision?: 'oui' | 'non' | 'en_attente'
   notes?: string
   url_portail?: string
+  societe_soumissionnaire_id?: number
   created_at: string
 }
 

@@ -156,6 +156,7 @@ def generate_response(body: dict, db: Session = Depends(get_db)):
     )
     db.add(reponse)
     ao.statut = "en_attente_de_resultats"
+    ao.societe_soumissionnaire_id = societe.id
     db.commit()
     db.refresh(reponse)
 

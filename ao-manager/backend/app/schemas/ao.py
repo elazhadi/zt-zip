@@ -27,6 +27,7 @@ class AOBase(BaseModel):
     criteres_notation: Optional[Any] = None
     notes: Optional[str] = None
     url_portail: Optional[str] = None
+    societe_soumissionnaire_id: Optional[int] = None
 
 
 class AOCreate(AOBase):
@@ -53,6 +54,7 @@ class AOUpdate(BaseModel):
     decision: Optional[str] = None
     notes: Optional[str] = None
     url_portail: Optional[str] = None
+    societe_soumissionnaire_id: Optional[int] = None
 
 
 class AOOut(AOBase):

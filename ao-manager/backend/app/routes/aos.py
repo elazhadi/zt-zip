@@ -24,6 +24,7 @@ def list_aos(
     decision: Optional[str] = None,
     domaine: Optional[str] = None,
     q: Optional[str] = None,
+    societe_id: Optional[int] = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(AppelOffre)
@@ -38,6 +39,8 @@ def list_aos(
             or_(AppelOffre.objet.ilike(f"%{q}%"),
                 AppelOffre.reference.ilike(f"%{q}%"))
         )
+    if societe_id:
+        query = query.filter(AppelOffre.societe_soumissionnaire_id == societe_id)
     return query.order_by(AppelOffre.created_at.desc()).all()
 
 

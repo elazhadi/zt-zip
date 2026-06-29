@@ -1,12 +1,12 @@
 import { useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { aoApi, reponseApi } from '../lib/api'
-import type { AppelOffre, Reponse } from '../types'
+import { aoApi, reponseApi, societeApi } from '../lib/api'
+import type { AppelOffre, Reponse, Societe } from '../types'
 import { STATUT_CONFIG } from '../types'
 import {
   ArrowLeft, AlertTriangle, CheckCircle, XCircle, FileDown,
-  Building2, Calendar, MapPin, Tag, Loader2, ExternalLink
+  Building2, Calendar, Tag, Loader2, ExternalLink, Clock
 } from 'lucide-react'
 import { fmtNum } from '../lib/format'
 import toast from 'react-hot-toast'
@@ -36,6 +36,11 @@ export default function FicheAO() {
     queryKey: ['ao', id],
     queryFn: () => aoApi.get(Number(id)),
     enabled: !!id,
+  })
+
+  const { data: societes = [] } = useQuery<Societe[]>({
+    queryKey: ['societes'],
+    queryFn: () => societeApi.list(),
   })
 
   const { data: reponses = [] } = useQuery<Reponse[]>({
@@ -318,6 +323,26 @@ export default function FicheAO() {
                   ))}
                 </select>
               </div>
+              <div className="mt-3">
+                <label className="label text-xs">Société soumissionnaire</label>
+                <select
+                  className="input text-sm"
+                  value={ao.societe_soumissionnaire_id ?? ''}
+                  onChange={e => {
+                    const val = e.target.value ? parseInt(e.target.value) : null
+                    aoApi.update(Number(id), { societe_soumissionnaire_id: val }).then(() => {
+                      queryClient.invalidateQueries({ queryKey: ['ao', id] })
+                      queryClient.invalidateQueries({ queryKey: ['aos'] })
+                    })
+                  }}
+                >
+                  <option value="">— Non associée —</option>
+                  {societes.map(s => (
+                    <option key={s.id} value={s.id}>{s.code} — {s.raison_sociale}</option>
+                  ))}
+                </select>
+              </div>
+
               {!ao.decision && (
                 <div className="flex gap-2 mt-3">
                   <button

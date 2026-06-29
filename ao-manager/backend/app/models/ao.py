@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Numeric, TIMESTAMP, Boolean
+from sqlalchemy import Column, Integer, String, Text, Numeric, TIMESTAMP, Boolean, ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -35,6 +35,7 @@ class AppelOffre(Base):
     decision = Column(String(20))  # oui|non|en_attente
     notes = Column(Text)
     url_portail = Column(Text)
+    societe_soumissionnaire_id = Column(Integer, ForeignKey("societes.id"), nullable=True)
     created_at = Column(TIMESTAMP, default=datetime.utcnow)
 
     reponses = relationship("Reponse", back_populates="ao", cascade="all, delete-orphan")

@@ -35,7 +35,7 @@ export const societeApi = {
 
 // AOs
 export const aoApi = {
-  list: (params?: Record<string, string>) => api.get('/aos/', { params }).then(r => r.data),
+  list: (params?: Record<string, string | number>) => api.get('/aos/', { params }).then(r => r.data),
   get: (id: number) => api.get(`/aos/${id}`).then(r => r.data),
   create: (data: unknown) => api.post('/aos/', data).then(r => r.data),
   update: (id: number, data: unknown) => api.put(`/aos/${id}`, data).then(r => r.data),
