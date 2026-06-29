@@ -12,6 +12,22 @@ from .config import settings
 
 Base.metadata.create_all(bind=engine)
 
+
+def _run_migrations():
+    """Apply schema changes for new columns added to existing tables."""
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        for sql in [
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS societes_autorisees JSONB",
+        ]:
+            try:
+                conn.execute(text(sql))
+            except Exception:
+                pass
+        conn.commit()
+
+_run_migrations()
+
 app = FastAPI(
     title="AO Manager API",
     description="Gestion & Réponse aux Appels d'Offres Publics Marocains",
@@ -68,22 +84,6 @@ def _create_default_admin():
         db.close()
 
 _create_default_admin()
-
-
-def _run_migrations():
-    """Apply schema changes for new columns added to existing tables."""
-    from sqlalchemy import text
-    with engine.connect() as conn:
-        for sql in [
-            "ALTER TABLE users ADD COLUMN IF NOT EXISTS societes_autorisees JSONB",
-        ]:
-            try:
-                conn.execute(text(sql))
-            except Exception:
-                pass
-        conn.commit()
-
-_run_migrations()
 
 # Serve frontend (built React app)
 FRONTEND_DIST = os.path.join(os.path.dirname(__file__), "..", "frontend_dist")
