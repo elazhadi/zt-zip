@@ -50,6 +50,12 @@ export const aoApi = {
   setStatut: (id: number, statut: string) =>
     api.put(`/aos/${id}/statut`, { statut }).then(r => r.data),
   pipelineStats: () => api.get('/aos/stats/pipeline').then(r => r.data),
+  importHistorique: (file: File) => {
+    const fd = new FormData(); fd.append('file', file)
+    return api.post('/aos/import-historique', fd, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data)
+  },
+  confirmHistoriqueBulk: (items: unknown[]) =>
+    api.post('/aos/confirm-historique-bulk', { items }).then(r => r.data),
   listConcurrents: (id: number) => api.get(`/aos/${id}/concurrents`).then(r => r.data),
   addConcurrent: (id: number, data: unknown) => api.post(`/aos/${id}/concurrents`, data).then(r => r.data),
 }

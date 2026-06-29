@@ -9,6 +9,7 @@ import { aoApi } from '../lib/api'
 import type { AppelOffre, AOStatut } from '../types'
 import { STATUT_CONFIG } from '../types'
 import { Calendar, Building2, AlertTriangle, ChevronRight } from 'lucide-react'
+import { fmtDH } from '../lib/format'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
 
@@ -63,7 +64,7 @@ function AOCard({ ao, isDragging }: { ao: AppelOffre; isDragging?: boolean }) {
       )}
       {ao.estimation && (
         <p className="mt-1 text-xs text-gray-500">
-          {(ao.estimation / 1000).toFixed(0)}K DH
+          {fmtDH(ao.estimation)}
         </p>
       )}
     </div>

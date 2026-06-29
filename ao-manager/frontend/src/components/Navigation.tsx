@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Search, Kanban, BarChart2, Archive,
-  Settings, Trophy, X, Users, LogOut, ChevronDown
+  Settings, Trophy, X, Users, LogOut, ChevronDown, History
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
@@ -29,6 +29,7 @@ const NAV_ITEMS = [
   { to: '/referentiel',  icon: Archive,         label: 'Référentiel',     module: 'referentiel' },
   { to: '/parametres',   icon: Settings,        label: 'Paramètres',      module: 'parametres' },
   { to: '/utilisateurs', icon: Users,           label: 'Utilisateurs',    module: 'utilisateurs' },
+  { to: '/import-historique', icon: History,   label: 'Import historique', module: 'analyse' },
 ]
 
 interface Props {

@@ -3,8 +3,9 @@ import { useDropzone } from 'react-dropzone'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { aoApi, reponseApi } from '../lib/api'
-import type { AppelOffre } from '../types'
-import { Upload, FileText, CheckCircle, XCircle, Clock, ChevronRight, AlertTriangle, Loader2 } from 'lucide-react'
+import type { AppelOffre, Lot } from '../types'
+import { fmtNum } from '../lib/format'
+import { Upload, FileText, CheckCircle, XCircle, ChevronRight, AlertTriangle, Loader2, Trash2, Eye } from 'lucide-react'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
 
@@ -22,12 +23,22 @@ export default function AnalyseDAO() {
   const [warnings, setWarnings] = useState<string[]>([])
   const [result, setResult] = useState<any>(null)
   const [savedFiles, setSavedFiles] = useState<string[]>([])
+  const [showDocs, setShowDocs] = useState(false)
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop: useCallback((accepted: File[]) => setFiles(accepted), []),
-    accept: { 'application/pdf': ['.pdf'], 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'] },
+    onDrop: useCallback((accepted: File[]) => setFiles(prev => {
+      const names = new Set(prev.map(f => f.name))
+      return [...prev, ...accepted.filter(f => !names.has(f.name))]
+    }), []),
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/zip': ['.zip'],
+    },
     multiple: true,
   })
+
+  const removeFile = (idx: number) => setFiles(prev => prev.filter((_, i) => i !== idx))
 
   const analyseMutation = useMutation({
     mutationFn: (files: File[]) => aoApi.uploadAnalyse(files),
@@ -56,7 +67,10 @@ export default function AnalyseDAO() {
       setStep('decision')
       queryClient.invalidateQueries({ queryKey: ['aos'] })
     },
-    onError: () => toast.error('Erreur lors de la sauvegarde'),
+    onError: (err: any) => {
+      const detail = err?.response?.data?.detail
+      toast.error(detail ? `Erreur : ${detail}` : 'Erreur lors de la sauvegarde')
+    },
   })
 
   const decisionMutation = useMutation({
@@ -114,6 +128,27 @@ export default function AnalyseDAO() {
     })
   }
 
+  // Helpers for editing articles in the lots
+  const updateArticle = (li: number, ai: number, field: string, value: any) => {
+    if (!extracted?.lots) return
+    const lots: Lot[] = JSON.parse(JSON.stringify(extracted.lots))
+    const art = lots[li].articles[ai] as any
+    art[field] = value
+    if (field === 'prix_unitaire' || field === 'quantite') {
+      art.montant = parseFloat(((art.prix_unitaire || 0) * (art.quantite || 0)).toFixed(2))
+    }
+    if (field === 'montant' && (art.quantite || 0) > 0) {
+      art.prix_unitaire = parseFloat((value / art.quantite).toFixed(2))
+    }
+    setExtracted({ ...extracted, lots })
+  }
+
+  const lotTotal = (lot: Lot) =>
+    lot.articles.reduce((s, a: any) => s + (a.montant || 0), 0)
+
+  const grandTotal = () =>
+    (extracted?.lots || []).reduce((s, l) => s + lotTotal(l), 0)
+
   const steps = [
     { key: 'upload', label: 'Téléversement' },
     { key: 'analysing', label: 'Analyse IA' },
@@ -161,15 +196,22 @@ export default function AnalyseDAO() {
             <input {...getInputProps()} />
             <Upload className="mx-auto mb-3 text-gray-400" size={36} />
             <p className="text-sm text-gray-600 font-medium">Glissez vos fichiers DAO ici</p>
-            <p className="text-xs text-gray-400 mt-1">PDF, DOCX — plusieurs fichiers acceptés</p>
+            <p className="text-xs text-gray-400 mt-1">PDF, DOCX, ZIP — plusieurs fichiers acceptés</p>
           </div>
           {files.length > 0 && (
             <div className="mt-4 space-y-2">
               {files.map((f, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm text-gray-700 bg-gray-50 rounded-lg px-3 py-2">
-                  <FileText size={16} className="text-primary-600" />
+                  <FileText size={16} className="text-primary-600 flex-shrink-0" />
                   <span className="flex-1 truncate">{f.name}</span>
-                  <span className="text-xs text-gray-400">{(f.size / 1024).toFixed(0)} Ko</span>
+                  <span className="text-xs text-gray-400 flex-shrink-0">{(f.size / 1024).toFixed(0)} Ko</span>
+                  <button
+                    className="flex-shrink-0 text-gray-400 hover:text-red-500 transition-colors"
+                    onClick={e => { e.stopPropagation(); removeFile(i) }}
+                    title="Supprimer"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               ))}
             </div>
@@ -199,6 +241,37 @@ export default function AnalyseDAO() {
       {step === 'review' && extracted && (
         <div className="card">
           <h2 className="text-base font-semibold text-gray-900 mb-4">Données extraites — Vérification</h2>
+
+          {/* Warnings */}
+          {warnings.length > 0 && (
+            <div className="warning-banner mb-4">
+              <AlertTriangle size={16} className="flex-shrink-0" />
+              <ul className="text-sm space-y-0.5">
+                {warnings.map((w, i) => <li key={i}>{w}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {/* Document list */}
+          {savedFiles.length > 0 && (
+            <div className="mb-4">
+              <button
+                className="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-800 font-medium mb-2"
+                onClick={() => setShowDocs(v => !v)}
+              >
+                <Eye size={15} />
+                {showDocs ? 'Masquer' : 'Voir'} les documents chargés ({savedFiles.length})
+              </button>
+              {showDocs && (
+                <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+                  {savedFiles.map((p, i) => (
+                    <p key={i} className="text-xs text-gray-600 font-mono truncate">{p.split('/').pop()}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
               <label className="label">Référence</label>
@@ -217,36 +290,98 @@ export default function AnalyseDAO() {
               <input className="input" value={extracted.maitre_ouvrage?.nom || ''} onChange={e => setExtracted({ ...extracted, maitre_ouvrage: { ...extracted.maitre_ouvrage, nom: e.target.value } })} />
             </div>
             <div>
-              <label className="label">Estimation (DH HT)</label>
-              <input className="input" type="number" value={extracted.estimation || ''} onChange={e => setExtracted({ ...extracted, estimation: parseFloat(e.target.value) })} />
+              <label className="label">Procédure</label>
+              <input className="input" value={extracted.procedure || ''} onChange={e => setExtracted({ ...extracted, procedure: e.target.value })} />
+            </div>
+            <div>
+              <label className="label">Estimation MO (DH TTC)</label>
+              <input className="input" type="number" value={extracted.estimation || ''} onChange={e => setExtracted({ ...extracted, estimation: parseFloat(e.target.value) || undefined })} />
             </div>
             <div>
               <label className="label">Caution provisoire (DH)</label>
-              <input className="input" type="number" value={extracted.caution_provisoire || ''} onChange={e => setExtracted({ ...extracted, caution_provisoire: parseFloat(e.target.value) })} />
+              <input className="input" type="number" value={extracted.caution_provisoire || ''} onChange={e => setExtracted({ ...extracted, caution_provisoire: parseFloat(e.target.value) || undefined })} />
             </div>
             <div>
               <label className="label">Domaine</label>
               <input className="input" value={extracted.domaine || ''} onChange={e => setExtracted({ ...extracted, domaine: e.target.value })} />
             </div>
+            <div>
+              <label className="label">Délai exécution</label>
+              <input className="input bg-gray-50 text-gray-600" value={extracted.delai_execution ? `${(extracted.delai_execution as any).valeur} ${(extracted.delai_execution as any).unite}` : ''} readOnly />
+            </div>
           </div>
 
+          {/* Bordereau des prix complet */}
           {extracted.lots && extracted.lots.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Lots / Articles détectés</h3>
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-gray-800 mb-3">Bordereau des prix — Articles détectés</h3>
               {extracted.lots.map((lot, li) => (
-                <div key={li} className="mb-3">
-                  <p className="text-sm font-medium text-gray-800">Lot {lot.numero} — {lot.designation}</p>
-                  <div className="ml-4 mt-1 space-y-1">
-                    {lot.articles.map((art, ai) => (
-                      <div key={ai} className="text-xs text-gray-600 flex gap-3">
-                        <span className="font-mono w-6">{art.numero}</span>
-                        <span className="flex-1">{art.designation}</span>
-                        <span className="text-gray-400">{art.quantite} {art.unite}</span>
-                      </div>
-                    ))}
+                <div key={li} className="mb-6">
+                  <p className="text-sm font-semibold text-gray-700 bg-gray-50 px-3 py-2 rounded-t-lg border border-gray-200">
+                    Lot {lot.numero} — {lot.designation}
+                  </p>
+                  <div className="border border-t-0 border-gray-200 rounded-b-lg overflow-x-auto">
+                    <table className="w-full text-xs min-w-[700px]">
+                      <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                          <th className="text-left px-2 py-2 text-gray-500 font-medium w-8">#</th>
+                          <th className="text-left px-2 py-2 text-gray-500 font-medium">Désignation</th>
+                          <th className="text-right px-2 py-2 text-gray-500 font-medium w-16">Qté</th>
+                          <th className="text-left px-2 py-2 text-gray-500 font-medium w-14">Unité</th>
+                          <th className="text-right px-2 py-2 text-gray-500 font-medium w-28">P.U. HT (DH)</th>
+                          <th className="text-right px-2 py-2 text-gray-500 font-medium w-32">Montant HT (DH)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {lot.articles.map((art, ai) => (
+                          <tr key={ai} className="border-t border-gray-100 hover:bg-gray-50">
+                            <td className="px-2 py-1.5 font-mono text-gray-400">{art.numero}</td>
+                            <td className="px-2 py-1.5 text-gray-800">
+                              <div>{art.designation}</div>
+                              {(art as any).specifications_techniques && (
+                                <div className="text-gray-400 text-xs mt-0.5 line-clamp-2">{(art as any).specifications_techniques}</div>
+                              )}
+                              {(art as any).marque_exigee && (
+                                <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700">
+                                  Marque : {(art as any).marque_exigee}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-2 py-1.5 text-right text-gray-700">{art.quantite ?? '—'}</td>
+                            <td className="px-2 py-1.5 text-gray-500">{art.unite}</td>
+                            <td className="px-2 py-1.5">
+                              <input
+                                type="number"
+                                className="w-full text-right border border-gray-200 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:border-primary-400"
+                                placeholder="—"
+                                value={(art as any).prix_unitaire || ''}
+                                onChange={e => updateArticle(li, ai, 'prix_unitaire', parseFloat(e.target.value) || 0)}
+                              />
+                            </td>
+                            <td className="px-2 py-1.5 text-right font-medium text-gray-800">
+                              {(art as any).montant ? fmtNum((art as any).montant) : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                        <tr className="border-t-2 border-gray-300 bg-gray-50 font-semibold">
+                          <td colSpan={5} className="px-2 py-2 text-right text-gray-700 text-xs">Total Lot {lot.numero} HT</td>
+                          <td className="px-2 py-2 text-right text-gray-900 text-xs">
+                            {lotTotal(lot) > 0 ? `${fmtNum(lotTotal(lot))} DH` : '—'}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               ))}
+              {extracted.lots.length > 1 && grandTotal() > 0 && (
+                <div className="flex justify-end">
+                  <div className="bg-primary-50 border border-primary-200 rounded-lg px-4 py-2 text-sm">
+                    <span className="text-primary-700 font-semibold">Total général HT : </span>
+                    <span className="text-primary-900 font-bold">{fmtNum(grandTotal())} DH</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -294,7 +429,7 @@ export default function AnalyseDAO() {
           <h2 className="text-base font-semibold text-gray-900 mb-4">Tarification</h2>
           {savedAO.estimation && (
             <div className="bg-blue-50 rounded-lg p-3 mb-4 text-sm text-blue-800">
-              Estimation MO : <strong>{savedAO.estimation.toLocaleString('fr-MA')} DH HT</strong>
+              Estimation MO : <strong>{fmtNum(savedAO.estimation)} DH TTC</strong>
             </div>
           )}
           <div className="grid grid-cols-2 gap-4 mb-6">
@@ -311,7 +446,7 @@ export default function AnalyseDAO() {
               />
               {savedAO.estimation && (
                 <p className="text-xs text-gray-500 mt-1">
-                  → {((parseFloat(pct) / 100) * savedAO.estimation).toLocaleString('fr-MA', { maximumFractionDigits: 2 })} DH HT
+                  → {fmtNum((parseFloat(pct) / 100) * savedAO.estimation, 2)} DH HT
                 </p>
               )}
             </div>

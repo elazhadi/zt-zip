@@ -13,6 +13,7 @@ import Parametres from './pages/Parametres'
 import MarcheDetail from './pages/MarcheDetail'
 import Resultats from './pages/Resultats'
 import Utilisateurs from './pages/Utilisateurs'
+import ImportHistorique from './pages/ImportHistorique'
 import { Loader2 } from 'lucide-react'
 
 function ProtectedRoutes() {
@@ -43,6 +44,7 @@ function ProtectedRoutes() {
         <Route path="resultats" element={<Resultats />} />
         <Route path="parametres" element={<Parametres />} />
         <Route path="utilisateurs" element={<Utilisateurs />} />
+        <Route path="import-historique" element={<ImportHistorique />} />
       </Route>
     </Routes>
   )

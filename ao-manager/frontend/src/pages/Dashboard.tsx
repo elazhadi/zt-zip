@@ -4,6 +4,7 @@ import { aoApi } from '../lib/api'
 import type { AppelOffre } from '../types'
 import { STATUT_CONFIG } from '../types'
 import { AlertTriangle, TrendingUp, FileText, Clock } from 'lucide-react'
+import { fmtNum } from '../lib/format'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import clsx from 'clsx'
 
@@ -75,7 +76,7 @@ export default function Dashboard() {
             <p className="text-xs text-gray-500">Pipeline</p>
             <TrendingUp size={18} className="text-orange-600" />
           </div>
-          <p className="text-lg font-bold text-gray-900">{(totalEstimation / 1_000_000).toFixed(1)}M DH</p>
+          <p className="text-lg font-bold text-gray-900">{fmtNum(totalEstimation / 1_000_000, 1)}M DH</p>
         </div>
       </div>
 

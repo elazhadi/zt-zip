@@ -147,6 +147,75 @@ Analyse article par article la conformité du prospectus et génère un rapport 
 """
 
 
+HISTORIQUE_PROMPT = """Tu es un expert en marchés publics marocains (Décret 2-22-431).
+Ce dossier archivé contient les documents d'un AO : RC, CPS, CTP, offre, BPU, DPGF,
+PV de dépouillement, notification de marché, OS, PV de réception, correspondances, etc.
+
+Analyse TOUS les documents et remplis le JSON ci-dessous. Si une info est introuvable → null.
+
+Règles pour "statut" :
+- "cloture"                  : PV réception définitive OU attestation bonne exécution présents
+- "en_garantie"              : PV réception provisoire présent, sans réception définitive
+- "marche_en_cours"          : notification marché / OS présent, exécution en cours
+- "en_attente_de_resultats"  : PV dépouillement présent, pas encore de notification
+- "perdu"                    : PV mentionne un attributaire ≠ notre société
+- "en_instance"              : par défaut, statut incertain
+
+Règles pour "decision" : "oui" si offre/soumission trouvée, sinon "non"
+
+Réponds UNIQUEMENT avec ce JSON valide, sans texte autour :
+{
+  "reference": "numéro/référence de l'AO",
+  "objet": "objet/intitulé complet du marché",
+  "maitre_ouvrage": {"nom": "", "adresse": "", "ville": "", "type": ""},
+  "date_limite": "YYYY-MM-DD HH:MM ou null",
+  "procedure": "appel d'offres ouvert|restreint|concours|bon de commande",
+  "domaine": "domaine d'activité",
+  "reserve_tpme": false,
+  "estimation": null,
+  "lots": [],
+  "caution_provisoire": null,
+  "delai_execution": {"valeur": null, "unite": "jours|mois"},
+  "statut": "cloture|en_garantie|marche_en_cours|en_attente_de_resultats|perdu|en_instance",
+  "decision": "oui|non",
+  "montant_marche_ht": null,
+  "numero_marche": null,
+  "notes_import": "résumé bref de ce qui a été trouvé dans le dossier"
+}
+
+Documents du dossier :
+"""
+
+
+def analyse_historique(text: str) -> dict:
+    prompt = HISTORIQUE_PROMPT + text[:60000]
+    message = client.messages.create(
+        model=MODEL,
+        max_tokens=4096,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    raw = message.content[0].text.strip()
+    raw = re.sub(r'^```json\s*', '', raw)
+    raw = re.sub(r'\s*```$', '', raw)
+    return json.loads(raw)
+
+
+def analyse_historique_images(images_b64: list[str]) -> dict:
+    content = []
+    for img_b64 in images_b64[:15]:
+        content.append({"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": img_b64}})
+    content.append({"type": "text", "text": HISTORIQUE_PROMPT + "(Document sous forme d'images de pages PDF scannées)"})
+    message = client.messages.create(
+        model=MODEL,
+        max_tokens=4096,
+        messages=[{"role": "user", "content": content}]
+    )
+    raw = message.content[0].text.strip()
+    raw = re.sub(r'^```json\s*', '', raw)
+    raw = re.sub(r'\s*```$', '', raw)
+    return json.loads(raw)
+
+
 def analyse_dao_images(images_b64: list[str]) -> dict:
     """Analyse DAO from PDF page images (scanned PDF) using Claude Vision."""
     content = []
