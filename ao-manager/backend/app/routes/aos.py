@@ -117,7 +117,25 @@ async def upload_and_analyse_dao(
                 all_text_parts.append(f"=== {file.filename} ===\n{text}")
 
     if not all_text_parts:
-        return {"error": "Impossible d'extraire le texte des fichiers fournis", "extracted_data": None}
+        # Fallback: Claude Vision for scanned PDFs
+        from ..services.ocr_service import pdf_to_images_base64
+        all_images = []
+        for fp in saved_files:
+            if fp.lower().endswith(".pdf"):
+                imgs = pdf_to_images_base64(fp)
+                all_images.extend(imgs)
+                if all_images:
+                    break  # one PDF is enough for first attempt
+
+        if not all_images:
+            return {"error": "Impossible d'extraire le texte des fichiers fournis. Assurez-vous d'uploader un PDF ou DOCX lisible.", "extracted_data": None}
+
+        try:
+            extracted = ai_service.analyse_dao_images(all_images)
+            warnings = _generate_warnings(extracted)
+            return {"extracted_data": extracted, "saved_files": saved_files, "warnings": warnings}
+        except Exception as e:
+            return {"error": f"Erreur analyse Vision IA : {e}", "extracted_data": None}
 
     combined_text = "\n\n".join(all_text_parts)
     try:

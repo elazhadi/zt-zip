@@ -147,6 +147,29 @@ Analyse article par article la conformité du prospectus et génère un rapport 
 """
 
 
+def analyse_dao_images(images_b64: list[str]) -> dict:
+    """Analyse DAO from PDF page images (scanned PDF) using Claude Vision."""
+    content = []
+    for img_b64 in images_b64[:15]:
+        content.append({
+            "type": "image",
+            "source": {"type": "base64", "media_type": "image/png", "data": img_b64}
+        })
+    content.append({
+        "type": "text",
+        "text": DAO_ANALYSIS_PROMPT + "(Document fourni sous forme d'images de pages PDF scannées)"
+    })
+    message = client.messages.create(
+        model=MODEL,
+        max_tokens=4096,
+        messages=[{"role": "user", "content": content}]
+    )
+    raw = message.content[0].text.strip()
+    raw = re.sub(r'^```json\s*', '', raw)
+    raw = re.sub(r'\s*```$', '', raw)
+    return json.loads(raw)
+
+
 def analyse_dao(text: str) -> dict:
     prompt = DAO_ANALYSIS_PROMPT + text[:50000]
     message = client.messages.create(

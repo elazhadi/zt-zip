@@ -116,3 +116,21 @@ def extract_text(file_path: str) -> str:
     elif ext in (".xlsx", ".xls"):
         return extract_text_from_xlsx(file_path)
     return ""
+
+
+def pdf_to_images_base64(file_path: str, max_pages: int = 15, dpi_scale: float = 1.5) -> list[str]:
+    """Convert PDF pages to base64 PNG images for Claude Vision. Works on scanned PDFs."""
+    import base64
+    try:
+        import fitz  # PyMuPDF
+        doc = fitz.open(file_path)
+        images = []
+        mat = fitz.Matrix(dpi_scale, dpi_scale)
+        for i in range(min(len(doc), max_pages)):
+            pix = doc[i].get_pixmap(matrix=mat)
+            images.append(base64.b64encode(pix.tobytes("png")).decode("utf-8"))
+        doc.close()
+        return images
+    except Exception as e:
+        print(f"pdf_to_images_base64 error: {e}")
+        return []
