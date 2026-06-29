@@ -25,19 +25,38 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
+
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <span className="text-primary-600 font-black text-2xl">AO</span>
+          <div className="flex items-center justify-center mb-4">
+            <img
+              src="/logo.svg"
+              alt="AO Manager"
+              className="w-20 h-20 drop-shadow-md"
+              onError={e => {
+                // Fallback to text logo if SVG fails
+                const el = e.currentTarget
+                el.style.display = 'none'
+                const fb = el.nextElementSibling as HTMLElement
+                if (fb) fb.style.display = 'flex'
+              }}
+            />
+            {/* Text fallback (hidden by default) */}
+            <div
+              className="w-20 h-20 bg-primary-600 rounded-2xl items-center justify-center shadow-lg"
+              style={{ display: 'none' }}
+            >
+              <span className="text-white font-black text-3xl">AO</span>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-white">AO Manager</h1>
-          <p className="text-primary-200 text-sm mt-1">Marchés Publics — Décret 2-22-431</p>
+          <h1 className="text-2xl font-bold text-gray-900">AO Manager</h1>
+          <p className="text-gray-500 text-sm mt-1">Marchés Publics — Décret 2-22-431</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-6">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-5">Connexion</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -102,7 +121,7 @@ export default function Login() {
           </div>
         </div>
 
-        <p className="text-center text-primary-300 text-xs mt-6">v3.0 — Conforme au Décret 2-22-431</p>
+        <p className="text-center text-gray-400 text-xs mt-6">v3.0 — Conforme au Décret 2-22-431</p>
       </div>
     </div>
   )

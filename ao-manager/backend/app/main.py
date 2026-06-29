@@ -30,34 +30,47 @@ _run_migrations()
 
 
 def _ensure_admin():
-    """Create or reset the default super-admin account."""
-    from .models.user import User, ROLES_PRESETS
-    from .services.auth_service import hash_password
-    db = SessionLocal()
+    """Create or reset the default super-admin — always runs, fully logged."""
     try:
-        admin = db.query(User).filter(User.email == "admin@ao-manager.ma").first()
-        if admin is None:
-            admin = User(
-                nom="Administrateur", prenom="",
-                email="admin@ao-manager.ma",
-                password_hash=hash_password("Admin@2024"),
-                role_predefini="admin",
-                permissions=ROLES_PRESETS["admin"],
-                is_active=True, is_super_admin=True,
-            )
-            db.add(admin)
-            db.commit()
-            print("✅ Compte admin créé : admin@ao-manager.ma / Admin@2024")
-        else:
-            # Reset password on every deploy so it stays known
-            admin.password_hash = hash_password("Admin@2024")
-            admin.is_active = True
-            admin.is_super_admin = True
-            admin.permissions = ROLES_PRESETS["admin"]
-            db.commit()
-            print("✅ Compte admin synchronisé")
-    finally:
-        db.close()
+        from .models.user import User, ROLES_PRESETS
+        from .services.auth_service import hash_password, verify_password
+
+        # Validate bcrypt works before touching DB
+        test_hash = hash_password("Admin@2024")
+        assert verify_password("Admin@2024", test_hash), "bcrypt verify failed"
+        print(f"🔑 bcrypt OK")
+
+        db = SessionLocal()
+        try:
+            admin = db.query(User).filter(User.email == "admin@ao-manager.ma").first()
+            if admin is None:
+                admin = User(
+                    nom="Administrateur", prenom="",
+                    email="admin@ao-manager.ma",
+                    password_hash=test_hash,
+                    role_predefini="admin",
+                    permissions=ROLES_PRESETS["admin"],
+                    is_active=True, is_super_admin=True,
+                )
+                db.add(admin)
+                db.commit()
+                db.refresh(admin)
+                print(f"✅ Admin créé — hash: {admin.password_hash[:20]}...")
+            else:
+                admin.password_hash = test_hash
+                admin.is_active = True
+                admin.is_super_admin = True
+                admin.permissions = ROLES_PRESETS["admin"]
+                db.commit()
+                db.refresh(admin)
+                print(f"✅ Admin MàJ — hash: {admin.password_hash[:20]}...")
+        except Exception as e:
+            print(f"❌ _ensure_admin DB error: {e}")
+            db.rollback()
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"❌ _ensure_admin error: {e}")
 
 _ensure_admin()
 
