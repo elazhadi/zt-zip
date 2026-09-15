@@ -155,7 +155,7 @@ export interface DocumentRef {
 
 export const STATUT_CONFIG: Record<AOStatut, { label: string; color: string; bg: string }> = {
   en_instance: { label: 'En instance', color: 'text-gray-600', bg: 'bg-gray-100' },
-  en_cours_de_reponse: { label: 'En cours de réponse', color: 'text-blue-700', bg: 'bg-blue-100' },
+  en_cours_de_reponse: { label: 'En cours de réponse', color: 'text-primary-700', bg: 'bg-primary-100' },
   en_attente_de_resultats: { label: 'En attente de résultats', color: 'text-yellow-700', bg: 'bg-yellow-100' },
   en_adjudication: { label: 'En adjudication', color: 'text-orange-700', bg: 'bg-orange-100' },
   marche_en_cours: { label: 'Marché en cours', color: 'text-green-700', bg: 'bg-green-100' },

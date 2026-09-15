@@ -45,7 +45,7 @@ export default function Layout() {
           <span className="text-xs text-gray-500 font-medium hidden sm:inline">Sociétés actives :</span>
           <div className="flex items-center gap-2 overflow-x-auto flex-1 min-w-0">
             {societes.map((s, i) => {
-              const colors = ['bg-blue-600', 'bg-purple-600', 'bg-emerald-600', 'bg-orange-600', 'bg-rose-600']
+              const colors = ['bg-primary-600', 'bg-purple-600', 'bg-emerald-600', 'bg-orange-600', 'bg-rose-600']
               const color = colors[i % colors.length]
               return (
                 <span key={s.id} className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold text-white flex-shrink-0 ${color}`}>

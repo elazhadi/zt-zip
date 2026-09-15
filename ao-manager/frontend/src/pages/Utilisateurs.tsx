@@ -30,7 +30,7 @@ const ACTION_LABELS: Record<string, string> = {
   supprimer: 'Supprimer',
 }
 const ACTION_COLORS: Record<string, string> = {
-  consulter: 'text-blue-600',
+  consulter: 'text-primary-600',
   creer:     'text-green-600',
   modifier:  'text-orange-600',
   supprimer: 'text-red-600',
@@ -39,7 +39,7 @@ const ACTION_COLORS: Record<string, string> = {
 const ROLES = [
   { key: 'admin',          label: 'Administrateur',   color: 'bg-red-100 text-red-700' },
   { key: 'gestionnaire',   label: 'Gestionnaire AO',  color: 'bg-purple-100 text-purple-700' },
-  { key: 'soumissionnaire',label: 'Soumissionnaire',  color: 'bg-blue-100 text-blue-700' },
+  { key: 'soumissionnaire',label: 'Soumissionnaire',  color: 'bg-primary-100 text-primary-700' },
   { key: 'consultant',     label: 'Consultant',        color: 'bg-gray-100 text-gray-700' },
   { key: 'custom',         label: 'Personnalisé',      color: 'bg-yellow-100 text-yellow-700' },
 ]
@@ -166,7 +166,7 @@ function RolePresets({
 
 function Avatar({ nom, prenom, size = 'md' }: { nom: string; prenom: string; size?: 'sm' | 'md' }) {
   const initials = `${(prenom || nom)[0] || '?'}${nom[0] || ''}`.toUpperCase().slice(0, 2)
-  const colors = ['bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 'bg-orange-500', 'bg-rose-500', 'bg-teal-500']
+  const colors = ['bg-primary-500', 'bg-purple-500', 'bg-emerald-500', 'bg-orange-500', 'bg-rose-500', 'bg-teal-500']
   const color = colors[(nom.charCodeAt(0) + (prenom.charCodeAt(0) || 0)) % colors.length]
   return (
     <div className={clsx(

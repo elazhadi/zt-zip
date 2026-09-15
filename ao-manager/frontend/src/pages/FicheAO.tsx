@@ -188,7 +188,7 @@ export default function FicheAO() {
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               {ao.reserve_tpme && <span className="badge bg-purple-100 text-purple-700">Réservé TPME</span>}
-              {ao.prospectus_exige && <span className="badge bg-blue-100 text-blue-700">Prospectus exigé</span>}
+              {ao.prospectus_exige && <span className="badge bg-primary-100 text-primary-700">Prospectus exigé</span>}
               {ao.echantillon_exige && <span className="badge bg-orange-100 text-orange-700">Échantillon exigé</span>}
               {ao.offre_technique_exigee && <span className="badge bg-cyan-100 text-cyan-700">Offre technique</span>}
             </div>

@@ -60,7 +60,7 @@ export default function Dashboard() {
         <div className="card">
           <div className="flex items-center justify-between mb-1">
             <p className="text-xs text-gray-500">En cours</p>
-            <Clock size={18} className="text-blue-600" />
+            <Clock size={18} className="text-primary-600" />
           </div>
           <p className="text-2xl font-bold text-gray-900">{aos.filter(a => a.statut === 'en_cours_de_reponse').length}</p>
         </div>

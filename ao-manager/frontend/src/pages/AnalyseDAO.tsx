@@ -183,9 +183,9 @@ export default function AnalyseDAO() {
 
       {/* Persistent DAO documents banner */}
       {showDocsBanner && (
-        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl px-4 py-2">
+        <div className="mb-4 bg-primary-50 border border-primary-200 rounded-xl px-4 py-2">
           <button
-            className="flex items-center gap-2 text-sm text-blue-700 font-medium w-full text-left"
+            className="flex items-center gap-2 text-sm text-primary-700 font-medium w-full text-left"
             onClick={() => setShowDocs(v => !v)}
           >
             <Eye size={15} />
@@ -193,12 +193,12 @@ export default function AnalyseDAO() {
             <ChevronRight size={13} className={clsx('ml-auto transition-transform', showDocs && 'rotate-90')} />
           </button>
           {showDocs && (
-            <div className="mt-2 space-y-1 border-t border-blue-200 pt-2">
+            <div className="mt-2 space-y-1 border-t border-primary-200 pt-2">
               {files.map((f, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs text-blue-800">
+                <div key={i} className="flex items-center gap-2 text-xs text-primary-800">
                   <FileText size={12} className="flex-shrink-0" />
                   <span className="font-mono truncate">{f.name}</span>
-                  <span className="text-blue-400 flex-shrink-0">({(f.size / 1024).toFixed(0)} Ko)</span>
+                  <span className="text-primary-400 flex-shrink-0">({(f.size / 1024).toFixed(0)} Ko)</span>
                 </div>
               ))}
             </div>
@@ -490,7 +490,7 @@ export default function AnalyseDAO() {
           <h2 className="text-base font-semibold text-gray-900 mb-4">Tarification</h2>
 
           {savedAO.estimation && (
-            <div className="bg-blue-50 rounded-lg p-3 mb-6 text-sm text-blue-800">
+            <div className="bg-primary-50 rounded-lg p-3 mb-6 text-sm text-primary-800">
               Estimation MO : <strong>{fmtNum(savedAO.estimation)} DH TTC</strong>
             </div>
           )}
