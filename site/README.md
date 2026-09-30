@@ -87,26 +87,22 @@ Bonnes pratiques mises en place sur chaque page :
 - Illustrations en SVG inline (pas d'images lourdes), chargement rapide.
 ## Formulaire de contact (envoi e-mail + anti-spam)
 
-Les demandes sont envoyées à **Sypramed@gmail.com**. Le site étant statique
-(sans serveur), l'envoi passe par **Web3Forms** (gratuit, sans backend).
+Les demandes sont envoyées à **contact@sypramed.ma** via le compte SMTP du même
+nom. Le site étant hébergé sur **Genious** (PHP), l'envoi passe par le script
+`send.php` (à la racine du site).
 
 Protection anti-spam intégrée :
 - **Captcha** mathématique simple (ex. « 3 + 4 ? ») validé avant l'envoi ;
-- **Honeypot** caché (`botcheck`) qui piège les robots.
+- **Honeypot** caché (`botcheck`) vérifié côté serveur.
 
-### Activer l'envoi réel (1 étape, ~30 s)
+### Mise en service
+Voir **`../mail-endpoint/README.md`** — en résumé :
+1. Auto-déploiement FTP : ajouter les *Secrets* GitHub `FTP_SERVER`,
+   `FTP_USERNAME`, `FTP_PASSWORD`.
+2. Créer `public_html/mail-config.php` sur le serveur avec le mot de passe SMTP
+   (jamais sur GitHub).
 
-1. Allez sur **https://web3forms.com**, saisissez `Sypramed@gmail.com`,
-   récupérez la **clé d'accès** (Access Key) reçue par e-mail.
-2. Dans `assets/js/main.js`, remplacez :
-   ```js
-   const WEB3FORMS_KEY = "REPLACE_WITH_YOUR_ACCESS_KEY";
-   ```
-   par votre clé. C'est tout — les demandes arrivent dans la boîte Gmail.
-
-> Tant que la clé n'est pas renseignée, le bouton « Envoyer » ouvre
+> Tant que `send.php` n'est pas joignable, le bouton « Envoyer » ouvre
 > automatiquement le **client mail** du visiteur (mailto) prérempli vers
-> Sypramed@gmail.com : le formulaire reste donc fonctionnel par défaut.
-
-Alternatives possibles (au lieu de Web3Forms) : Formspree, EmailJS, ou un
-petit backend PHP `mail()` — il suffit de changer l'URL d'envoi dans `main.js`.
+> contact@sypramed.ma : le formulaire reste donc fonctionnel par défaut.
+> L'URL de l'endpoint se règle en haut de `assets/js/main.js` (`MAIL_ENDPOINT`).

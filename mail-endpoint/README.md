@@ -1,58 +1,57 @@
-# Point d'envoi e-mail du formulaire (`send.php`)
+# Déploiement du site sur Genious (auto-déploiement + formulaire)
 
-Le site est hébergé sur **GitHub Pages** (statique) : il ne peut pas envoyer
-d'e-mail par SMTP lui-même. Ce petit script **PHP** s'en charge et doit être
-hébergé sur **Genious** (qui exécute le PHP et héberge le compte mail).
-
-Le formulaire du site (`contact.html`) envoie les données à ce script, qui les
-expédie via le compte **contact@sypramed.ma** (SMTP `mail.sypramed.ma`) vers
-**contact@sypramed.ma**.
+Le site est **hébergé sur Genious** et **redéployé automatiquement** à chaque
+push GitHub (via FTP). Le formulaire de contact (`send.php`) tourne sur le même
+serveur : il envoie les demandes via le compte SMTP **contact@sypramed.ma**.
 
 ```
-Visiteur ──(POST)──►  https://api.sypramed.ma/send.php  ──(SMTP)──►  boîte contact@sypramed.ma
- (site GitHub Pages)        (hébergé sur Genious)
+git push ──► GitHub Actions ──(FTP)──► Genious /public_html ──► www.sypramed.ma
+Formulaire ──► send.php (même serveur) ──(SMTP)──► boîte contact@sypramed.ma
 ```
 
-## Mise en place (une seule fois)
+## A. DNS (rien à faire de spécial)
+Le domaine `sypramed.ma` utilise déjà les **nameservers Genious**
+(`hamza.genious.net`, `omar.genious.net`) → il pointe donc **par défaut vers
+Genious**. 
 
-### 1. Créer un sous-domaine sur Genious
-Dans **cPanel → Sous-domaines**, créez `api.sypramed.ma`
-(dossier racine par ex. `public_html/api`).
+> ❌ N'ajoutez PAS les enregistrements GitHub (`185.199.x.x`) ni le sous-domaine
+> `api`. Si vous les aviez déjà créés, **supprimez-les** et laissez `@` et `www`
+> pointer vers le serveur Genious (`41.77.118.57`). Ne touchez pas aux `MX`.
 
-> DNS : comme `sypramed.ma` / `www` pointent vers GitHub, ajoutez dans la zone
-> DNS un enregistrement **A** : `api` → `196.32.220.154` (l'IP de votre serveur
-> Genious). Le sous-domaine `api` reste ainsi sur Genious.
+## B. Auto-déploiement FTP — secrets GitHub (une fois)
+Dans le dépôt GitHub → **Settings → Secrets and variables → Actions →
+New repository secret**, créez :
 
-### 2. Téléverser le script
-Copiez **`send.php`** dans le dossier du sous-domaine (`public_html/api/`).
+| Nom du secret  | Valeur                                   |
+|----------------|------------------------------------------|
+| `FTP_SERVER`   | `41.77.118.57` (ou `ftp.sypramed.ma`)    |
+| `FTP_USERNAME` | `sypramed`                               |
+| `FTP_PASSWORD` | votre mot de passe FTP/cPanel (le nouveau) |
 
-### 3. Renseigner le mot de passe (sur le serveur uniquement)
-Éditez `send.php` sur le serveur et remplacez :
-```php
-$SMTP_PASS = 'A_REMPLACER_SUR_LE_SERVEUR';
-```
-par le mot de passe du compte `contact@sypramed.ma`.
-⚠️ Ne remettez jamais ce fichier (avec le mot de passe) sur GitHub.
+Ensuite, onglet **Actions → « Déploiement FTP vers Genious » → Run workflow**
+(ou faites un push). Le site part dans `public_html/`.
 
-### 4. Activer le HTTPS du sous-domaine
-cPanel → **SSL/TLS Status** → *Run AutoSSL* pour `api.sypramed.ma`.
+> Si les fichiers arrivent au mauvais endroit, ajustez `server-dir` dans
+> `.github/workflows/deploy-ftp.yml` (`./public_html/` pour le compte principal).
 
-### 5. Tester
-Ouvrez `https://www.sypramed.ma/contact.html`, envoyez une demande :
-elle doit arriver dans la boîte **contact@sypramed.ma**.
+## C. Formulaire de contact — mot de passe SMTP (une fois)
+`send.php` est déployé automatiquement, **mais pas le mot de passe** (pour ne
+jamais l'exposer sur GitHub). Créez-le une seule fois sur le serveur :
 
-## Réglages
-- Port : `465` (SSL) par défaut. Si bloqué, passez à `587` avec `$SMTP_SECURE = 'tls'`.
-- `$ALLOWED_ORIGINS` : liste des domaines autorisés à appeler le script (déjà
-  réglé sur www.sypramed.ma et sypramed.ma).
-- Anti-spam : honeypot vérifié côté serveur ; le captcha est vérifié côté site.
+1. cPanel → **Gestionnaire de fichiers** → `public_html`.
+2. Créez un fichier **`mail-config.php`** (voir `mail-config.sample.php`) avec :
+   ```php
+   <?php
+   $SMTP_PASS = 'le_mot_de_passe_de_contact@sypramed.ma';
+   ```
+3. Enregistrez. Ce fichier n'est jamais écrasé par les déploiements (il est
+   exclu). Le formulaire enverra alors les demandes vers contact@sypramed.ma.
 
-## Repli automatique
-Tant que `send.php` n'est pas en ligne, le bouton « Envoyer » du site ouvre
-automatiquement le client mail du visiteur, pré-rempli vers contact@sypramed.ma.
-L'URL de l'endpoint est configurable en haut de `site/assets/js/main.js`
-(`MAIL_ENDPOINT`).
+## D. HTTPS
+cPanel → **SSL/TLS Status** → *Run AutoSSL* pour `sypramed.ma` et
+`www.sypramed.ma` (cadenas 🔒).
 
 ## Sécurité
-- Le mot de passe SMTP reste **uniquement** dans `send.php` sur Genious.
-- Changez le mot de passe du compte s'il a été communiqué en clair.
+- Le mot de passe SMTP vit **uniquement** dans `public_html/mail-config.php`.
+- Le mot de passe FTP/cPanel vit **uniquement** dans les *Secrets* GitHub.
+- Changez ces mots de passe s'ils ont été communiqués en clair.

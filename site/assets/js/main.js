@@ -86,10 +86,10 @@
   // ---- Contact form : captcha + envoi e-mail ----
   // Adresse de contact (aussi utilisée pour le repli mailto)
   const CONTACT_EMAIL = "contact@sypramed.ma";
-  // Point d'envoi PHP hébergé sur Genious (voir mail-endpoint/send.php).
+  // Point d'envoi PHP hébergé au même endroit que le site (Genious).
   // Il envoie le message via le compte SMTP contact@sypramed.ma.
   // Si l'endpoint n'est pas joignable, le bouton ouvre le client mail (repli).
-  const MAIL_ENDPOINT = "https://api.sypramed.ma/send.php";
+  const MAIL_ENDPOINT = "send.php";
 
   const form = document.querySelector("#contact-form");
   if (form) {
