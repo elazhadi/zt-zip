@@ -84,13 +84,12 @@
   }
 
   // ---- Contact form : captcha + envoi e-mail ----
-  // Destinataire des demandes
-  const CONTACT_EMAIL = "Sypramed@gmail.com";
-  // Clé d'accès Web3Forms (gratuite) — obtenez-la en 30 s sur https://web3forms.com
-  // en saisissant l'adresse Sypramed@gmail.com, puis collez la clé ci-dessous.
-  // Tant qu'elle reste "REPLACE_WITH_YOUR_ACCESS_KEY", l'envoi se fait via le
-  // client mail du visiteur (mailto) en repli.
-  const WEB3FORMS_KEY = "REPLACE_WITH_YOUR_ACCESS_KEY";
+  // Adresse de contact (aussi utilisée pour le repli mailto)
+  const CONTACT_EMAIL = "contact@sypramed.ma";
+  // Point d'envoi PHP hébergé sur Genious (voir mail-endpoint/send.php).
+  // Il envoie le message via le compte SMTP contact@sypramed.ma.
+  // Si l'endpoint n'est pas joignable, le bouton ouvre le client mail (repli).
+  const MAIL_ENDPOINT = "https://api.sypramed.ma/send.php";
 
   const form = document.querySelector("#contact-form");
   if (form) {
@@ -166,37 +165,17 @@
         return;
       }
 
-      // Pas de clé configurée -> repli mailto
-      if (WEB3FORMS_KEY === "REPLACE_WITH_YOUR_ACCESS_KEY") {
-        sendMailto();
-        succeed();
-        return;
-      }
-
-      // Envoi via Web3Forms
-      const data = {
-        access_key: WEB3FORMS_KEY,
-        subject: "[Site SYPRAMED] Nouvelle demande de " + (form.querySelector("#nom") || {}).value,
-        from_name: "Site SYPRAMED",
-        nom: (form.querySelector("#nom") || {}).value,
-        societe: (form.querySelector("#societe") || {}).value,
-        email: (form.querySelector("#email") || {}).value,
-        telephone: (form.querySelector("#tel") || {}).value,
-        sujet: (form.querySelector("#sujet") || {}).value,
-        message: (form.querySelector("#message") || {}).value
-      };
+      // Envoi via le point PHP (SMTP contact@sypramed.ma), repli mailto si indisponible
       try {
         if (submitBtn) { submitBtn.disabled = true; submitBtn.style.opacity = ".65"; }
-        const res = await fetch("https://api.web3forms.com/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify(data)
-        });
+        const res = await fetch(MAIL_ENDPOINT, { method: "POST", body: new FormData(form) });
         const out = await res.json();
-        if (out.success) succeed();
-        else showErr("L'envoi a échoué. Réessayez ou écrivez à " + CONTACT_EMAIL + ".");
+        if (out && out.success) succeed();
+        else showErr((out && out.message) || ("L'envoi a échoué. Réessayez ou écrivez à " + CONTACT_EMAIL + "."));
       } catch (err) {
-        showErr("Connexion impossible. Réessayez ou écrivez à " + CONTACT_EMAIL + ".");
+        // Endpoint injoignable (pas encore en ligne, réseau…) -> repli client mail
+        sendMailto();
+        succeed();
       } finally {
         if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = ""; }
       }
