@@ -1,0 +1,46 @@
+name: Déploiement du site sur GitHub Pages
+
+# Publie le contenu du dossier site/ sur GitHub Pages à chaque push.
+# La racine du domaine (www.sypramed.ma) sert directement site/index.html.
+
+on:
+  push:
+    branches:
+      - claude/sypramed-website-design-9qijdt
+      - master
+      - main
+    paths:
+      - "site/**"
+      - ".github/workflows/deploy-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configuration de Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload du dossier site/
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./site
+
+      - name: Déploiement
+        id: deployment
+        uses: actions/deploy-pages@v4
