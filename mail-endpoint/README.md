@@ -34,18 +34,12 @@ Ensuite, onglet **Actions → « Déploiement FTP vers Genious » → Run workfl
 > Si les fichiers arrivent au mauvais endroit, ajustez `server-dir` dans
 > `.github/workflows/deploy-ftp.yml` (`./public_html/` pour le compte principal).
 
-## C. Formulaire de contact — mot de passe SMTP (une fois)
-`send.php` est déployé automatiquement, **mais pas le mot de passe** (pour ne
-jamais l'exposer sur GitHub). Créez-le une seule fois sur le serveur :
+## C. Formulaire de contact — rien à configurer
+`send.php` utilise la fonction **mail() locale** de cPanel (le site et la boîte
+sont sur le même serveur). **Aucun mot de passe SMTP n'est nécessaire.**
 
-1. cPanel → **Gestionnaire de fichiers** → `public_html`.
-2. Créez un fichier **`mail-config.php`** (voir `mail-config.sample.php`) avec :
-   ```php
-   <?php
-   $SMTP_PASS = 'le_mot_de_passe_de_contact@sypramed.ma';
-   ```
-3. Enregistrez. Ce fichier n'est jamais écrasé par les déploiements (il est
-   exclu). Le formulaire enverra alors les demandes vers contact@sypramed.ma.
+> L'ancien fichier `public_html/mail-config.php` n'est plus utilisé : vous
+> pouvez le supprimer.
 
 ## D. HTTPS
 cPanel → **SSL/TLS Status** → *Run AutoSSL* pour `sypramed.ma` et
