@@ -193,6 +193,7 @@ table.grid td.ht { font-weight: 600; }
 .tag.exc { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
 
 /* ---------- Tiroir fiche profilé ---------- */
+.prof-draw{margin:0 0 14px;text-align:center}.prof-draw img{max-width:100%;max-height:200px;height:auto;display:block;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:12px;box-sizing:border-box}.prof-draw .cap{font-size:11px;color:var(--muted);margin-top:6px}
 .scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 40; }
 .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(620px, 100%); background: var(--surface); z-index: 41; box-shadow: var(--shadow); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px); }
 .dhead { display: flex; gap: 12px; align-items: start; justify-content: space-between; padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
@@ -1138,6 +1139,7 @@ if (typeof module !== "undefined") module.exports = Engine;
       (p.refStrugal ? '<span class="tag">Réf. Strugal ' + esc(p.refStrugal) + "</span>" : "") + (g ? '<span class="tag exc">' + esc(g.nom) + " · " + f2(g.prixKg) + " DH/kg</span>" : "") + (isExc ? '<span class="tag exc">exception de groupe</span>' : "") +
       '</div></div><button type="button" class="iconbtn" data-act="close-drawer" aria-label="Fermer la fiche">×</button></div>' +
       '<div class="dbody">' +
+      '<div class="prof-draw"><img loading="lazy" src="assets/profils/' + p.ref + '.png" alt="Coupe du profil\u00e9 ' + esc(p.ref) + '" onerror="this.closest(&quot;.prof-draw&quot;).remove()"><div class="cap">Coupe \u2014 r\u00e9f. ' + esc(p.ref) + '</div></div>' +
       '<div class="facts"><div class="fact"><div class="k">Poids</div><div class="v">' + f3(p.poids) + ' <span class="small muted">kg/ml</span></div></div>' +
       '<div class="fact"><div class="k">Poids barre ' + f2(L) + ' m</div><div class="v">' + f3(p.poids * L) + ' <span class="small muted">kg</span></div></div>' +
       '<div class="fact"><div class="k">Surface laquée</div><div class="v">' + f3(p.surface) + ' <span class="small muted">m²/ml</span></div></div>' +
