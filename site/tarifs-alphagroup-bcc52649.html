@@ -193,7 +193,7 @@ table.grid td.ht { font-weight: 600; }
 .tag.exc { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
 
 /* ---------- Tiroir fiche profilé ---------- */
-.supswitch{display:inline-flex;gap:2px;background:var(--bar-2);border-radius:999px;padding:3px;margin-left:8px}.supswitch a{font:600 12px var(--f-ui);color:var(--bar-muted);padding:5px 13px;border-radius:999px;text-decoration:none;white-space:nowrap}.supswitch a.active{background:var(--surface);color:var(--ink)}.supswitch a:not(.active):hover{color:var(--bar-ink)}.achat-box{margin:0 0 16px}.prof-draw{margin:0 0 14px;text-align:center}.prof-draw img{max-width:100%;max-height:200px;height:auto;display:block;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:12px;box-sizing:border-box}.prof-draw .cap{font-size:11px;color:var(--muted);margin-top:6px}
+.supswitch{display:inline-flex;gap:2px;background:var(--bar-2);border-radius:999px;padding:3px;margin-left:8px}.supswitch a{font:600 12px var(--f-ui);color:var(--bar-muted);padding:5px 13px;border-radius:999px;text-decoration:none;white-space:nowrap}.supswitch a.active{background:var(--surface);color:var(--ink)}.supswitch a:not(.active):hover{color:var(--bar-ink)}.pv-box{margin:0 0 4px}.pv-box + div{display:none}.pv-forced{display:inline-block;margin-left:6px;font-size:10px;font-weight:700;color:#9a4d07;background:#fbecd8;padding:2px 7px;border-radius:999px;text-transform:none;letter-spacing:0;vertical-align:middle}.pv-marges{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:10px 0 0;font-size:12px}.pv-marges .pv-lbl{color:var(--muted);font-weight:600}.pv-marges label{display:inline-flex;align-items:center;gap:4px;color:var(--ink)}.pv-marges input{width:54px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;font:inherit;text-align:right;background:var(--surface);color:var(--ink)}.pv-btn{font:600 12px var(--f-ui);padding:6px 11px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}.pv-btn.ghost{background:transparent;color:var(--accent)}.pv-pct{font-size:11px;color:var(--muted);font-weight:600}.pv-note{font-size:11px;color:var(--muted);margin:6px 0 0}.prof-draw{margin:0 0 14px;text-align:center}.prof-draw img{max-width:100%;max-height:200px;height:auto;display:block;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:12px;box-sizing:border-box}.prof-draw .cap{font-size:11px;color:var(--muted);margin-top:6px}
 .scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 40; }
 .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(620px, 100%); background: var(--surface); z-index: 41; box-shadow: var(--shadow); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px); }
 .dhead { display: flex; gap: 12px; align-items: start; justify-content: space-between; padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
@@ -1146,7 +1146,7 @@ if (typeof module !== "undefined") module.exports = Engine;
       (pt.appliquerMaj ? '<div class="fact"><div class="k">Pour ' + f0(pt.seuilKg) + ' kg</div><div class="v">' + f0(E.minBars(pt, p)) + ' <span class="small muted">barres</span></div></div>' : "") +
       "</div>" +
       (p.remarque ? '<div class="note">' + esc(p.remarque) + "</div>" : "") +
-      '<div class="achat-box"><h3 class="small muted" style="margin:0 0 6px;text-transform:uppercase;letter-spacing:.05em">Prix d\'achat \u00b7 par barre de 6 m \u00b7 DH</h3><div class="tbl-wrap"><table class="grid"><thead><tr><th>Finition</th><th class="num">Achat HT</th><th class="num ttc">Achat TTC</th></tr></thead><tbody><tr><td>BLANC</td><td class="num">' + f2(p.poids*51*6) + '</td><td class="num ttc">' + f2(E.ttc(pt,p.poids*51*6)) + '</td></tr><tr><td>GIVR\u00c9</td><td class="num">' + f2(p.poids*54*6) + '</td><td class="num ttc">' + f2(E.ttc(pt,p.poids*54*6)) + '</td></tr></tbody></table></div></div>' + '<div><h3 class="small muted" style="margin:0 0 6px;text-transform:uppercase;letter-spacing:.05em">Prix client <span class="dot ' + tierCls(S.tier) + '"></span> ' + esc(tierName(S.tier)) + " · par barre de " + f2(L) + ' m · DH</h3><div class="tbl-wrap"><table class="grid"><thead><tr><th>Finition</th>' +
+      (typeof alphaPriceBlock==="function"?alphaPriceBlock(p):"") + '<div><h3 class="small muted" style="margin:0 0 6px;text-transform:uppercase;letter-spacing:.05em">Prix client <span class="dot ' + tierCls(S.tier) + '"></span> ' + esc(tierName(S.tier)) + " · par barre de " + f2(L) + ' m · DH</h3><div class="tbl-wrap"><table class="grid"><thead><tr><th>Finition</th>' +
       (adm ? '<th class="num">Achat HT</th>' : "") + '<th class="num">HT</th><th class="num ttc">TTC</th>' +
       (pt.appliquerMaj ? '<th class="num hide-s">HT &lt; ' + f0(pt.seuilKg) + ' kg</th><th class="num ttc hide-s">TTC &lt; ' + f0(pt.seuilKg) + " kg</th>" : "") +
       "</tr></thead><tbody>" + rows + "</tbody></table></div></div>" + tiersCmp +
@@ -2211,6 +2211,81 @@ if (typeof module !== "undefined") module.exports = Engine;
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();
+})();
+
+</script>
+<script>
+(function () {
+  "use strict";
+  var KG = { BLANC: 51, GIVRE: 54 }, L = 6, TVA = 0.2;
+  var DEF = { public: 10, revendeur: 15, special: 20 };
+  var TIERS = [["public", "Public"], ["revendeur", "Revendeur"], ["special", "Spécial"]];
+  function f2(x) {
+    try { return Number(x).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    catch (e) { return (Math.round(x * 100) / 100).toFixed(2); }
+  }
+  function load() { try { return JSON.parse(localStorage.getItem("alpha:marges") || "{}"); } catch (e) { return {}; } }
+  function save(o) { try { localStorage.setItem("alpha:marges", JSON.stringify(o)); } catch (e) {} }
+  function ovOf(ref) { var o = load(); return o[ref] || null; }
+
+  window.alphaPriceBlock = function (p) {
+    if (!p || !p.poids) return "";
+    var ov = ovOf(p.ref), mg = ov || DEF, forced = !!ov;
+    var ach = { BLANC: p.poids * KG.BLANC * L, GIVRE: p.poids * KG.GIVRE * L };
+    function cells(mult) {
+      return '<td class="num">' + f2(ach.BLANC * mult) + '</td><td class="num ttc">' + f2(ach.BLANC * mult * (1 + TVA)) + "</td>" +
+             '<td class="num">' + f2(ach.GIVRE * mult) + '</td><td class="num ttc">' + f2(ach.GIVRE * mult * (1 + TVA)) + "</td>";
+    }
+    var rows = '<tr class="pv-achat"><td>Achat</td>' + cells(1) + "</tr>";
+    TIERS.forEach(function (t) {
+      rows += '<tr data-tier="' + t[0] + '"><td>' + t[1] + ' <span class="pv-pct">+' + mg[t[0]] + "%</span></td>" + cells(1 + mg[t[0]] / 100) + "</tr>";
+    });
+    var inputs = TIERS.map(function (t) {
+      return '<label>' + t[1] + ' <input class="pv-mg" data-t="' + t[0] + '" type="number" min="0" step="0.5" value="' + mg[t[0]] + '">%</label>';
+    }).join("");
+    return '<div class="pv-box" data-ref="' + p.ref + '" data-poids="' + p.poids + '">' +
+      '<h3 class="small muted" style="margin:0 0 6px;text-transform:uppercase;letter-spacing:.05em">Achat &amp; vente · par barre de 6 m · DH' +
+      (forced ? ' <span class="pv-forced">marge forcée</span>' : "") + "</h3>" +
+      '<div class="tbl-wrap"><table class="grid"><thead><tr><th></th><th class="num">BLANC HT</th><th class="num ttc">BLANC TTC</th><th class="num">GIVRÉ HT</th><th class="num ttc">GIVRÉ TTC</th></tr></thead><tbody>' +
+      rows + "</tbody></table></div>" +
+      '<div class="pv-marges"><span class="pv-lbl">Forcer la marge :</span>' + inputs +
+      '<button type="button" class="pv-btn" data-act="pv-save">Enregistrer</button>' +
+      '<button type="button" class="pv-btn ghost" data-act="pv-reset">Défaut</button></div>' +
+      '<div class="pv-note">La marge forcée est mémorisée dans ce navigateur et recalcule l’affichage (n’affecte pas le bouton « Ajouter au devis »).</div></div>';
+  };
+
+  function recompute(box) {
+    var poids = parseFloat(box.getAttribute("data-poids"));
+    var ach = { BLANC: poids * KG.BLANC * L, GIVRE: poids * KG.GIVRE * L };
+    box.querySelectorAll('tbody tr[data-tier]').forEach(function (tr) {
+      var inp = box.querySelector('.pv-mg[data-t="' + tr.getAttribute("data-tier") + '"]');
+      var m = parseFloat(inp.value) || 0, mult = 1 + m / 100;
+      var tds = tr.querySelectorAll("td.num");
+      var v = [ach.BLANC * mult, ach.BLANC * mult * (1 + TVA), ach.GIVRE * mult, ach.GIVRE * mult * (1 + TVA)];
+      tds.forEach(function (td, i) { td.textContent = f2(v[i]); });
+      var pct = tr.querySelector(".pv-pct"); if (pct) pct.textContent = "+" + m + "%";
+    });
+  }
+  document.addEventListener("input", function (e) {
+    var inp = e.target && e.target.closest ? e.target.closest(".pv-mg") : null;
+    if (inp) { var box = inp.closest(".pv-box"); if (box) recompute(box); }
+  });
+  document.addEventListener("click", function (e) {
+    var b = e.target && e.target.closest ? e.target.closest("[data-act]") : null; if (!b) return;
+    var act = b.getAttribute("data-act"); if (act !== "pv-save" && act !== "pv-reset") return;
+    var box = b.closest(".pv-box"); if (!box) return;
+    var ref = box.getAttribute("data-ref"), o = load();
+    if (act === "pv-save") {
+      var m = {}; box.querySelectorAll(".pv-mg").forEach(function (i) { m[i.getAttribute("data-t")] = parseFloat(i.value) || 0; });
+      o[ref] = m; save(o);
+      if (!box.querySelector(".pv-forced")) box.querySelector("h3").insertAdjacentHTML("beforeend", ' <span class="pv-forced">marge forcée</span>');
+    } else {
+      delete o[ref]; save(o);
+      box.querySelectorAll(".pv-mg").forEach(function (i) { i.value = DEF[i.getAttribute("data-t")]; });
+      recompute(box);
+      var fb = box.querySelector(".pv-forced"); if (fb) fb.remove();
+    }
+  });
 })();
 
 </script>
