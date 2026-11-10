@@ -709,7 +709,7 @@ if (typeof module !== "undefined") module.exports = Engine;
     pt: null, ptSource: "", expectedStamp: null, gridUpToDate: null, publishing: false, publishAgain: false,
     tier: LS.get("tps:tier", "public"),
     view: "tarif",
-    tf: Object.assign({ q: "", fam: [], ser: [], typ: [], grp: [], fin: null, unite: "barre", tranche: "normal", sort: { k: "ordre", d: 1 } }, LS.get("tps:tf", {}), { q: "" }),
+    tf: Object.assign({ q: "", fam: [], ser: [], typ: [], grp: [], fin: null, unite: "barre", tranche: "normal", kind: "tous", sort: { k: "ordre", d: 1 } }, LS.get("tps:tf", {}), { q: "" }),
     filtersOpen: false,
     drawer: null,
     quote: null, quoteDirty: false, quoteConfirm: null, qsearch: "", qsel: 0, savedQ: "", canWriteDevis: null, copyText: null,
@@ -945,6 +945,10 @@ if (typeof module !== "undefined") module.exports = Engine;
   /* ================= TARIF (liste multicritère) ================= */
   function matches(p, except) {
     const tf = S.tf;
+    if (except !== "kind" && tf.kind && tf.kind !== "tous") {
+      const isAcc = typeof strugalIsAcc === "function" && strugalIsAcc(p.ref);
+      if (tf.kind === "acc" ? !isAcc : isAcc) return false;
+    }
     if (except !== "fam" && tf.fam.length && !tf.fam.includes(p.famille)) return false;
     if (except !== "ser" && tf.ser.length && !tf.ser.includes(p.serieId)) return false;
     if (except !== "typ" && tf.typ.length && !tf.typ.includes(p.type)) return false;
@@ -999,6 +1003,7 @@ if (typeof module !== "undefined") module.exports = Engine;
         '<label class="search field" for="tf-q"><span class="sr">Rechercher un profilé</span>' + ICON_SEARCH +
         '<input id="tf-q" class="inp" type="search" autocomplete="off" placeholder="Réf., désignation, série… (ex. 04704, dormant S70)"></label>' +
         '<label class="field finsel" for="tf-fin"><span>Finition</span><select id="tf-fin" class="inp"></select></label>' +
+        '<div class="field"><span>Afficher</span><div class="toggle" id="tf-kind" role="group" aria-label="Type d\'article"><button type="button" data-v="tous">Tous</button><button type="button" data-v="profiles">Profilés</button><button type="button" data-v="acc">Accessoires</button></div></div>' +
         '<div class="field"><span>Prix par</span><div class="toggle" id="tf-unite" role="group" aria-label="Unité de prix"><button type="button" data-v="barre">Barre</button><button type="button" data-v="ml">Mètre</button></div></div>' +
         '<div class="field" id="tf-tranche-f"><span>Quantité commandée</span><div class="toggle" id="tf-tranche" role="group" aria-label="Tranche de quantité"></div></div>' +
         '<button type="button" class="btn ftoggle" id="tf-ftoggle" aria-controls="tf-filters"></button>' +
@@ -1018,6 +1023,7 @@ if (typeof module !== "undefined") module.exports = Engine;
     }
     sel.value = S.tf.fin;
     $$("#tf-unite button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.v === S.tf.unite));
+    $$("#tf-kind button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.v === (S.tf.kind || "tous")));
     const tr = $("#tf-tranche-f");
     tr.hidden = !S.pt.appliquerMaj;
     if (!S.pt.appliquerMaj) S.tf.tranche = "normal";
@@ -2037,8 +2043,8 @@ if (typeof module !== "undefined") module.exports = Engine;
     });
     vt.addEventListener("click", (e) => {
       const t = e.target;
-      const tg = t.closest("#tf-unite button, #tf-tranche button");
-      if (tg) { const k = tg.parentElement.id === "tf-unite" ? "unite" : "tranche"; S.tf[k] = tg.dataset.v; persistTf(); renderTarif(); return; }
+      const tg = t.closest("#tf-unite button, #tf-tranche button, #tf-kind button");
+      if (tg) { const pid = tg.parentElement.id; const k = pid === "tf-unite" ? "unite" : pid === "tf-kind" ? "kind" : "tranche"; S.tf[k] = tg.dataset.v; persistTf(); renderTarif(); return; }
       const sb = t.closest("button.sort");
       if (sb) { const k = sb.dataset.sort; S.tf.sort = S.tf.sort.k === k ? { k, d: -S.tf.sort.d } : { k, d: 1 }; persistTf(); renderTable(); return; }
       const a = t.closest("[data-act]");
