@@ -1,0 +1,40 @@
+name: Déploiement FTP vers Genious
+
+# Envoie le contenu du dossier site/ vers l'hébergement Genious (public_html)
+# à chaque push. Le mot de passe du formulaire (mail-config.php) n'est jamais
+# touché : il est exclu du déploiement.
+
+on:
+  push:
+    branches:
+      - claude/sypramed-website-design-9qijdt
+      - master
+      - main
+    paths:
+      - "site/**"
+      - ".github/workflows/deploy-ftp.yml"
+  workflow_dispatch:
+
+jobs:
+  ftp-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Déploiement FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftp            # passez à "ftps" si votre hébergement le supporte
+          port: 21
+          local-dir: ./site/
+          server-dir: ./public_html/
+          # Fichiers à ne jamais envoyer / supprimer sur le serveur :
+          exclude: |
+            **/*.md
+            **/.git*
+            mail-config.php
+            CNAME
