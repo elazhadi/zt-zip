@@ -2485,7 +2485,8 @@ window.SYP_SUPPLIER = "Alpha Group";
     var t = d.normalize ? d.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : d;
     return /^\s*epaisseur\b/i.test(t);
   }
-  window.sypLibelle = function (des, ref) { return sansLibelle(des) ? (ref || "") : des; };
+  // rien à dire d'utile : on laisse la colonne vide, la référence est déjà en face
+  window.sypLibelle = function (des) { return sansLibelle(des) ? "" : des; };
   window.sypSerieOk = function (des) { return !sansLibelle(des); };
 
   function uniteDe(l){
