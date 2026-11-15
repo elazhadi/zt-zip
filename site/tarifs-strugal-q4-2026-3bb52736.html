@@ -1259,7 +1259,7 @@ if (typeof module !== "undefined") module.exports = Engine;
         const finOpts = '<option value="">Défaut (' + esc(finName(q.finitionDefaut)) + ")</option>" + pt.finitions.map((f) => '<option value="' + esc(f.id) + '"' + (f.id === ln.finition ? " selected" : "") + ">" + esc(f.nom) + "</option>").join("");
         const seuil = !o.prof ? "" : o.majore ? '<span class="tag warn" title="Ajoutez ' + o.manque + ' barre(s) pour atteindre ' + f0(pt.seuilKg) + ' kg">majoré · +' + o.manque + " b. pour " + f0(pt.seuilKg) + " kg</span>" : o.qte > 0 ? '<span class="tag">' + f0(o.cumul) + " kg ✓</span>" : "";
         h += '<tr data-i="' + i + '"><td class="muted">' + (i + 1) + '</td><td class="refcell"><span class="mono">' + esc(ln.ref) + "</span></td>" +
-          "<td>" + (o.prof ? esc(o.prof.designation) + '<span class="sub">' + esc(o.prof.serie) + "</span>" : '<span class="tag warn">Réf. introuvable dans le catalogue</span>') + "</td>" +
+          "<td>" + (o.prof ? esc(typeof sypLibelle === "function" ? sypLibelle(o.prof.designation, o.prof.ref) : o.prof.designation) + ((typeof sypSerieOk !== "function" || sypSerieOk(o.prof.designation)) ? '<span class="sub">' + esc(o.prof.serie) + "</span>" : "") : '<span class="tag warn">Réf. introuvable dans le catalogue</span>') + "</td>" +
           '<td><select class="inp tiny linefin" data-li="finition" aria-label="Finition ligne ' + (i + 1) + '">' + finOpts + "</select></td>" +
           '<td class="num"><input class="inp tiny num qtyinp" type="number" min="0" step="1" inputmode="numeric" data-li="qte" value="' + esc(ln.qte) + '" aria-label="Barres ligne ' + (i + 1) + '"></td>' +
           '<td class="num hide-s" data-c="poids">' + f1(o.poidsLigne) + "</td>" +
@@ -2567,6 +2567,16 @@ window.SYP_SUPPLIER = "Strugal";
     var i = document.querySelector('.topbar img, header img, img[src^="data:image"]');
     return i ? i.getAttribute("src") : "";
   }
+  /* Désignation du devis : certains catalogues n'ont qu'une épaisseur à
+     donner (profilés Alpha). Dans ce cas la référence parle mieux au client. */
+  function sansLibelle(d){
+    if (!d) return true;
+    var t = d.normalize ? d.normalize("NFD").replace(/[\u0300-\u036f]/g, "") : d;
+    return /^\s*epaisseur\b/i.test(t);
+  }
+  window.sypLibelle = function (des, ref) { return sansLibelle(des) ? (ref || "") : des; };
+  window.sypSerieOk = function (des) { return !sansLibelle(des); };
+
   function uniteDe(l){
     var u = l.unite || (typeof window.SYP_UNIT === "function" ? window.SYP_UNIT(l.ref, 1) : "");
     if (!u) u = "barre";
@@ -2601,7 +2611,7 @@ window.SYP_SUPPLIER = "Strugal";
       var corps = lignes.filter(function (l) { return l.sup === s; }).map(function (l) {
         n++; sousTotal += l.montantHT;
         return '<tr><td class="c">'+n+'</td><td class="mono">'+esc(l.ref)+'</td>'+
-               '<td>'+esc(l.designation)+(l.serie?'<span class="sub">'+esc(l.serie)+'</span>':'')+'</td>'+
+               '<td>'+esc(window.sypLibelle(l.designation, l.ref))+((l.serie && window.sypSerieOk(l.designation))?'<span class="sub">'+esc(l.serie)+'</span>':'')+'</td>'+
                '<td>'+esc(l.finition)+'</td>'+
                '<td class="r">'+l.qte+' <span class="sub">'+esc(uniteDe(l))+'</span></td>'+
                '<td class="r">'+f2(l.puHT)+'</td><td class="r b">'+f2(l.montantHT)+'</td></tr>';
